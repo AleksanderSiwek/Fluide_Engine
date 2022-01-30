@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 set(PROJECT_NAME Fluid_Engine)
+set(PROJECT_LIB Fluid_Engine_lib)
 set(PROJECT_BINARY Fluid_Engine_binary)
 set(PROJECT_TESTS Fluid_Engine_tests)
 
