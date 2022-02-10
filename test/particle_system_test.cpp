@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/particle_system.hpp"
+#include "../src/particle_systems/particle_system.hpp"
 
 
 TEST(ParticleSystemTest, DefaultConstructor_test)

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/vector3.hpp"
+#include "../src/common/vector3.hpp"
 
 
 TEST(Vector3Test, Constructor_test)
@@ -109,6 +109,13 @@ TEST(Vector3Test, DivideVect_test)
     EXPECT_EQ(0.25, v.z);
 }
 
+TEST(Vector3Test, GetLength_test)
+{
+    Vector3<double> v(3, 5, sqrt(2));
+    EXPECT_EQ(6, v.GetLength());
+}
+
+
 TEST(Vector3Test, Max_test)
 {
     Vector3<int> v(1, 2, 3);
@@ -128,6 +135,19 @@ TEST(Vector3Test, Normalize_test)
     EXPECT_EQ(0.5, v.x);
     EXPECT_EQ(0.5, v.y);
     EXPECT_EQ(double(sqrt(2)/2), v.z);
+}
+
+TEST(Vector3Test, GetNormalized_test)
+{
+    Vector3<double> v(1, 1, sqrt(2));
+    Vector3<double> v_norm = v.GetNormalized();
+
+    EXPECT_EQ(0.5, v_norm.x);
+    EXPECT_EQ(0.5, v_norm.y);
+    EXPECT_EQ(double(sqrt(2)/2), v_norm.z);
+    EXPECT_EQ(1, v.x);
+    EXPECT_EQ(1, v.y);
+    EXPECT_EQ(double(sqrt(2)), v.z);
 }
 
 TEST(Vector3Test, IsEqualVect_test)

@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "vector3.hpp"
+#include "../common/vector3.hpp"
 
 // TO DO search neighbours 
 class ParticleSystem

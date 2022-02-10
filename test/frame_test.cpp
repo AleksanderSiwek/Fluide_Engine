@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/frame.hpp"
+#include "../src/common/frame.hpp"
 
 
 TEST(FrameTest, Constructor_test)

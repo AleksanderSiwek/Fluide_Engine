@@ -1,0 +1,4 @@
+#ifndef FLIP_SIMULATOR_HPP
+#define FLIP_SIMULATOR_HPP
+
+#endif // FLIP_SIMULATOR_HPP

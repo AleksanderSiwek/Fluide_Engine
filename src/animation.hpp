@@ -1,7 +1,7 @@
 #ifndef ANIMATION_HPP
 #define ANIMATION_HPP
 
-#include "frame.hpp"
+#include "./common/frame.hpp"
 
 class Animation
 {

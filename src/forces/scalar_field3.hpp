@@ -1,7 +1,7 @@
 #ifndef SCALAR_FIELD_3_HPP
 #define SCALAR_FIELD_3_HPP
 
-#include "vector3.hpp"
+#include "../common/vector3.hpp"
 
 
 template <typename T>

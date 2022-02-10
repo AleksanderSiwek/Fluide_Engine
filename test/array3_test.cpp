@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/array3.hpp"
+#include "../src/common/array3.hpp"
 
 
 TEST(Array3Test, DefaultConstructor_test)

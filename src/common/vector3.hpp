@@ -2,6 +2,7 @@
 #define VECTOR_3_HPP
 
 #include "frame.hpp"
+#include "math.h"
 
 template <typename T>
 class Vector3
@@ -85,6 +86,11 @@ class Vector3
             return *this;
         }
 
+        double GetLength()
+        {
+            return sqrt(x * x + y * y + z * z);
+        }
+
         T Max() 
         {
             if(x >= y && x >= z) return x;
@@ -102,6 +108,12 @@ class Vector3
         void Normalize()
         {
             Divide(sqrt(x * x + y * y + z * z));
+        }
+
+        Vector3<T> GetNormalized()
+        {
+            double val = sqrt(x * x + y * y + z * z);
+            return Vector3<T>(x/val, y/val, z/val);
         }
 
         bool IsEqual(const Vector3<T>& v) const

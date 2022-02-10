@@ -1,7 +1,7 @@
 #ifndef VECTOR_FIELD_3_HPP
 #define VECTOR_FIELD_3_HPP
 
-#include "vector3.hpp"
+#include "../common/vector3.hpp"
 
 
 template <typename T>
