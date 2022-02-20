@@ -20,18 +20,30 @@ class ParticleSystem
         void AddScalarValue(std::string name, double initialValue=0);
         void AddVectorValue(std::string name, Vector3<double> initialValue=(0, 0, 0));
 
-        void SetScalarValue(size_t idx, std::vector<double> values);
-        void SetScalarValue(std::string name, std::vector<double> values);
-        void SetVectorValue(size_t idx, std::vector<Vector3<double>> values);
-        void SetVectorValue(std::string name, std::vector<Vector3<double>> values);
+        void SetScalarValues(size_t idx, std::vector<double> values);
+        void SetScalarValues(std::string name, std::vector<double> values);
+        void SetVectorValues(size_t idx, std::vector<Vector3<double>> values);
+        void SetVectorValues(std::string name, std::vector<Vector3<double>> values);
+        void SetScalarValue(size_t idx, size_t particleIdx, double values);
+        void SetScalarValue(std::string name, size_t particleIdx, double value);
+        void SetVectorValue(size_t idx, size_t particleIdx, Vector3<double> value);
+        void SetVectorValue(std::string name,size_t particleIdx, Vector3<double> value);
         void SetMass(double mass);
         void SetRadius(double radius);
 
         size_t GetParticleNumber() const;
-        std::vector<double> GetScalarValue(size_t idx) const;
-        std::vector<double> GetScalarValue(const std::string& name) const;
-        std::vector<Vector3<double>> GetVectorValue(size_t idx) const;
-        std::vector<Vector3<double>> GetVectorValue(const std::string& name) const;
+        std::vector<double> GetScalarValues(size_t idx) const;
+        std::vector<double> GetScalarValues(const std::string& name) const;
+        std::vector<Vector3<double>> GetVectorValues(size_t idx) const;
+        std::vector<Vector3<double>> GetVectorValues(const std::string& name) const;
+        std::vector<double>* GetScalarValuesPtr(size_t idx);
+        std::vector<double>* GetScalarValuesPtr(const std::string& name);
+        std::vector<Vector3<double>>* GetVectorValuesPtr(size_t idx);
+        std::vector<Vector3<double>>* GetVectorValuesPtr(const std::string& name);
+        double GetScalarValue(size_t idx, size_t particleIdx) const;
+        double GetScalarValue(const std::string& name, size_t particleIdx) const;
+        Vector3<double> GetVectorValue(size_t idx, size_t particleIdx) const;
+        Vector3<double> GetVectorValue(const std::string& name, size_t particleIdx) const;
         size_t GetScalarIdxByName(std::string name) const;
         size_t GetVectorIdxByName(std::string name) const;
         size_t GetScalarDataMaxIdx() const;

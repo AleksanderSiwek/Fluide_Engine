@@ -9,29 +9,33 @@ template <typename T>
 class Array3
 {
     public:
-        Array3() : _size(Vector3<size_t>(0, 0, 0))
+        Array3() 
         {
-
+            SetSize(Vector3<size_t>(0, 0, 0));
         }
 
-        Array3(size_t width, size_t height, size_t depth, const T& initailValue = T()) : _size(Vector3<size_t>(width, height, depth)), _data(std::vector<T>(width * height * depth, initailValue))
+        Array3(size_t width, size_t height, size_t depth, const T& initailValue = T()) 
         {
-
+            SetSize(Vector3<size_t>(width, height, depth));
+            CreateTable(initailValue);
         }
 
-        Array3(const Vector3<size_t>& size, const T& initailValue = T()) : _size(size), _data(std::vector<T>(size.x * size.y * size.z, initailValue)) 
+        Array3(const Vector3<size_t>& size, const T& initailValue = T()) 
+            : _data(std::vector<T>(size.x * size.y * size.z)) 
         {
-
+            SetSize(size);
+            CreateTable(initailValue);
         }
 
-        Array3(const Array3<T>& array) : _size(array.GetSize()), _data(array.GetRawData()) 
+        Array3(const Array3<T>& array) 
+            : _data(array.GetRawData()) 
         {
-
+            SetSize(array.GetSize());
         }
 
         ~Array3() {}
 
-        Vector3<size_t> GetSize() const
+        virtual Vector3<size_t> GetSize() const
         {
              return _size;
         }
@@ -39,6 +43,11 @@ class Array3
         std::vector<T> GetRawData() const
         {
             return _data;
+        }
+
+        std::vector<T>* GetRawDataPtr()
+        {
+            return &_data;
         }
 
         const T& GetElement(size_t i, size_t j, size_t k) const
@@ -113,21 +122,21 @@ class Array3
             }
         }
 
-        void Resize(const Vector3<size_t> size)
+        virtual void Resize(const Vector3<size_t> size, T initialValue = 0)
         {
             std::vector<T> data = _data;
             Clear();
-            _size = size;
-            _data = std::vector<T>(_size.x * _size.y * _size.z, 0);
+            SetSize(size);
+            _data = std::vector<T>(_size.x * _size.y * _size.z, initialValue);
 
             Fill(data);
         }
 
-        void Resize(size_t x_size, size_t y_size, size_t z_size)
+        virtual void Resize(size_t x_size, size_t y_size, size_t z_size, T initialValue = 0)
         {
             std::vector<T> data = _data;
             Clear();
-            _size = Vector3<size_t>(x_size, y_size, z_size);
+            SetSize(Vector3<size_t>(x_size, y_size, z_size));
             _data = std::vector<T>(_size.x * _size.y * _size.z, 0);
 
             Fill(data);
@@ -136,7 +145,7 @@ class Array3
         void Copy(const Array3& array)
         {
             Clear();
-            _size = array.GetSize();
+            SetSize(array.GetSize());
             _data = array.GetRawData();
         }
 
@@ -192,9 +201,20 @@ class Array3
             return _data[i];
         }
 
-    private:
+    protected:
         std::vector<T> _data;
         Vector3<size_t> _size;
+
+        virtual void SetSize(Vector3<size_t> size)
+        {
+            _size = size;
+        }
+
+        void CreateTable(const T& initialValue)
+        {
+            _data = std::vector<T>(_size.x * _size.y * _size.z);
+            Fill(initialValue);
+        }
 };
 
 #endif // ARRAY_3_HPP

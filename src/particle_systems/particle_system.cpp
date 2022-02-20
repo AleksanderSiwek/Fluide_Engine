@@ -16,11 +16,13 @@ void ParticleSystem::Resize(size_t numberOfParticles)
 {
     _numberOfParticles = numberOfParticles;
 
-    for (auto& data : _scalarData) {
+    for (auto& data : _scalarData) 
+    {
         data.resize(_numberOfParticles, 0.0);
     }
 
-    for (auto& data : _vectorData) {
+    for (auto& data : _vectorData) 
+    {
         data.resize(_numberOfParticles, Vector3<double>(0, 0, 0));
     }
 }
@@ -47,24 +49,52 @@ void ParticleSystem::AddVectorValue(std::string name, Vector3<double> initialVal
     _vectorData.emplace_back(_numberOfParticles, initialValue);
 }
 
-void ParticleSystem::SetScalarValue(size_t idx, std::vector<double> values)
+void ParticleSystem::SetScalarValues(size_t idx, std::vector<double> values)
 {
     _scalarData[idx] = values;
 }
 
-void ParticleSystem::SetScalarValue(std::string name, std::vector<double> values)
+void ParticleSystem::SetScalarValues(std::string name, std::vector<double> values)
 {
     _scalarData[_scalarDataDict[name]] = values;
 }
 
-void ParticleSystem::SetVectorValue(size_t idx, std::vector<Vector3<double>> values)
+void ParticleSystem::SetVectorValues(size_t idx, std::vector<Vector3<double>> values)
 {
     _vectorData[idx] = values;
 }
 
-void ParticleSystem::SetVectorValue(std::string name, std::vector<Vector3<double>> values)
+void ParticleSystem::SetVectorValues(std::string name, std::vector<Vector3<double>> values)
 {
     _vectorData[_vectorDataDict[name]] = values;
+}
+
+void ParticleSystem::SetScalarValue(size_t idx, size_t particleIdx, double value)
+{
+    if(idx < _scalarData.size())
+    {
+        if(particleIdx < _scalarData[idx].size())
+            _scalarData[idx][particleIdx] = value;
+    }
+}
+
+void ParticleSystem::SetScalarValue(std::string name, size_t particleIdx,double value)
+{
+    SetScalarValue(GetScalarIdxByName(name), particleIdx, value);
+}
+
+void ParticleSystem::SetVectorValue(size_t idx, size_t particleIdx, Vector3<double> value)
+{
+    if(idx < _vectorData.size())
+    {
+        if(particleIdx < _vectorData[idx].size())
+            _vectorData[idx][particleIdx] = value;
+    }
+}
+
+void ParticleSystem::SetVectorValue(std::string name,size_t particleIdx, Vector3<double> value)
+{
+    SetVectorValue(GetVectorIdxByName(name), particleIdx, value);
 }
 
 void ParticleSystem::SetMass(double mass)
@@ -92,24 +122,74 @@ size_t ParticleSystem::GetVectorIdxByName(std::string name) const
     return _vectorDataDict.at(name);
 }
 
-std::vector<double> ParticleSystem::GetScalarValue(size_t idx) const
+std::vector<double> ParticleSystem::GetScalarValues(size_t idx) const
 {
     return _scalarData[idx];
 }
 
-std::vector<double> ParticleSystem::GetScalarValue(const std::string& name) const
+std::vector<double> ParticleSystem::GetScalarValues(const std::string& name) const
 {
     return _scalarData[_scalarDataDict.at(name)];
 }
 
-std::vector<Vector3<double>> ParticleSystem::GetVectorValue(size_t idx) const
+std::vector<Vector3<double>> ParticleSystem::GetVectorValues(size_t idx) const
 {
     return _vectorData[idx];
 }
 
-std::vector<Vector3<double>> ParticleSystem::GetVectorValue(const std::string& name) const
+std::vector<Vector3<double>> ParticleSystem::GetVectorValues(const std::string& name) const
 {
     return _vectorData[_vectorDataDict.at(name)];
+}
+
+std::vector<double>* ParticleSystem::GetScalarValuesPtr(size_t idx)
+{
+    return &(_scalarData[idx]);
+}
+
+std::vector<double>* ParticleSystem::GetScalarValuesPtr(const std::string& name)
+{
+    return &(_scalarData[GetScalarIdxByName(name)]);
+}
+
+std::vector<Vector3<double>>* ParticleSystem::GetVectorValuesPtr(size_t idx)
+{
+    return &(_vectorData[idx]);
+}
+
+std::vector<Vector3<double>>* ParticleSystem::GetVectorValuesPtr(const std::string& name)
+{
+    return &(_vectorData[GetVectorIdxByName(name)]);
+}
+
+double ParticleSystem::GetScalarValue(size_t idx, size_t particleIdx) const
+{
+    if(idx < _scalarData.size())
+    {
+        if(particleIdx < _scalarData[idx].size())
+            return _scalarData[idx][particleIdx];
+    }
+    return 0;
+}
+
+double ParticleSystem::GetScalarValue(const std::string& name, size_t particleIdx) const
+{
+    return GetScalarValue(GetScalarIdxByName(name), particleIdx);
+}
+
+Vector3<double> ParticleSystem::GetVectorValue(size_t idx, size_t particleIdx) const
+{
+    if(idx < _vectorData.size())
+    {
+        if(particleIdx < _vectorData[idx].size())
+            return _vectorData[idx][particleIdx];
+    }
+    return 0;
+}
+
+Vector3<double> ParticleSystem::GetVectorValue(const std::string& name, size_t particleIdx) const
+{
+    return GetVectorValue(GetVectorIdxByName(name), particleIdx);
 }
 
 size_t ParticleSystem::GetScalarDataMaxIdx() const

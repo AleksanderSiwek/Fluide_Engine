@@ -17,7 +17,8 @@ TEST(ParticleSystemTest, Resize_test)
     EXPECT_EQ(500, particle_system.GetParticleNumber());
     EXPECT_EQ(0, particle_system.GetScalarDataMaxIdx());
     EXPECT_EQ(1, particle_system.GetVectorDataMaxIdx());
-    EXPECT_EQ(500, particle_system.GetVectorValue("position").size());
+    EXPECT_EQ(500, particle_system.GetVectorValues("position").size());
+    EXPECT_EQ(500, particle_system.GetParticleNumber());
 }
 
 TEST(ParticleSystemTest, AddParticles_test)
@@ -28,10 +29,11 @@ TEST(ParticleSystemTest, AddParticles_test)
     EXPECT_EQ(200, particle_system.GetParticleNumber());
     EXPECT_EQ(0, particle_system.GetScalarDataMaxIdx());
     EXPECT_EQ(1, particle_system.GetVectorDataMaxIdx());
-    EXPECT_EQ(200, particle_system.GetVectorValue("position").size());
+    EXPECT_EQ(200, particle_system.GetVectorValues("position").size());
+    EXPECT_EQ(200, particle_system.GetParticleNumber());
 }
 
-TEST(ParticleSystemTest, AddScalarValue_test)
+TEST(ParticleSystemTest, AddScalarValues_test)
 {
     ParticleSystem particle_system;
     particle_system.Resize(100);
@@ -39,12 +41,12 @@ TEST(ParticleSystemTest, AddScalarValue_test)
     EXPECT_EQ(100, particle_system.GetParticleNumber());
     EXPECT_EQ(1, particle_system.GetScalarDataMaxIdx());
     EXPECT_EQ(1, particle_system.GetVectorDataMaxIdx());
-    EXPECT_EQ(100, particle_system.GetVectorValue("position").size());
-    EXPECT_EQ(100, particle_system.GetScalarValue("density").size());
-    EXPECT_EQ(1, particle_system.GetScalarValue("density")[0]);    
+    EXPECT_EQ(100, particle_system.GetVectorValues("position").size());
+    EXPECT_EQ(100, particle_system.GetScalarValues("density").size());
+    EXPECT_EQ(1, particle_system.GetScalarValues("density")[0]);    
 }
 
-TEST(ParticleSystemTest, AddVectorValue_test)
+TEST(ParticleSystemTest, AddVectorValues_test)
 {
     ParticleSystem particle_system;
     particle_system.Resize(100);
@@ -53,9 +55,14 @@ TEST(ParticleSystemTest, AddVectorValue_test)
     EXPECT_EQ(100, particle_system.GetParticleNumber());
     EXPECT_EQ(0, particle_system.GetScalarDataMaxIdx());
     EXPECT_EQ(2, particle_system.GetVectorDataMaxIdx());
-    EXPECT_EQ(100, particle_system.GetVectorValue("position").size());
-    EXPECT_EQ(100, particle_system.GetVectorValue("velocity").size());
-    EXPECT_EQ(true, particle_system.GetVectorValue("velocity")[0] == initialValue);    
+    EXPECT_EQ(100, particle_system.GetVectorValues("position").size());
+    EXPECT_EQ(100, particle_system.GetVectorValues("velocity").size());
+    EXPECT_EQ(true, particle_system.GetVectorValues("velocity")[0] == initialValue);    
+}
+
+TEST(ParticleSystemTest, TODO_test)
+{
+    EXPECT_EQ(1, 0);
 }
 
 // TO DO 
