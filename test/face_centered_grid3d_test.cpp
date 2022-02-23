@@ -17,8 +17,8 @@ TEST(FaceCenteredGrid3DTest, DefaultConstructor_test)
     EXPECT_EQ(1, spacing.y);
     EXPECT_EQ(1, spacing.z);
     EXPECT_EQ(0, grid.x(0, 0, 0));
-    EXPECT_EQ(0, grid.x(0, 0, 0));
-    EXPECT_EQ(0, grid.x(0, 0, 0));
+    EXPECT_EQ(0, grid.y(0, 0, 0));
+    EXPECT_EQ(0, grid.z(0, 0, 0));
 }
 
 TEST(FaceCenteredGrid3DTest, Constructor_test)
@@ -40,9 +40,9 @@ TEST(FaceCenteredGrid3DTest, Constructor_test)
     EXPECT_EQ(1, spacing.x);
     EXPECT_EQ(2, spacing.y);
     EXPECT_EQ(3, spacing.z);
-    EXPECT_EQ(1, grid(2, 2, 2).x);
-    EXPECT_EQ(1, grid(2, 2, 2).y);
-    EXPECT_EQ(1, grid(2, 2, 2).z);
+    EXPECT_EQ(1, grid.x(2, 2, 2));
+    EXPECT_EQ(1, grid.y(2, 2, 2));
+    EXPECT_EQ(1, grid.z(2, 2, 2));
 }
 
 TEST(FaceCenteredGrid3DTest, CalculationOrigin_test)
@@ -51,4 +51,13 @@ TEST(FaceCenteredGrid3DTest, CalculationOrigin_test)
     EXPECT_EQ(0, grid.GetDataXOrigin().x);
     EXPECT_EQ(0.5, grid.GetDataXOrigin().y);
     EXPECT_EQ(0.5, grid.GetDataXOrigin().z);
+}
+
+TEST(FaceCenteredGrid3DTest, ValueAtCellCenter_test)
+{
+    FaceCenteredGrid3D grid(3, 0, 1, 3);
+    Vector3<double> valueAtCenter = grid.ValueAtCellCenter(1, 1, 1);
+    EXPECT_EQ(3, valueAtCenter.x);
+    EXPECT_EQ(3, valueAtCenter.y);
+    EXPECT_EQ(3, valueAtCenter.z);
 }

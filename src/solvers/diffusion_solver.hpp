@@ -1,7 +1,7 @@
 #ifndef DIFFUSION_SOLVER_HPP
 #define DIFFUSION_SOLVER_HPP
 
-#include "../common/array3.hpp"
+#include "../grid_systems/face_centered_grid3d.hpp"
 
 class DiffusionSolver
 {
@@ -14,12 +14,11 @@ class DiffusionSolver
 
         void SetViscosity(double viscosity);
 
-        virtual Array3<double> CalculateDiffusion(const Array3<Vector3<double>>& source, double diffusionCoefficient, double timeIntervalInSeconds, Vector3<double> gridSpacing, Vector3<double> dataPosition) = 0;
-        virtual void CalculateDiffusion(const Array3<Vector3<double>>& source, double diffusionCoefficient, double timeIntervalInSeconds, Vector3<double> gridSpacing, Vector3<double> dataPosition, Array3<double>* dest) = 0;
+        virtual FaceCenteredGrid3D CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds) = 0;
+        virtual void CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* dest_grid) = 0;
 
     protected:
         double _viscosity;
-
 };
 
 #endif // DIFFUSION_SOLVER_HPP

@@ -3,7 +3,7 @@
 
 #include "grid3d.hpp"
 
-class ScalarGrid3D : public Grid3D<double>
+class ScalarGrid3D : public Grid3D, public Array3<double>
 {
     public:
         ScalarGrid3D(Vector3<size_t> size=1, Vector3<double> origin=0, Vector3<double> spacing=1, double initialValue=0);
