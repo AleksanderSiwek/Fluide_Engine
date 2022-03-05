@@ -34,7 +34,7 @@ FaceCenteredGrid3D ForwardEulerDiffusionSolver::CalculateDiffusion(FaceCenteredG
     return output;
 }
 
-void ForwardEulerDiffusionSolver::CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double diffusionCoefficient, double timeIntervalInSeconds, FaceCenteredGrid3D* dest_grid)
+void ForwardEulerDiffusionSolver::CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* dest_grid)
 {
     FaceCenteredGrid3D* out = new FaceCenteredGrid3D();
     dest_grid = out;

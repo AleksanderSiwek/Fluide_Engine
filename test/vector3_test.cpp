@@ -115,17 +115,29 @@ TEST(Vector3Test, GetLength_test)
     EXPECT_EQ(6, v.GetLength());
 }
 
-
 TEST(Vector3Test, Max_test)
 {
     Vector3<int> v(1, 2, 3);
     EXPECT_EQ(3, v.Max());
 }
 
+TEST(Vector3Test, AbsMax_test)
+{
+    Vector3<int> v(1, 2, -3);
+    EXPECT_EQ(3, v.AbsMax());
+}
+
 TEST(Vector3Test, Min_test)
 {
     Vector3<int> v(1, 2, 3);
     EXPECT_EQ(1, v.Min());
+}
+
+TEST(Vector3Test, Dot_test)
+{
+    Vector3<double> v(1, 2, 3);
+    Vector3<double> v1(1, 2, 3);
+    EXPECT_EQ(14, v.Dot(v1));
 }
 
 TEST(Vector3Test, Normalize_test)

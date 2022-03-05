@@ -91,18 +91,33 @@ class Vector3
             return sqrt(x * x + y * y + z * z);
         }
 
-        T Max() 
+        T Max() const
         {
             if(x >= y && x >= z) return x;
             if(y >= x && y >= z) return y;
             return z;
         }
 
-        T Min()
+        T AbsMax() const
+        {
+            T _x = std::abs(x);
+            T _y = std::abs(y);
+            T _z = std::abs(z);
+            if(_x >= _y && _x >= _z) return _x;
+            if(_y >= _x && _y >= _z) return _y;
+            return _z;
+        }
+
+        T Min() const
         {
             if(x <= y && x <= z) return x;
             if(y <= x && y <= z) return y;
             return z;
+        }
+
+        T Dot(const Vector3<T>& vect) const
+        {
+            return x * vect.x + y * vect.y + z * vect.z;
         }
 
         void Normalize()

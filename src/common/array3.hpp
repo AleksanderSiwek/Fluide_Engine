@@ -122,7 +122,7 @@ class Array3
             }
         }
 
-        virtual void Resize(const Vector3<size_t> size, T initialValue = 0)
+        virtual void Resize(const Vector3<size_t> size, T initialValue = T())
         {
             std::vector<T> data = _data;
             Clear();
@@ -132,12 +132,12 @@ class Array3
             Fill(data);
         }
 
-        virtual void Resize(size_t x_size, size_t y_size, size_t z_size, T initialValue = 0)
+        virtual void Resize(size_t x_size, size_t y_size, size_t z_size, T initialValue = T())
         {
             std::vector<T> data = _data;
             Clear();
             SetSize(Vector3<size_t>(x_size, y_size, z_size));
-            _data = std::vector<T>(_size.x * _size.y * _size.z, 0);
+            _data = std::vector<T>(_size.x * _size.y * _size.z, initialValue);
 
             Fill(data);
         }

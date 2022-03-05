@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/solvers/forward_euler_diffusion_solver.hpp"
+#include "../src/fluid_solvers/forward_euler_diffusion_solver.hpp"
 
 #define AIR_CELL 0 
 #define FLUID_CELL 1
@@ -14,6 +14,7 @@ TEST(ForwardEulerDiffusionSolverTest, CalculateDiffusion_test)
     fluid_markers(1, 0, 2) = FLUID_CELL;
     fluid_markers(1, 1, 2) = FLUID_CELL;
     ForwardEulerDiffusionSolver solver = ForwardEulerDiffusionSolver();
-    FaceCenteredGrid3D output = solver.CalculateDiffusion(input_arr, fluid_markers, 0.5, 0.1);
+    solver.SetViscosity(0.5);
+    FaceCenteredGrid3D output = solver.CalculateDiffusion(input_arr, fluid_markers, 0.1);
     EXPECT_EQ(true, expected_output.IsEqual(output));
 }
