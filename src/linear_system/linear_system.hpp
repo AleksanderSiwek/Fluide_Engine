@@ -2,9 +2,10 @@
 #define _LINEAR_SYSTEM_HPP
 
 #include "../common/array3.hpp"
-
+#include "../grid_systems/face_centered_grid3d.hpp"
 
 // TO DO: Create compressed version
+// TO DO: Create proper markers
 
 struct LinearSystemMatrixRow
 {
@@ -15,6 +16,7 @@ struct LinearSystemMatrixRow
 };
 
 typedef Array3<struct LinearSystemMatrixRow> SystemMatrix;
+typedef Array3<double> SystemVector;
 
 class LinearSystem
 {
@@ -24,10 +26,11 @@ class LinearSystem
 
         void Resize(const Vector3<size_t>& size);
         void Clear();
+        void Build(const FaceCenteredGrid3D& input, const Array3<size_t>& markers);
 
         SystemMatrix A;
-        Array3<double> b;
-        Array3<double> x;
+        SystemVector b;
+        SystemVector x;
 };
 
 #endif // _LINEAR_SYSTEM_HPP

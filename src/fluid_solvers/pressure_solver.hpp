@@ -6,7 +6,7 @@
 class PressureSolver
 {
     public:
-        PressureSolver(double density);
+        PressureSolver(double density=1);
 
         virtual ~PressureSolver();
 
@@ -14,8 +14,7 @@ class PressureSolver
 
         void SetDensity(double density);
 
-        virtual FaceCenteredGrid3D CalculatePressure(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds) = 0;
-        virtual void CalculatePressure(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* out) = 0;
+        virtual void CalculatePressure(FaceCenteredGrid3D& source_grid, const Array3<size_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 
     protected: 
         double _density;

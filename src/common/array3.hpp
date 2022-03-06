@@ -122,6 +122,13 @@ class Array3
             }
         }
 
+        void Swap(Array3<T>& arr)
+        {
+            Array3<T> tmp = arr;
+            arr = *this;
+            Copy(tmp);
+        }
+
         virtual void Resize(const Vector3<size_t> size, T initialValue = T())
         {
             std::vector<T> data = _data;

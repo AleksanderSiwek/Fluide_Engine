@@ -10,11 +10,11 @@
 class BLAS
 {
     public:
-        static double Dot(const Vector3<double>& a, const Vector3<double>& b);
-        static void Residual(double a, const Vector3<double> x, const Vector3<double> y, Vector3<double>* result);
-        static void AXpY(double a, const Vector3<double> x, const Vector3<double> y, Vector3<double>* result);
-        static double L2Norm(const Vector3<double>& vector);
-        static double LInfNorm(const Vector3<double>& vector);
+        static double Dot(const SystemVector& a, const SystemVector& b);
+        static void Residual(const SystemMatrix& A, const SystemVector& x, const SystemVector& b, SystemVector* result);
+        static void AXpY(double a, const SystemVector& x, const SystemVector& y, SystemVector* result);
+        static double L2Norm(const SystemVector& vector);
+        static double LInfNorm(const SystemVector& vector);
 };
 
 #endif // BLAS
