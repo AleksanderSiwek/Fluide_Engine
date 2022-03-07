@@ -2,7 +2,6 @@
 #define _LINEAR_SYSTEM_HPP
 
 #include "../common/array3.hpp"
-#include "../grid_systems/face_centered_grid3d.hpp"
 
 // TO DO: Create compressed version
 // TO DO: Create proper markers
@@ -26,7 +25,6 @@ class LinearSystem
 
         void Resize(const Vector3<size_t>& size);
         void Clear();
-        void Build(const FaceCenteredGrid3D& input, const Array3<size_t>& markers);
 
         SystemMatrix A;
         SystemVector b;

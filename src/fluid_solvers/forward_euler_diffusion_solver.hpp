@@ -11,9 +11,8 @@ class ForwardEulerDiffusionSolver : public DiffusionSolver
 
         ~ForwardEulerDiffusionSolver();  
 
-        FaceCenteredGrid3D CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds) override;
-        void CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* dest_grid) override;
-        double CalculateLaplacian(Array3<double>* grid, const Array3<uint8_t> fluidMarkers, Vector3<double> gridSpacing, size_t i, size_t j, size_t k);
+        void CalculateDiffusion(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
+        double CalculateLaplacian(const Array3<double>& grid, const FluidMarkers& fluidMarkers, Vector3<double> gridSpacing, size_t i, size_t j, size_t k);
 
     private:
 };

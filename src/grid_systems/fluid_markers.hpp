@@ -14,7 +14,7 @@ enum FluidMarker
 class FluidMarkers : public Array3<enum FluidMarker>
 {
     public:
-        FluidMarkers();
+        FluidMarkers(Vector3<size_t> size = 1, enum FluidMarker initialMarker = AIR_MARK);
 
         ~FluidMarkers();
 

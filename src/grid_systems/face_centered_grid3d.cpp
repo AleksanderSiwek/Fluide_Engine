@@ -167,6 +167,21 @@ Array3<double>* FaceCenteredGrid3D::GetDataZPtr()
     return &_dataZ;
 }
 
+const Array3<double>& FaceCenteredGrid3D::GetDataXRef() const 
+{
+    return _dataX;
+}
+
+const Array3<double>& FaceCenteredGrid3D::GetDataYRef() const
+{
+    return _dataY;
+}   
+
+const Array3<double>& FaceCenteredGrid3D::GetDataZRef() const
+{
+    return _dataZ;
+}
+
 void FaceCenteredGrid3D::CalculateDataOrigins()
 {
     _dataXOrigin = GetOrigin() + 0.5 * Vector3<double>(0, GetGridSpacing().y, GetGridSpacing().z);

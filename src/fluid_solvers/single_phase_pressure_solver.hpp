@@ -1,6 +1,7 @@
 #ifndef _SINGLE_PHASE_PRESSURE_SOLVER
 #define _SINGLE_PHASE_PRESSURE_SOLVER
 
+#include <memory>
 #include "pressure_solver.hpp"
 #include "../linear_system/jacobi_iteration_solver.hpp"
 
@@ -14,12 +15,16 @@ class SinglePhasePressureSolver : public PressureSolver
         
         ~SinglePhasePressureSolver();
 
-        virtual void CalculatePressure(FaceCenteredGrid3D& source_grid, const Array3<size_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
-        void ApplyPressure(const FaceCenteredGrid3D& input, const Array3<size_t>& fluidMarkers, FaceCenteredGrid3D* output);
+        virtual void CalculatePressure(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
+        void ApplyPressure(const FaceCenteredGrid3D& input, const FluidMarkers& fluidMarkers, FaceCenteredGrid3D* output);
+
+        void SetLinearSystemSolver(const std::shared_ptr<LinearSystemSolver>& solver);
 
     private:
         LinearSystem _system;
-        JacobiIterationSolver _systemSolver;
+        std::shared_ptr<LinearSystemSolver> _systemSolver;
+
+        void BuildSystem(const FaceCenteredGrid3D& input, const FluidMarkers& markers);
 
 };
 

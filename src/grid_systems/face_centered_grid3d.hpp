@@ -38,6 +38,9 @@ class FaceCenteredGrid3D : public Grid3D
         Array3<double>* GetDataXPtr();
         Array3<double>* GetDataYPtr();
         Array3<double>* GetDataZPtr();
+        const Array3<double>& GetDataXRef() const;
+        const Array3<double>& GetDataYRef() const;
+        const Array3<double>& GetDataZRef() const;
 
     private:
         Vector3<double> _dataXOrigin;

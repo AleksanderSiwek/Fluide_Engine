@@ -2,6 +2,7 @@
 #define DIFFUSION_SOLVER_HPP
 
 #include "../grid_systems/face_centered_grid3d.hpp"
+#include "../grid_systems/fluid_markers.hpp"
 
 class DiffusionSolver
 {
@@ -14,8 +15,7 @@ class DiffusionSolver
 
         void SetViscosity(double viscosity);
 
-        virtual FaceCenteredGrid3D CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds) = 0;
-        virtual void CalculateDiffusion(FaceCenteredGrid3D& source_grid, const Array3<uint8_t>& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* dest_grid) = 0;
+        virtual void CalculateDiffusion(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 
     protected:
         double _viscosity;
