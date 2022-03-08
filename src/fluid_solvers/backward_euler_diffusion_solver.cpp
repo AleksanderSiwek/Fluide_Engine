@@ -10,7 +10,7 @@ BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
 
 }
 
-void BackwardEulerDiffusionSolver::CalculateDiffusion(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     output->Resize(source_grid.GetSize());
     Vector3<double> spacing = source_grid.GetGridSpacing();

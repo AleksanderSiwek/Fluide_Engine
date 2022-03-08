@@ -10,7 +10,7 @@ ForwardEulerDiffusionSolver::~ForwardEulerDiffusionSolver()
 
 }
 
-void ForwardEulerDiffusionSolver::CalculateDiffusion(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     Vector3<size_t> size = source_grid.GetSize();
     output->Resize(size);

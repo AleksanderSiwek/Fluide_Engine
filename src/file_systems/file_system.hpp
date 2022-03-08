@@ -17,6 +17,6 @@ class FileSystem
 
     private:
         std::string _cacheFolderPath;
-}l
+};
 
 #endif // _FILE_SYSTEM_HPP

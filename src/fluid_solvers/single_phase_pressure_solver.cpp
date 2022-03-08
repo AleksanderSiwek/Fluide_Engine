@@ -11,7 +11,7 @@ SinglePhasePressureSolver::~SinglePhasePressureSolver()
 
 }
 
-void SinglePhasePressureSolver::CalculatePressure(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void SinglePhasePressureSolver::Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     output->Resize(source_grid.GetSize());
     BuildSystem(source_grid, fluidMarkers);

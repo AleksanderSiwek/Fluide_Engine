@@ -21,6 +21,11 @@ void PhysicsAnimation::SetCurrentFrame(const Frame& frame)
     _currentFrame = frame;
 }
 
+void PhysicsAnimation::SetNumberOfSubTimesteps(size_t numberOfSubTimesteps)
+{
+    _numberOfSubTimesteps = numberOfSubTimesteps;
+}
+
 Frame PhysicsAnimation::GetCurrentFrame() const
 {
     return _currentFrame;
@@ -29,6 +34,11 @@ Frame PhysicsAnimation::GetCurrentFrame() const
 double PhysicsAnimation::GetCurrentTimeInSeconds() const
 {
     return _currentTime;
+}
+
+size_t PhysicsAnimation::GetNumberOfSubTimeSteps() const
+{
+    return _numberOfTimeSteps;
 }
 
 void PhysicsAnimation::OnUpdate(const Frame& frame)

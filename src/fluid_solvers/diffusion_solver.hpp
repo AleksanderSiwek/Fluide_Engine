@@ -15,7 +15,7 @@ class DiffusionSolver
 
         void SetViscosity(double viscosity);
 
-        virtual void CalculateDiffusion(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
+        virtual void Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 
     protected:
         double _viscosity;

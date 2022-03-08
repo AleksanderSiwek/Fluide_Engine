@@ -13,8 +13,10 @@ class PhysicsAnimation : public Animation
 
         Frame GetCurrentFrame() const;
         double GetCurrentTimeInSeconds() const;
+        size_t GetNumberOfSubTimeSteps() const;
 
         void SetCurrentFrame(const Frame& frame);
+        void SetNumberOfSubTimesteps(size_t numberOfSubTimesteps);
 
     protected:
         virtual void OnAdvanceTimeStep(double timeIntervalInSeconds) = 0;
@@ -26,7 +28,7 @@ class PhysicsAnimation : public Animation
         unsigned int _numberOfTimeSteps = 1;
         double _currentTime = 0.0;
         float _stepTime = 1/60; // in seconds
-        unsigned int _numberOfSubTimesteps;
+        size_t _numberOfSubTimesteps;
 
         void OnUpdate(const Frame& frame) final;
         void AdvanceTimeStep(double timeIntervalInSeconds);
