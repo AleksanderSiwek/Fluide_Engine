@@ -10,11 +10,11 @@ BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
 
 }
 
-void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     output->Resize(source_grid.GetSize());
     Vector3<double> spacing = source_grid.GetGridSpacing();
-    Vector3<double> c = timeIntervalInSeconds * _viscosity / (spacing * spacing);
+    Vector3<double> c = timeIntervalInSeconds * viscosity / (spacing * spacing);
 
     BuildSystem(source_grid.GetDataXRef(), c, fluidMarkers);
     _systemSolver->Solve(&_system);

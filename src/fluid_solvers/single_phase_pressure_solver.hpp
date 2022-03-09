@@ -15,7 +15,7 @@ class SinglePhasePressureSolver : public PressureSolver
         
         ~SinglePhasePressureSolver();
 
-        virtual void Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
+        virtual void Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
         void ApplyPressure(const FaceCenteredGrid3D& input, const FluidMarkers& fluidMarkers, FaceCenteredGrid3D* output);
 
         void SetLinearSystemSolver(const std::shared_ptr<LinearSystemSolver>& solver);

@@ -10,7 +10,7 @@ ForwardEulerDiffusionSolver::~ForwardEulerDiffusionSolver()
 
 }
 
-void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     Vector3<size_t> size = source_grid.GetSize();
     output->Resize(size);
@@ -25,9 +25,9 @@ void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, c
         {
             for(size_t k = 0; k < size.z; k++)
             {
-                output->x(i, j, k) = source_grid.x(i, j, k) + _viscosity * timeIntervalInSeconds * CalculateLaplacian(xData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
-                output->y(i, j, k) = source_grid.y(i, j, k) + _viscosity * timeIntervalInSeconds * CalculateLaplacian(yData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
-                output->z(i, j, k) = source_grid.z(i, j, k) + _viscosity * timeIntervalInSeconds * CalculateLaplacian(zData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
+                output->x(i, j, k) = source_grid.x(i, j, k) + viscosity * timeIntervalInSeconds * CalculateLaplacian(xData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
+                output->y(i, j, k) = source_grid.y(i, j, k) + viscosity * timeIntervalInSeconds * CalculateLaplacian(yData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
+                output->z(i, j, k) = source_grid.z(i, j, k) + viscosity * timeIntervalInSeconds * CalculateLaplacian(zData, fluidMarkers, source_grid.GetGridSpacing(), i, j, k);
             }            
         }       
     }

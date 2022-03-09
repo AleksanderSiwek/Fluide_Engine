@@ -4,17 +4,18 @@
 #include "grid_systems/face_centered_grid3d.hpp"
 #include "particle_systems/particle_system.hpp"
 
-// TO DO: ? Well see
 
-class Fluid
+class Fluid3
 {
     public:
-        Fluid();
+        Fluid3();
 
-        ~Fluid();
+        ~Fluid3();
 
         FaceCenteredGrid3D velocityGrid;
         ParticleSystem particleSystem;
+        double viscosity;
+        double density;
 
 };
 

@@ -14,7 +14,7 @@ class BackwardEulerDiffusionSolver : public DiffusionSolver
 
         ~BackwardEulerDiffusionSolver();
 
-        void Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
+        void Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
 
     private:
         LinearSystem _system;

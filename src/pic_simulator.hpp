@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "physics_animation.hpp"
+#include "fluid3.hpp"
 #include "particle_systems/particle_system.hpp"
 #include "grid_systems/gird_3d_system.hpp"
 #include "fluid_solvers/diffusion_solver.hpp"
@@ -45,10 +46,7 @@ class PICSimulator : public PhysicsAnimation
         void ApplyBoundryCondition();
 
     private:
-        FaceCenteredGrid3D _velocityGrid;
-        ParticleSystem _particleSystem;
-        double _viscosity;
-        double _density;
+        Fluid3 fluid;
 
         std::shared_ptr<DiffusionSolver> _diffusionSolver;
         std::shared_ptr<PressureSolver> _pressureSolver;

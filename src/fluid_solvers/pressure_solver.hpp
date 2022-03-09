@@ -7,19 +7,11 @@
 class PressureSolver
 {
     public:
-        PressureSolver(double density=1);
+        PressureSolver();
 
         virtual ~PressureSolver();
 
-        double GetDensity() const;
-
-        void SetDensity(double density);
-
-        virtual void Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
-
-    protected: 
-        double _density;
-
+        virtual void Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 };
 
 #endif // PRESSURE_SOLVER_HPP

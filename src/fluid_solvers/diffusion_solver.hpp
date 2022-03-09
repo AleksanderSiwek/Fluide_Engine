@@ -7,18 +7,11 @@
 class DiffusionSolver
 {
     public:
-        DiffusionSolver(double viscosity = 0);
+        DiffusionSolver();
 
         virtual ~DiffusionSolver();
 
-        double GetViscosity() const;
-
-        void SetViscosity(double viscosity);
-
-        virtual void Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
-
-    protected:
-        double _viscosity;
+        virtual void Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;;
 };
 
 #endif // DIFFUSION_SOLVER_HPP

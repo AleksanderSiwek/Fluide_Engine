@@ -12,12 +12,12 @@ PICSimulator::~PICSimulator()
 
 void PICSimulator::SetViscosity(double viscosity)
 {
-    _viscosity = viscosity;
+    fluid.viscosity = viscosity;
 }
 
 void PICSimulator::SetDensity(double density)
 {
-    _density = density;
+    fluid.density = density;
 }
 
 void PICSimulator::SetDiffusionSolver(std::shared_ptr<DiffusionSolver> diffusionSolver)
@@ -32,12 +32,12 @@ void PICSimulator::SetPressureSolver(std::shared_ptr<PressureSolver> pressureSol
 
 double PICSimulator::GetViscosity() const
 {
-    return _viscosity;
+    return fluid.viscosity;
 }
 
 double PICSimulator::GetDensity() const
 {
-    return _density;
+    return fluid.density;
 }
 
 void PICSimulator::OnInitialize()
@@ -75,16 +75,16 @@ void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 
 void PICSimulator::ComputeDiffusion(double timeIntervalInSeconds)
 {
-    FaceCenteredGrid3D currentVelocity(_velocityGrid);
+    FaceCenteredGrid3D currentVelocity(fluid.velocityGrid);
     
-    _diffusionSolver->Solve(currentVelocity, FluidMarkers(_velocityGrid.GetSize()), timeIntervalInSeconds, &_velocityGrid);
+    _diffusionSolver->Solve(currentVelocity, FluidMarkers(fluid.velocityGrid.GetSize()), timeIntervalInSeconds, fluid.viscosity, &(fluid.velocityGrid));
 }
 
 void PICSimulator::ComputePressure(double timeIntervalInSeconds)
 {
-    FaceCenteredGrid3D currentVelocity(_velocityGrid);
+    FaceCenteredGrid3D currentVelocity(fluid.velocityGrid);
     
-    _pressureSolver->Solve(currentVelocity, FluidMarkers(_velocityGrid.GetSize()), timeIntervalInSeconds, &_velocityGrid);
+    _pressureSolver->Solve(currentVelocity, FluidMarkers(fluid.velocityGrid.GetSize()), timeIntervalInSeconds, fluid.density, &(fluid.velocityGrid));
 }
 
 void PICSimulator::ComputeAdvection(double timeIntervalInSeconds)
