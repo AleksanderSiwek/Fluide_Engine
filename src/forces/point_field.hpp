@@ -1,28 +1,31 @@
 #ifndef POINT_FIELD_HPP
 #define POINT_FIELD_HPP
 
-#include "../common/vector3.hpp"
+#include "../common/vector_field3.hpp"
 
-class PointField
+
+class PointField : VectorField3
 {
     public:
-        PointField(Vector3<double> position, double strength, double strengthFallOff = 1);
+        PointField(Vector3<double> origin = 0, double strength = 0, double strengthFallOff = 1);
         PointField(const PointField& field);
 
         ~PointField();
 
-        void SetPosition(Vector3<double> position);
+        Vector3<double> Sample(const Vector3<double>& position) const override;
+        Vector3<double> Divergence(const Vector3<double>& position) const override;
+        Vector3<double> Curl(const Vector3<double>& position) const override;
+
+        void SetPosition(Vector3<double> origin);
         void SetStrength(double strength);
         void SetStrengthFallOff(double strengthFallOff);
 
-        Vector3<double> GetPosition() const;
+        Vector3<double> GetOrigin() const;
         double GetStrength() const;
         double GetStrengthFallOff() const;
 
-        Vector3<double> RescaleVector(Vector3<double> point, Vector3<double> value) const;
-
     private:
-        Vector3<double> _position;
+        Vector3<double> _origin;
         double _strength; 
         double _strengthFallOff;
 

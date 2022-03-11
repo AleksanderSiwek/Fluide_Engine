@@ -1,36 +1,33 @@
 #include "directional_field.hpp"
 
-DirectionalField::DirectionalField(Vector3<double> direction, double strength) : _direction(direction), _strength(strength)
-{
-    _direction.Normalize();
-}
-
-DirectionalField::DirectionalField(const DirectionalField& field) : _direction(field.GetDirection()), _strength(field.GetStrength())
+DirectionalField::DirectionalField(Vector3<double> strength) : _strength(strength)
 {
 
 }
 
-void DirectionalField::SetDirection(Vector3<double> direction)
+DirectionalField::DirectionalField(const DirectionalField& field) : _strength(field.Sample(0))
 {
-    _direction = direction;
+
 }
 
-void DirectionalField::SetStrength(double strength)
-{
-    _strength = strength;
-}
-
-Vector3<double> DirectionalField::GetDirection() const
-{
-    return _direction;
-}
-
-double DirectionalField::GetStrength() const
+Vector3<double> DirectionalField::Sample(const Vector3<double>& position) const
 {
     return _strength;
 }
 
-Vector3<double> DirectionalField::RescaleVector(Vector3<double> value)
+Vector3<double> DirectionalField::Divergence(const Vector3<double>& position) const
 {
-    return value + _direction * _strength;
+    // TO DO
+    return 0;
+}
+
+Vector3<double> DirectionalField::Curl(const Vector3<double>& position) const
+{
+    // TO DO
+    return 0;
+}
+
+void DirectionalField::SetStrength(Vector3<double> strength)
+{
+    _strength = strength;
 }

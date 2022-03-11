@@ -1,25 +1,23 @@
 #ifndef DIRECTIONAL_FIELD_HPP
 #define DIRECTIONAL_FIELD_HPP
 
-#include "../common/vector3.hpp"
+#include "../common/vector_field3.hpp"
 
-class DirectionalField
+
+class DirectionalField : VectorField3
 {
     public:
-        DirectionalField(Vector3<double> direction, double strength);
+        DirectionalField(Vector3<double> strngth);
         DirectionalField(const DirectionalField& field);
 
-        void SetDirection(Vector3<double> direction);
-        void SetStrength(double strength);
+        Vector3<double> Sample(const Vector3<double>& position) const override;
+        Vector3<double> Divergence(const Vector3<double>& position) const override;
+        Vector3<double> Curl(const Vector3<double>& position) const override;
 
-        Vector3<double> GetDirection() const;
-        double GetStrength() const;
-
-        Vector3<double> RescaleVector(Vector3<double> value);
+        void SetStrength(Vector3<double> strength);
 
     private:
-        Vector3<double> _direction;
-        double _strength;
+        Vector3<double> _strength;
 };
 
 #endif //DIRECTIONAL_FIELD_HPP

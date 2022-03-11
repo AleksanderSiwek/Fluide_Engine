@@ -1,11 +1,11 @@
 #include "point_field.hpp"
 
-PointField::PointField(Vector3<double> position, double strength, double strengthFallOff) : _position(position), _strength(strength), _strengthFallOff(strengthFallOff)
+PointField::PointField(Vector3<double> origin, double strength, double strengthFallOff) : _origin(origin), _strength(strength), _strengthFallOff(strengthFallOff)
 {
 
 }
 
-PointField::PointField(const PointField& field) : _position(field.GetPosition()), _strength(field.GetStrength()), _strengthFallOff(field.GetStrengthFallOff())
+PointField::PointField(const PointField& field) : _origin(field.GetOrigin()), _strength(field.GetStrength()), _strengthFallOff(field.GetStrengthFallOff())
 {
 
 }
@@ -15,9 +15,26 @@ PointField::~PointField()
 
 }
 
-void PointField::SetPosition(Vector3<double> position)
+void PointField::SetPosition(Vector3<double> origin)
 {
-    _position = position;
+    _origin = origin;
+}
+
+Vector3<double> PointField::Sample(const Vector3<double>& position) const
+{
+    return _strength * (GetDistance(position) / _strengthFallOff) * GetDirection(position);
+}
+
+Vector3<double> PointField::Divergence(const Vector3<double>& position) const
+{
+    // TO DO
+    return 0;
+}
+
+Vector3<double> PointField::Curl(const Vector3<double>& position) const
+{
+    // TO DO
+    return 0;
 }
 
 void PointField::SetStrength(double strength)
@@ -30,9 +47,9 @@ void PointField::SetStrengthFallOff(double strengthFallOff)
     _strengthFallOff = strengthFallOff;
 }
 
-Vector3<double> PointField::GetPosition() const
+Vector3<double> PointField::GetOrigin() const
 {
-    return _position;
+    return _origin;
 }
 
 double PointField::GetStrength() const
@@ -45,19 +62,14 @@ double PointField::GetStrengthFallOff() const
     return _strengthFallOff;
 }
 
-Vector3<double> PointField::RescaleVector(Vector3<double> point, Vector3<double> value) const
-{
-    return value + _strength * (GetDistance(point) / _strengthFallOff) * GetDirection(point);
-}
-
 Vector3<double> PointField::GetDistance(Vector3<double> point) const
 {
-    return (point - _position).GetLength();
+    return (point - _origin).GetLength();
 }
 
 Vector3<double> PointField::GetDirection(Vector3<double> point) const
 {
-    Vector3<double> direction = (_position - point);
+    Vector3<double> direction = (_origin - point);
     direction.Normalize();
     return direction;
 }
