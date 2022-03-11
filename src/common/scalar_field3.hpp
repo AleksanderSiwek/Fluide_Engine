@@ -12,9 +12,7 @@ class ScalarField3
         virtual ~ScalarField3() {}
 
         virtual double Sample(const Vector3<double>& position) const = 0;
-
         virtual Vector3<double> Gradient(const Vector3<double>& position) const = 0;
-
         virtual double Laplacian(const Vector3<double>& position) const = 0;
 };
 
