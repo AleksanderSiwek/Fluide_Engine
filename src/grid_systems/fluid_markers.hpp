@@ -3,6 +3,7 @@
 
 #include "../common/array3.hpp"
 
+
 enum FluidMarker
 {
     AIR_MARK = 0,

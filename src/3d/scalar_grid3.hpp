@@ -2,14 +2,16 @@
 #define _SCALAR_GRID_HPP
 
 #include "../common/array3.hpp"
+#include "../common/grid3d.hpp"
 #include "../common/scalar_field3.hpp"
+#include "../common/math_utils.hpp"
 
 
-class ScalarGrid3 : public Array3<double>, public ScalarField3
+class ScalarGrid3 : public Array3<double>, public Grid3D, public ScalarField3
 {
     public:
-        ScalarGrid3(size_t width, size_t height, size_t depth, const double& initailValue = 0, Vector3<double> origin = 0);
-        ScalarGrid3(const Vector3<size_t>& size, const double& initailValue = 0, Vector3<double> origin = 0);
+        ScalarGrid3(size_t width, size_t height, size_t depth, const double& initailValue = 0, Vector3<double> origin = 0, Vector3<double> gridSpacing = 1);
+        ScalarGrid3(const Vector3<size_t>& size, const double& initailValue = 0, Vector3<double> origin = 0, Vector3<double> gridSpacing = 1);
         ScalarGrid3(const ScalarGrid3& grid);
 
         ~ScalarGrid3();
@@ -18,12 +20,7 @@ class ScalarGrid3 : public Array3<double>, public ScalarField3
         virtual Vector3<double> Gradient(const Vector3<double>& position) const override;
         virtual double Laplacian(const Vector3<double>& position) const override;
 
-        Vector3<double> GetOrigin() const;
-
-        void SetOrigin(Vector3<double> origin);
-
     private:
-        Vector3<double> _origin;
 };
 
 #endif // _SCALAR_GRID_HPP
