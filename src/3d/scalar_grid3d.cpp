@@ -1,30 +1,30 @@
-#include "scalar_grid3.hpp"
+#include "scalar_grid3d.hpp"
 
 
-ScalarGrid3::ScalarGrid3(size_t width, size_t height, size_t depth, const double& initailValue, Vector3<double> origin, Vector3<double> gridSpacing)
+ScalarGrid3D::ScalarGrid3D(size_t width, size_t height, size_t depth, const double& initailValue, Vector3<double> origin, Vector3<double> gridSpacing)
     : Array3<double>(width, height, depth, initailValue), Grid3D(origin, gridSpacing)
 {
 
 }
 
-ScalarGrid3::ScalarGrid3(const Vector3<size_t>& size, const double& initailValue, Vector3<double> origin, Vector3<double> gridSpacing)
+ScalarGrid3D::ScalarGrid3D(const Vector3<size_t>& size, const double& initailValue, Vector3<double> origin, Vector3<double> gridSpacing)
     : Array3<double>(size, initailValue), Grid3D(origin, gridSpacing)
 {
 
 }
 
-ScalarGrid3::ScalarGrid3(const ScalarGrid3& grid)
+ScalarGrid3D::ScalarGrid3D(const ScalarGrid3D& grid)
     : Array3<double>(grid), Grid3D(grid)
 {
 
 }
 
-ScalarGrid3::~ScalarGrid3()
+ScalarGrid3D::~ScalarGrid3D()
 {
 
 }
 
-double ScalarGrid3::Sample(const Vector3<double>& position) const
+double ScalarGrid3D::Sample(const Vector3<double>& position) const
 {
     size_t i, j, k;
     double factorX, factorY, factorZ ;
@@ -55,13 +55,13 @@ double ScalarGrid3::Sample(const Vector3<double>& position) const
                                     factorZ);
 }
 
-Vector3<double> ScalarGrid3::Gradient(const Vector3<double>& position) const
+Vector3<double> ScalarGrid3D::Gradient(const Vector3<double>& position) const
 {
     // TO DO
     return 0;
 }
 
-double ScalarGrid3::Laplacian(const Vector3<double>& position) const
+double ScalarGrid3D::Laplacian(const Vector3<double>& position) const
 {
     // TO DO
     return 0;

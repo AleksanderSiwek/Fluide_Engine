@@ -1,48 +1,50 @@
-#ifndef _MESH_HPP
-#define _MESH_HPP
+#ifndef _TRIANGLE_MESH_HPP
+#define _TRIANGLE_MESH_HPP
 
 #include <vector>
 #include <string>
 
+#include "triangle_3d.hpp"
 #include "../common/vector3.hpp"
 
-typedef std::vector<size_t> Face;
 
-
-class Mesh
+class TriangleMesh
 {
     public:
-        Mesh();
-        Mesh(const Mesh& mesh);
-        ~Mesh();
+        TriangleMesh();
+        TriangleMesh(const TriangleMesh& mesh);
+
+        ~TriangleMesh();
 
         void Clear();
-        void Set(const Mesh& other);
+        void Set(const TriangleMesh& other);
         void AddVertex(const Vector3<double>& vertex);
         void AddNormal(const Vector3<double>& normal);
-        void AddFace(const Face& face);
+        void AddTriangle(const Triangle3D_t& triangle);
         void SetVertex(const Vector3<double>& vertex, size_t idx);
         void SetNormal(const Vector3<double>& normal, size_t idx);
-        void SetFace(const Face& face, size_t idx);
+        void SetTriangle(const Triangle3D_t& triangle, size_t idx);
 
         std::string GetObjectName() const;
+        Vector3<double> GetOrigin() const;
         const std::vector<Vector3<double>>& GetVerticies() const;
         const std::vector<Vector3<double>>& GetNormals() const;
-        const std::vector<Face>& GetFaces() const;
+        const std::vector<Triangle3D_t>& GetTriangles() const;
         std::vector<Vector3<double>>& GetVerticies();
         std::vector<Vector3<double>>& GetNormals();
-        std::vector<Face>& GetFaces();
+        std::vector<Triangle3D_t>& GetTriangles();
 
         void SetObjectName(std::string objectName);
+        void SetOrigin(Vector3<double> origin);
 
     private:
         std::string _objectName;
         
         std::vector<Vector3<double>> _vertices;
         std::vector<Vector3<double>> _normals;
-        std::vector<Face> _faces;
+        std::vector<Triangle3D_t> _triangles;
 
-        Vector3<double> origin;
+        Vector3<double> _origin;
 };
 
-#endif // _MESH_HPP
+#endif // _TRIANGLE_MESH_HPP

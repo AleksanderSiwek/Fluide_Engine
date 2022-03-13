@@ -1,11 +1,11 @@
 #ifndef _MESH_SIGNED_DISTANCE_FIELD_HPP
 #define _MESH_SIGNED_DISTANCE_FIELD_HPP
 
-#include "mesh.hpp"
-#include "./scalar_grid3.hpp"
+#include "triangle_mesh.hpp"
+#include "./scalar_grid3d.hpp"
 
 
-class MeshSignedDistanceField : public ScalarGrid3
+class MeshSignedDistanceField : public ScalarGrid3D
 {
     public:
         MeshSignedDistanceField(size_t width, size_t height, size_t depth, const double& initailValue = 0, Vector3<double> origin = 0);
@@ -14,7 +14,7 @@ class MeshSignedDistanceField : public ScalarGrid3
 
         ~MeshSignedDistanceField();
 
-        void Build(const Mesh& mesh);
+        void Build(const TriangleMesh& mesh);
 };
 
 #endif // _MESH_SIGNED_DISTANCE_FIELD_HPP

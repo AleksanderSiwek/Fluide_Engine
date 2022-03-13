@@ -11,17 +11,17 @@ OBJManager::~OBJManager()
 
 }
 
-void OBJManager::OnSave(std::ofstream* f, const Mesh& obj)
+void OBJManager::OnSave(std::ofstream* f, const TriangleMesh& obj)
 {
     SaveHeader(f);
     SaveObjectName(f, obj);
     SaveVericies(f, obj);
     SaveNormals(f, obj);
     DisableSmoothNormals(f);
-    SaveFaces(f, obj);
+    SaveTriangles(f, obj);
 }
 
-void OBJManager::OnLoad(std::ifstream* f, Mesh* obj)
+void OBJManager::OnLoad(std::ifstream* f, TriangleMesh* obj)
 {
     std::string line;
     while(std::getline(*f, line))
@@ -35,13 +35,13 @@ void OBJManager::SaveHeader(std::ofstream* f)
     (*f) << "mtllib test.mtl\n";
 }
 
-void OBJManager::SaveObjectName(std::ofstream* f, const Mesh& obj)
+void OBJManager::SaveObjectName(std::ofstream* f, const TriangleMesh& obj)
 {
     (*f) << "o " << obj.GetObjectName() << "\n";
         (*f) << std::endl;
 }
 
-void OBJManager::SaveVericies(std::ofstream* f, const Mesh& obj)
+void OBJManager::SaveVericies(std::ofstream* f, const TriangleMesh& obj)
 {
     auto& verticies = obj.GetVerticies();
     for(size_t i = 0; i < verticies.size(); i++)
@@ -53,7 +53,7 @@ void OBJManager::SaveVericies(std::ofstream* f, const Mesh& obj)
     (*f) << std::endl;
 }
 
-void OBJManager::SaveNormals(std::ofstream* f, const Mesh& obj)
+void OBJManager::SaveNormals(std::ofstream* f, const TriangleMesh& obj)
 {
     auto& normals = obj.GetNormals();
     for(size_t i = 0; i < normals.size(); i++)
@@ -71,33 +71,31 @@ void OBJManager::DisableSmoothNormals(std::ofstream* f)
     (*f) << std::endl;
 }
 
-void OBJManager::SaveFaces(std::ofstream* f, const Mesh& obj)
+void OBJManager::SaveTriangles(std::ofstream* f, const TriangleMesh& obj)
 {
-    const std::vector<std::vector<size_t>>& faces = obj.GetFaces();
-    for(size_t i = 0; i < faces.size(); i++)
+    const std::vector<Triangle3D_t>& triangles = obj.GetTriangles();
+    for(size_t i = 0; i < triangles.size(); i++)
     {
-        SaveFace(f, faces[i], i + 1);
+        SaveTriangle(f, triangles[i]);
     }
     (*f) << std::endl;
 }
 
-void OBJManager::SaveFace(std::ofstream* f, const std::vector<size_t>& face, size_t normalIdx)
+void OBJManager::SaveTriangle(std::ofstream* f, const Triangle3D_t& triangle)
 {
     (*f) << "f ";
-    for(size_t j = 0; j < face.size(); j++)
-    {
-        (*f) << face[j] << "//" << normalIdx << " ";
-    }
-    (*f) << "\n";
+    (*f) << triangle.point1Idx << "//" << triangle.normalIdx << " ";
+    (*f) << triangle.point2Idx << "//" << triangle.normalIdx << " ";
+    (*f) << triangle.point3Idx << "//" << triangle.normalIdx << "\n";
 }
 
-void OBJManager::ParseLine(const std::string& line, Mesh* obj)
+void OBJManager::ParseLine(const std::string& line, TriangleMesh* obj)
 {
     std::vector<std::string> splittedLine = SplitLine(line);
     if(IsObjectName(splittedLine)) ParseObjectName(splittedLine, obj);
     else if(IsVertex(splittedLine)) ParseVertex(splittedLine, obj);
     else if(IsNormal(splittedLine)) ParseNormal(splittedLine, obj);
-    else if(IsFace(splittedLine)) ParseFace(splittedLine, obj);
+    else if(IsTriangle(splittedLine)) ParseTriangle(splittedLine, obj);
 }
 
 std::vector<std::string> OBJManager::SplitLine(const std::string& line, char delimiter)
@@ -109,12 +107,12 @@ std::vector<std::string> OBJManager::SplitLine(const std::string& line, char del
     return strArr;
 }
 
-void OBJManager::ParseObjectName(const std::vector<std::string>& line, Mesh* obj)
+void OBJManager::ParseObjectName(const std::vector<std::string>& line, TriangleMesh* obj)
 {
     obj->SetObjectName(line[1]);
 }
 
-void OBJManager::ParseVertex(const std::vector<std::string>& line, Mesh* obj)
+void OBJManager::ParseVertex(const std::vector<std::string>& line, TriangleMesh* obj)
 {
     double x = std::stod(line[1]);
     double y = std::stod(line[2]);
@@ -122,7 +120,7 @@ void OBJManager::ParseVertex(const std::vector<std::string>& line, Mesh* obj)
     obj->AddVertex(Vector3<double>(x, y, z));
 }
 
-void OBJManager::ParseNormal(const std::vector<std::string>& line, Mesh* obj)
+void OBJManager::ParseNormal(const std::vector<std::string>& line, TriangleMesh* obj)
 {
     double x = std::stod(line[1]);
     double y = std::stod(line[2]);
@@ -130,16 +128,16 @@ void OBJManager::ParseNormal(const std::vector<std::string>& line, Mesh* obj)
     obj->AddNormal(Vector3<double>(x, y, z));
 }
 
-void OBJManager::ParseFace(const std::vector<std::string>& line, Mesh* obj)
+void OBJManager::ParseTriangle(const std::vector<std::string>& line, TriangleMesh* obj)
 {
-    std::vector<size_t> face;
     std::vector<std::string> faceVertex;
+    std::vector<size_t> verticies;
     for(size_t i = 1; i < line.size(); i++)
     {
         faceVertex = SplitLine(line[i], '/');
-        if(faceVertex.size() > 1) face.push_back(std::stoul(faceVertex[0]));
+        if(faceVertex.size() > 1) verticies.push_back(std::stoul(faceVertex[0]));
     }
-    obj->AddFace(face);
+    obj->AddTriangle(Triangle3D_t(verticies[0], verticies[1], verticies[2], std::stoul(faceVertex[faceVertex.size() - 1])));
 }
 
 bool OBJManager::IsObjectName(const std::vector<std::string>& line)
@@ -157,7 +155,7 @@ bool OBJManager::IsNormal(const std::vector<std::string>& line)
     return line[0] == "vn" && line.size() > 3;
 }
 
-bool OBJManager::IsFace(const std::vector<std::string>& line)
+bool OBJManager::IsTriangle(const std::vector<std::string>& line)
 {
-    return line[0] == "f" && line.size() > 3;
+    return line[0] == "f" && line.size() == 4;
 }

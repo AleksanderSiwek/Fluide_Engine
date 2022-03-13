@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "mesh.hpp"
+#include "triangle_mesh.hpp"
 
 
 class MeshFileManager
@@ -15,12 +15,12 @@ class MeshFileManager
         MeshFileManager();
         virtual ~MeshFileManager();
 
-        void Save(std::string name, const Mesh& obj);
-        void Load(std::string name, Mesh* obj);
+        void Save(std::string name, const TriangleMesh& obj);
+        void Load(std::string name, TriangleMesh* obj);
 
     protected:
-        virtual void OnSave(std::ofstream* f, const Mesh& obj) = 0;
-        virtual void OnLoad(std::ifstream* f, Mesh* obj) = 0;
+        virtual void OnSave(std::ofstream* f, const TriangleMesh& obj) = 0;
+        virtual void OnLoad(std::ifstream* f, TriangleMesh* obj) = 0;
 
     private:
         bool IsOpenFileError(std::ifstream* f);

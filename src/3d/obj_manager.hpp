@@ -12,28 +12,28 @@ class OBJManager : public MeshFileManager
         ~OBJManager();
 
     protected:
-        void OnSave(std::ofstream* f, const Mesh& obj) override;
-        void OnLoad(std::ifstream* f, Mesh* obj) override;
+        void OnSave(std::ofstream* f, const TriangleMesh& obj) override;
+        void OnLoad(std::ifstream* f, TriangleMesh* obj) override;
 
     private:
         void SaveHeader(std::ofstream* f);
-        void SaveObjectName(std::ofstream* f, const Mesh& obj);
-        void SaveVericies(std::ofstream* f, const Mesh& obj);
-        void SaveNormals(std::ofstream* f, const Mesh& obj);
+        void SaveObjectName(std::ofstream* f, const TriangleMesh& obj);
+        void SaveVericies(std::ofstream* f, const TriangleMesh& obj);
+        void SaveNormals(std::ofstream* f, const TriangleMesh& obj);
         void DisableSmoothNormals(std::ofstream* f);
-        void SaveFaces(std::ofstream* f, const Mesh& obj);
-        void SaveFace(std::ofstream* f, const std::vector<size_t>& face, size_t normalIdx);
+        void SaveTriangles(std::ofstream* f, const TriangleMesh& obj);
+        void SaveTriangle(std::ofstream* f, const Triangle3D_t& triangle);
 
-        void ParseLine(const std::string& line, Mesh* obj);
+        void ParseLine(const std::string& line, TriangleMesh* obj);
         std::vector<std::string> SplitLine(const std::string& line, char delimiter = ' ');
-        void ParseObjectName(const std::vector<std::string>& line, Mesh* obj);
-        void ParseVertex(const std::vector<std::string>& line, Mesh* obj);
-        void ParseNormal(const std::vector<std::string>& line, Mesh* obj);
-        void ParseFace(const std::vector<std::string>& line, Mesh* obj);
+        void ParseObjectName(const std::vector<std::string>& line, TriangleMesh* obj);
+        void ParseVertex(const std::vector<std::string>& line, TriangleMesh* obj);
+        void ParseNormal(const std::vector<std::string>& line, TriangleMesh* obj);
+        void ParseTriangle(const std::vector<std::string>& line, TriangleMesh* obj);
         bool IsObjectName(const std::vector<std::string>& line);
         bool IsVertex(const std::vector<std::string>& line);
         bool IsNormal(const std::vector<std::string>& line);
-        bool IsFace(const std::vector<std::string>& line);
+        bool IsTriangle(const std::vector<std::string>& line);
 };
 
 #endif // _OBJ_MANAGER_HPP

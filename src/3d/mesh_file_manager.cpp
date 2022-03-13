@@ -11,7 +11,7 @@ MeshFileManager::~MeshFileManager()
 
 }
 
-void MeshFileManager::Save(std::string name, const Mesh& obj)
+void MeshFileManager::Save(std::string name, const TriangleMesh& obj)
 {
     std::ofstream f(name.c_str());
     if(IsOpenFileError(&f))
@@ -21,7 +21,7 @@ void MeshFileManager::Save(std::string name, const Mesh& obj)
     }
 }
 
-void MeshFileManager::Load(std::string name, Mesh* obj)
+void MeshFileManager::Load(std::string name, TriangleMesh* obj)
 {
     std::ifstream f(name.c_str());
     if(IsOpenFileError(&f))

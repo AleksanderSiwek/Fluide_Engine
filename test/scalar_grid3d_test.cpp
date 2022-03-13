@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/grid_systems/scalar_grid3d.hpp"
+#include "../src/3d/scalar_grid3d.hpp"
 
 TEST(ScalarGrid3DTest, DefaultConstructor_test)
 {
