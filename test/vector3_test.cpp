@@ -398,3 +398,4 @@ TEST(Vector3Test, VectDivideVectOperator_test)
     EXPECT_EQ(2, v.z);
 }
 
+
