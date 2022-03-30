@@ -18,13 +18,11 @@ class Grid3D
 
         Vector3<double> GridIndexToPosition(size_t i, size_t j, size_t k) 
         { 
-            return Vector3<double>(i * _gridSpacing.x, j * _gridSpacing.y, k * _gridSpacing.z); 
+            return Vector3<double>(_gridSpacing.x/2 + i * _gridSpacing.x, _gridSpacing.y/2 + j * _gridSpacing.y, _gridSpacing.z/2 + k * _gridSpacing.z); 
         }
-        Vector3<double> GridIndexToPosition(Vector3<double> position) 
+        Vector3<double> GridIndexToPosition(Vector3<size_t> position) 
         { 
-            return Vector3<double>( position.x * _gridSpacing.x, 
-                                    position.y * _gridSpacing.y, 
-                                    position.z * _gridSpacing.z); 
+            return GridIndexToPosition(position.x, position.y, position.z);
         }
 
         void SetOrigin(Vector3<double> origin) { _origin = origin; }

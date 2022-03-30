@@ -16,154 +16,197 @@ double Collisions::DistanceToLine(Vector3<double> point, const Line& line)
     return 1;
 }
 
-Vector3<double> Collisions::ClossestPointOnTriangle(Vector3<double> point, Vector3<double> p1, Vector3<double> p2, Vector3<double> p3)
+Vector3<double> Collisions::ClossestPointOnTriangle(Vector3<double> point, Vector3<double> trianglePoint0, Vector3<double> trianglePoint1, Vector3<double> trianglePoint2)
 {
-    Vector3<double> edge0 = p2 - p1;
-    Vector3<double> edge1 = p3 - p1;
-    Vector3<double> pv = p1 - point;
+    Vector3<double> diff = trianglePoint0 - point;
+    Vector3<double> edge0 = trianglePoint1 - trianglePoint0;
+    Vector3<double> edge1 = trianglePoint2 - trianglePoint0;
+    double a00 = edge0.Dot(edge0);
+    double a01 = edge0.Dot(edge1);
+    double a11 = edge1.Dot(edge1);
+    double b0 = diff.Dot(edge0);
+    double b1 = diff.Dot(edge1);
+    double det = std::max(a00 * a11 - a01 * a01, 0.0);
+    double s = a01 * b1 - a11 * b0;
+    double t = a01 * b0 - a00 * b1;
 
-    double a = edge0.Dot(edge0);
-    double b = edge0.Dot(edge1);
-    double c = edge1.Dot(edge1);
-    double d = edge0.Dot(pv);
-    double e = edge1.Dot(pv);
-
-    double det = a*c - b*b;
-    double deps = 1e-9;
-    if (std::abs(det) < deps) 
+    if (s + t <= det)
     {
-        // degenerate triangle: closest point is located on a line segment
-        double feps = 1e-6;
-        double len1 = (p1 - p2).GetLength();
-        double len2 = (p2 - p3).GetLength();
-        double len3 = (p3 - p1).GetLength();
-        if (len1 < feps && len2 < feps && len3 < feps) 
+        if (s < 0)
         {
-            return p1;
+            if (t < 0)  // region 4
+            {
+                if (b0 < 0)
+                {
+                    t = 0;
+                    if (-b0 >= a00)
+                    {
+                        s = 1;
+                    }
+                    else
+                    {
+                        s = -b0 / a00;
+                    }
+                }
+                else
+                {
+                    s = 0;
+                    if (b1 >= 0)
+                    {
+                        t = 0;
+                    }
+                    else if (-b1 >= a11)
+                    {
+                        t = 1;
+                    }
+                    else
+                    {
+                        t = -b1 / a11;
+                    }
+                }
+            }
+            else  // region 3
+            {
+                s = 0;
+                if (b1 >= 0)
+                {
+                    t = 0;
+                }
+                else if (-b1 >= a11)
+                {
+                    t = 1;
+                }
+                else
+                {
+                    t = -b1 / a11;
+                }
+            }
         }
-        Vector3<double> dp, dq;
-        if (len1 < feps) 
+        else if (t < 0)  // region 5
         {
-            dp = p1;
-            dq = p3;
-        } 
-        else if (len2 < feps) 
-        {
-            dp = p2;
-            dq = p1;
-        } 
-        else 
-        {
-            dp = p3;
-            dq = p2;
+            t = 0;
+            if (b0 >= 0)
+            {
+                s = 0;
+            }
+            else if (-b0 >= a00)
+            {
+                s = 1;
+            }
+            else
+            {
+                s = -b0 / a00;
+            }
         }
+        else  // region 0
+        {
+            // minimum at interior point
+            s /= det;
+            t /= det;
+        }
+    }
+    else
+    {
+        double tmp0{}, tmp1{}, numer{}, denom{};
 
-        double dotnum = (point - dp).Dot((dq - dp));
-        double dotdem = (dq - dp).Dot((dq - dp));
-        if (std::abs(dotdem) < feps) 
+        if (s < 0)  // region 2
         {
-            return p1;
-        } 
-        else 
+            tmp0 = a01 + b0;
+            tmp1 = a11 + b1;
+            if (tmp1 > tmp0)
+            {
+                numer = tmp1 - tmp0;
+                denom = a00 - 2 * a01 + a11;
+                if (numer >= denom)
+                {
+                    s = 1;
+                    t = 0;
+                }
+                else
+                {
+                    s = numer / denom;
+                    t = 1 - s;
+                }
+            }
+            else
+            {
+                s = 0;
+                if (tmp1 <= 0)
+                {
+                    t = 1;
+                }
+                else if (b1 >= 0)
+                {
+                    t = 0;
+                }
+                else
+                {
+                    t = -b1 / a11;
+                }
+            }
+        }
+        else if (t < 0)  // region 6
         {
-            double lambda = dotnum / dotdem;
-            if (lambda <= 0.0f) 
+            tmp0 = a01 + b1;
+            tmp1 = a00 + b0;
+            if (tmp1 > tmp0)
             {
-                return dp;
-            } 
-            else if (lambda >= 1.0f) 
+                numer = tmp1 - tmp0;
+                denom = a00 - 2 * a01 + a11;
+                if (numer >= denom)
+                {
+                    t = 1;
+                    s = 0;
+                }
+                else
+                {
+                    t = numer / denom;
+                    s = 1 - t;
+                }
+            }
+            else
             {
-                return dq;
-            } 
-            else 
+                t = 0;
+                if (tmp1 <= 0)
+                {
+                    s = 1;
+                }
+                else if (b0 >= 0)
+                {
+                    s = 0;
+                }
+                else
+                {
+                    s = -b0 / a00;
+                }
+            }
+        }
+        else  // region 1
+        {
+            numer = a11 + b1 - a01 - b0;
+            if (numer <= 0)
             {
-                return dp + lambda * (dq - dp);
+                s = 0;
+                t = 1;
+            }
+            else
+            {
+                denom = a00 - 2 * a01 + a11;
+                if (numer >= denom)
+                {
+                    s = 1;
+                    t = 0;
+                }
+                else
+                {
+                    s = numer / denom;
+                    t = 1 - s;
+                }
             }
         }
     }
 
-    double s = b*e - c*d;
-    double t = b*d - a*e;
-
-    if (s + t < det) 
-    {
-        if (s < 0.0) 
-        {
-            if (t < 0.0) 
-            {
-                if (d < 0.0) 
-                {
-                    s = Clamp<double>(-d / a, 0.0, 1.0);
-                    t = 0.0;
-                }
-                else 
-                {
-                    s = 0.0;
-                    t = Clamp<double>(-e / c, 0.0, 1.0);
-                }
-            } 
-            else 
-            {
-                s = 0.0;
-                t = Clamp<double>(-e / c, 0.0, 1.0);
-            }
-        } 
-        else if (t < 0.0) 
-        {
-            s = Clamp<double>(-d / a, 0.0, 1.0);
-            t = 0.0;
-        } 
-        else 
-        {
-            double invDet = 1.0 / det;
-            s *= invDet;
-            t *= invDet;
-        }
-    } 
-    else 
-    {
-        if (s < 0.0) 
-        {
-            double tmp0 = b + d;
-            double tmp1 = c + e;
-            if (tmp1 > tmp0) 
-            {
-                double numer = tmp1 - tmp0;
-                double denom = a - 2 * b + c;
-                s = Clamp<double>(numer / denom, 0.0, 1.0);
-                t = 1 - s;
-            } 
-            else 
-            {
-                t = Clamp<double>(-e / c, 0.0, 1.0);
-                s = 0.0;
-            }
-        } 
-        else if (t < 0.0) 
-        {
-            if (a + d > b + e) 
-            {
-                double numer = c + e - b - d;
-                double denom = a - 2 * b + c;
-                s = Clamp<double>(numer / denom, 0.0, 1.0);
-                t = 1 - s;
-            } 
-            else 
-            {
-                s = Clamp<double>(-e / c, 0.0, 1.0);
-                t = 0.0;
-            }
-        } 
-        else 
-        {
-            double numer = c + e - b - d;
-            double denom = a - 2 * b + c;
-            s = Clamp<double>(numer / denom, 0.0, 1.0);
-            t = 1.0 - s;
-        }
-    }
-
-    return p1 + s * edge0 + t * edge1;
+    return trianglePoint0 + s * edge0 + t * edge1;
 }
 
 double Collisions::DistanceToTriangle(Vector3<double> point, Vector3<double> p1, Vector3<double> p2, Vector3<double> p3)

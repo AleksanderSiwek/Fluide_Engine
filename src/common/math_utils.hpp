@@ -56,4 +56,12 @@ inline void GetBarycentric(T x, size_t iLow, size_t iHigh, size_t* i, T* f) {
     *i -= offset;
 }
 
+template<typename T>
+inline Vector3<T> Cross(const Vector3<T>& a, const Vector3<T>& b)
+{
+    return Vectro3<T>(a.y * b.z - a.z * b.y,
+                      a.z * b.x - a.x * b.z,
+                      a.x * b.y - a.y * b.x);
+}
+
 #endif // _MATHS_UTILS_HPP

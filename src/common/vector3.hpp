@@ -120,6 +120,13 @@ class Vector3
             return x * vect.x + y * vect.y + z * vect.z;
         }
 
+        Vector3<double> Cross(const Vector3<double> vect)
+        {
+            x = y * vect.z - z * vect.y;
+            y = z * vect.x - x * vect.z;
+            z = x * vect.y - y * vect.x;
+        }
+
         void Normalize()
         {
             Divide(sqrt(x * x + y * y + z * z));

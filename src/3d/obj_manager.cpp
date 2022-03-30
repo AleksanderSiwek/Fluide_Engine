@@ -84,9 +84,9 @@ void OBJManager::SaveTriangles(std::ofstream* f, const TriangleMesh& obj)
 void OBJManager::SaveTriangle(std::ofstream* f, const Triangle3D_t& triangle)
 {
     (*f) << "f ";
-    (*f) << triangle.point1Idx << "//" << triangle.normalIdx << " ";
-    (*f) << triangle.point2Idx << "//" << triangle.normalIdx << " ";
-    (*f) << triangle.point3Idx << "//" << triangle.normalIdx << "\n";
+    (*f) << triangle.point1Idx + 1 << "//" << triangle.normalIdx + 1 << " ";
+    (*f) << triangle.point2Idx + 1 << "//" << triangle.normalIdx + 1 << " ";
+    (*f) << triangle.point3Idx + 1 << "//" << triangle.normalIdx + 1 << "\n";
 }
 
 void OBJManager::ParseLine(const std::string& line, TriangleMesh* obj)
@@ -137,7 +137,7 @@ void OBJManager::ParseTriangle(const std::vector<std::string>& line, TriangleMes
         faceVertex = SplitLine(line[i], '/');
         if(faceVertex.size() > 1) verticies.push_back(std::stoul(faceVertex[0]));
     }
-    obj->AddTriangle(Triangle3D_t(verticies[0], verticies[1], verticies[2], std::stoul(faceVertex[faceVertex.size() - 1])));
+    obj->AddTriangle(Triangle3D_t(verticies[0] - 1, verticies[1] - 1, verticies[2] - 1, std::stoul(faceVertex[faceVertex.size() - 1]) - 1));
 }
 
 bool OBJManager::IsObjectName(const std::vector<std::string>& line)
