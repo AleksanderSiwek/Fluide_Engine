@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../src/3d/collisions.hpp"
+#include "../src/3d/obj_manager.hpp"
 
 TEST(CollisionsTest, DistanceToPoint_test)
 {
@@ -43,11 +44,30 @@ TEST(CollisionsTest, DistanceToTriangle2_test)
     Vector3<double> triP3(0, 0, 1);
 
     auto p = Collisions::ClossestPointOnTriangle(point, triP1, triP2, triP3);
-    std::cout << "Point: " << p.x << ", " << p.y << ", " << p.z << "\n";
-
     double distance = Collisions::DistanceToTriangle(point, triP1, triP2, triP3);
 
     EXPECT_EQ(1, distance);
+}
+
+TEST(CollisionsTest, IsInsideTriangleMesh_test)
+{
+    Vector3<double> point0(0, 0, 0);
+    Vector3<double> point1(0.5, 0.5, 0.5);
+    Vector3<double> point2(0.99, 0.99, 0.99);
+    Vector3<double> point3(1, 1, 1);
+    Vector3<double> point4(1, 0, 1);
+    Vector3<double> point5(2, 1, 1);
+    TriangleMesh mesh;
+    OBJManager objManager;
+
+    objManager.Load("../../../test/test_cases/test_model.obj", &mesh);
+
+    EXPECT_EQ(true, mesh.IsInside(point0));
+    EXPECT_EQ(true, mesh.IsInside(point1));
+    EXPECT_EQ(true, mesh.IsInside(point2));
+    EXPECT_EQ(false, mesh.IsInside(point3));
+    EXPECT_EQ(false, mesh.IsInside(point4));
+    EXPECT_EQ(false, mesh.IsInside(point5));
 }
 
 

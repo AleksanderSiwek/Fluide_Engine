@@ -3,9 +3,11 @@
 
 #include <utility>
 
-#include "triangle_3d.hpp"
+#include "triangle_mesh.hpp"
 #include "../common/vector3.hpp"
 #include "../common/math_utils.hpp"
+
+#define _USE_MATH_DEFINES
 
 
 typedef std::pair<Vector3<double>, Vector3<double>> Line;
@@ -20,6 +22,11 @@ class Collisions
 
         static Vector3<double> ClossestPointOnTriangle(Vector3<double> point, Vector3<double> p1, Vector3<double> p2, Vector3<double> p3);
         static double DistanceToTriangle(Vector3<double> point, Vector3<double> p1, Vector3<double> p2, Vector3<double> p3);
+
+        static bool IsInsideTriangleMesh(const TriangleMesh& mesh, const Vector3<double>& point);
+
+    private:
+        static double ADet(const Vector3<double>& point1, const Vector3<double>& point2, const Vector3<double>& point3);
 };
 
 

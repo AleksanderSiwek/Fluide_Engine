@@ -116,3 +116,48 @@ void TriangleMesh::SetOrigin(Vector3<double> origin)
 {
     _origin = origin;
 }
+
+bool TriangleMesh::IsInside(const Vector3<double>& point) const
+{
+    std::vector<Vector3<double>> vertsToPoint;
+
+    for(size_t i = 0; i < _vertices.size(); i++)
+    {
+        vertsToPoint.push_back(_vertices[i] - point); 
+    }
+
+    double ret = 0;
+
+    for(size_t i = 0; i < _triangles.size(); i++)
+    {
+        const auto& A = vertsToPoint[_triangles[i].point1Idx];
+        const auto& B = vertsToPoint[_triangles[i].point2Idx];
+        const auto& C = vertsToPoint[_triangles[i].point3Idx];
+
+        double omega = ADet(A, B, C);
+
+        double normA = A.GetLength();
+        double normB = B.GetLength();
+        double normC = C.GetLength();
+
+        double k = normA * normB * normC;
+        k += normC * (A * B).Sum();
+        k += normA * (B * C).Sum();
+        k += normB * (C * A).Sum();
+
+        ret += atan2(omega, k);
+    }
+
+    return abs(ret) >= 2.0 * PI - 0.001;
+}
+
+double TriangleMesh::ADet(const Vector3<double>& point1, const Vector3<double>& point2, const Vector3<double>& point3) const
+{
+    double ret = point1.x * point2.y * point3.z;
+    ret += point2.x * point3.y * point1.z;
+    ret += point3.x * point1.y * point2.z;
+    ret -= point3.x * point2.y * point1.z;
+    ret -= point2.x * point1.y * point3.z;
+    ret -= point1.x * point3.y * point2.z;
+    return ret;
+}

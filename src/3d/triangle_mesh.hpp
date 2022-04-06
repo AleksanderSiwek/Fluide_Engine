@@ -6,6 +6,7 @@
 
 #include "triangle_3d.hpp"
 #include "../common/vector3.hpp"
+#include "../common/math_utils.hpp"
 
 
 class TriangleMesh
@@ -37,6 +38,8 @@ class TriangleMesh
         void SetObjectName(std::string objectName);
         void SetOrigin(Vector3<double> origin);
 
+        bool IsInside(const Vector3<double>& point) const;
+
     private:
         std::string _objectName;
         
@@ -45,6 +48,8 @@ class TriangleMesh
         std::vector<Triangle3D_t> _triangles;
 
         Vector3<double> _origin;
+
+        double ADet(const Vector3<double>& point1, const Vector3<double>& point2, const Vector3<double>& point3) const;
 };
 
 #endif // _TRIANGLE_MESH_HPP

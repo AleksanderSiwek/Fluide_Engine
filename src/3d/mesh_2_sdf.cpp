@@ -34,7 +34,6 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
     double inversedGridSpacing = 1.0 / gridSpacing.x;
     for(size_t trisIdx = 0; trisIdx < triangles.size(); trisIdx++)
     {
-        //std::cout << "Iter: " << trisIdx << "\n";
         tris = triangles[trisIdx];
         Vector3<double> vertexPos1 = verticies[tris.point1Idx] * inversedGridSpacing;
         Vector3<double> vertexPos2 = verticies[tris.point2Idx] * inversedGridSpacing;
@@ -69,8 +68,20 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
 
 void Mesh2SDF::ComputeSigns(const TriangleMesh& mesh, ScalarGrid3D& sdf)
 {
+    std::cout << "Compute Signs! \n";
     Vector3<size_t> size = sdf.GetSize(); 
     Array3<bool> isInside(size.x, size.y, size.z, false);
 
+    for(int i = 0; i < size.x; i++)
+    {
+        for(int j = 0; j < size.y; j++)
+        {
+            for(int k = 0; k < size.z; k++)
+            {
+                if(mesh.IsInside(sdf.GridIndexToPosition(i, j, k)))
+                    sdf(i, j, k) = sdf(i, j, k) * -1.0;
+            }
+        }
+    }
 
 }

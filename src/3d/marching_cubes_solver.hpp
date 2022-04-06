@@ -1,9 +1,10 @@
 #ifndef _MARCHING_CUBES_SOLVER_HPP
-#deifne _MARCHING_CUBES_SOLVER_HPP
+#define _MARCHING_CUBES_SOLVER_HPP
 
 #include "surface_tracker.hpp"
 
-class MarchingCubesSolver
+
+class MarchingCubesSolver : public SurfaceTracker
 {
     public:
         MarchingCubesSolver();

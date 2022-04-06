@@ -92,7 +92,8 @@ void OBJManager::SaveTriangle(std::ofstream* f, const Triangle3D_t& triangle)
 void OBJManager::ParseLine(const std::string& line, TriangleMesh* obj)
 {
     std::vector<std::string> splittedLine = SplitLine(line);
-    if(IsObjectName(splittedLine)) ParseObjectName(splittedLine, obj);
+    if(splittedLine.size() < 1) return;
+    else if(IsObjectName(splittedLine)) ParseObjectName(splittedLine, obj);
     else if(IsVertex(splittedLine)) ParseVertex(splittedLine, obj);
     else if(IsNormal(splittedLine)) ParseNormal(splittedLine, obj);
     else if(IsTriangle(splittedLine)) ParseTriangle(splittedLine, obj);

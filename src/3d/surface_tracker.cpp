@@ -6,7 +6,7 @@ SurfaceTracker::SurfaceTracker()
 
 }
 
-virtual SurfaceTracker::~SurfaceTracker()
+SurfaceTracker::~SurfaceTracker()
 {
     
 }

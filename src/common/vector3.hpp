@@ -86,9 +86,14 @@ class Vector3
             return *this;
         }
 
-        double GetLength()
+        double GetLength() const
         {
             return sqrt(x * x + y * y + z * z);
+        }
+
+        double Sum() const
+        {
+            return x + y + z;
         }
 
         T Max() const

@@ -1,4 +1,5 @@
 #include "collisions.hpp"
+#include <iostream>
 
 
 double Collisions::DistanceToPoint(Vector3<double> p1, Vector3<double> p2)
@@ -213,3 +214,4 @@ double Collisions::DistanceToTriangle(Vector3<double> point, Vector3<double> p1,
 {
     return DistanceToPoint(point, ClossestPointOnTriangle(point, p1, p2, p3));
 }
+

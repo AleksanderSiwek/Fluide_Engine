@@ -5,6 +5,8 @@
 #include "vector3.hpp"
 
 
+constexpr double PI = 3.14159265358979323846;
+
 template <typename T>
 inline T Clamp(const T& val, const T& maxVal, const T& minVal)
 {
