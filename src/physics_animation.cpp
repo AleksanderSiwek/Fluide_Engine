@@ -21,7 +21,7 @@ void PhysicsAnimation::SetCurrentFrame(const Frame& frame)
     _currentFrame = frame;
 }
 
-void PhysicsAnimation::SetNumberOfSubTimesteps(size_t numberOfSubTimesteps)
+void PhysicsAnimation::SetNumberOfSubTimesteps(unsigned int numberOfSubTimesteps)
 {
     _numberOfSubTimesteps = numberOfSubTimesteps;
 }
@@ -36,7 +36,7 @@ double PhysicsAnimation::GetCurrentTimeInSeconds() const
     return _currentTime;
 }
 
-size_t PhysicsAnimation::GetNumberOfSubTimeSteps() const
+unsigned int PhysicsAnimation::GetNumberOfSubTimeSteps() const
 {
     return _numberOfTimeSteps;
 }
@@ -60,7 +60,7 @@ void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 {
     _currentTime = _currentFrame.GetTimeInSeconds();
 
-    const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / _numberOfSubTimesteps;
+    const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / NumberOfSubTimeSteps(timeIntervalInSeconds);
     for(size_t i = 0; i < _numberOfSubTimesteps; i++)
     {
         OnAdvanceTimeStep(subTimestepInterval);

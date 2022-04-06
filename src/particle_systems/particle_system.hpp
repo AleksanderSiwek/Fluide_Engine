@@ -32,11 +32,15 @@ class ParticleSystem
         void SetRadius(double radius);
 
         size_t GetParticleNumber() const;
-        std::vector<double> GetScalarValues(size_t idx) const;
-        std::vector<double> GetScalarValues(const std::string& name) const;
-        std::vector<Vector3<double>> GetVectorValues(size_t idx) const;
-        std::vector<Vector3<double>> GetVectorValues(const std::string& name) const;
-        std::vector<double>* GetScalarValuesPtr(size_t idx);
+        std::vector<double>& GetScalarValues(size_t idx);
+        std::vector<double>& GetScalarValues(const std::string& name);
+        std::vector<Vector3<double>>& GetVectorValues(size_t idx);
+        std::vector<Vector3<double>>& GetVectorValues(const std::string& name);
+        const std::vector<double>& GetScalarValues(size_t idx) const;
+        const std::vector<double>& GetScalarValues(const std::string& name) const;
+        const std::vector<Vector3<double>>& GetVectorValues(size_t idx) const;
+        const std::vector<Vector3<double>>& GetVectorValues(const std::string& name) const;
+        const std::vector<double>* GetScalarValuesPtr(size_t idx);
         std::vector<double>* GetScalarValuesPtr(const std::string& name);
         std::vector<Vector3<double>>* GetVectorValuesPtr(size_t idx);
         std::vector<Vector3<double>>* GetVectorValuesPtr(const std::string& name);

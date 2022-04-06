@@ -1,7 +1,7 @@
 #ifndef EXTERNAL_FORCE_HPP
 #define EXTERNAL_FORCE_HPP
 
-#include "../common/array3.hpp"
+#include "../grid_systems/face_centered_grid3d.hpp"
 
 
 class ExternalForce
@@ -11,13 +11,13 @@ class ExternalForce
 
         virtual ~ExternalForce() {}
 
-        Vector3<double> ApplyExternalForce(Array3<double>& values)
+        void ApplyExternalForce(FaceCenteredGrid3D& values)
         {
-            return OnApplyExternalForce(values);
+            OnApplyExternalForce(values);
         }
 
     protected:
-        virtual Vector3<double> OnApplyExternalForce(Array3<double>& values) = 0;
+        virtual void OnApplyExternalForce(FaceCenteredGrid3D& values) = 0;
 };
 
 #endif // EXTERNAL_FORCE_HPP

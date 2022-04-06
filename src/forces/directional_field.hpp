@@ -1,10 +1,11 @@
 #ifndef DIRECTIONAL_FIELD_HPP
 #define DIRECTIONAL_FIELD_HPP
 
+#include "external_force.hpp"
 #include "../common/vector_field3.hpp"
 
 
-class DirectionalField : VectorField3
+class DirectionalField : public VectorField3
 {
     public:
         DirectionalField(Vector3<double> strngth);

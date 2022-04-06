@@ -2,6 +2,7 @@
 #define _FACE_CENTERED_GRID3D_HPP
 
 #include "../common/grid3d.hpp"
+#include "../common/math_utils.hpp"
 
 
 class FaceCenteredGrid3D : public Grid3D
@@ -22,6 +23,8 @@ class FaceCenteredGrid3D : public Grid3D
         const double& y(size_t i, size_t j, size_t k) const; 
         double& z(size_t i, size_t j, size_t k);
         const double& z(size_t i, size_t j, size_t k) const; 
+        Vector3<double> FaceCenteredGrid3D::GetElement(size_t i, size_t j, size_t k) const;
+        Vector3<double>  Sample(const Vector3<double>& position) const;
         Vector3<double> ValueAtCellCenter(size_t i, size_t j, size_t k) const;
         double DivergenceAtCallCenter(size_t i, size_t j, size_t k) const;
         Vector3<double> CurlAtCellCentre(size_t i, size_t j, size_t k) const;
@@ -30,6 +33,7 @@ class FaceCenteredGrid3D : public Grid3D
 
         Vector3<size_t> GetSize() const;
         Vector3<size_t> GetActualSize() const;
+        Vector3<double> GetDiemensions() const;
         Vector3<double> GetDataXOrigin() const;
         Vector3<double> GetDataYOrigin() const;
         Vector3<double> GetDataZOrigin() const;
@@ -42,6 +46,9 @@ class FaceCenteredGrid3D : public Grid3D
         const Array3<double>& GetDataXRef() const;
         const Array3<double>& GetDataYRef() const;
         const Array3<double>& GetDataZRef() const;
+        Array3<double>& GetDataXRef();
+        Array3<double>& GetDataYRef();
+        Array3<double>& GetDataZRef();
 
     private:
         Vector3<double> _dataXOrigin;

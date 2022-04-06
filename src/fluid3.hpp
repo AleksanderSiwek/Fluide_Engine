@@ -16,7 +16,6 @@ class Fluid3
         ParticleSystem particleSystem;
         double viscosity;
         double density;
-
 };
 
 
