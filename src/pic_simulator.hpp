@@ -55,6 +55,8 @@ class PICSimulator : public PhysicsAnimation
 
     protected:
         unsigned int NumberOfSubTimeSteps(double tmeIntervalInSecons) const override;
+        virtual void TransferParticles2Grid();
+        virtual void TransferGrid2Particles();
 
     private:
         Fluid3 _fluid;
@@ -69,6 +71,7 @@ class PICSimulator : public PhysicsAnimation
 
         void BeginAdvanceTimeStep(double tmeIntervalInSecons);
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
+        
 };
 
 #endif // _PIC_SIMULATOR_HPP

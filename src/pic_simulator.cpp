@@ -250,3 +250,20 @@ unsigned int PICSimulator::NumberOfSubTimeSteps(double tmeIntervalInSecons) cons
     return static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxClf), 1.0));
 }
 
+void PICSimulator::TransferParticles2Grid()
+{
+
+}
+
+void PICSimulator::TransferGrid2Particles()
+{
+    auto& velGrid = _fluid.velocityGrid;
+    size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
+    auto& particlesPos = _fluid.particleSystem.GetVectorValues(0);
+    auto& particlesVel = _fluid.particleSystem.GetVectorValues(1);
+
+    for(size_t i = 0; i < numberOfParticles; i++)
+    {
+        particlesVel[i] = velGrid.Sample(particlesPos[i]);
+    }
+}
