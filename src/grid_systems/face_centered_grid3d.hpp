@@ -2,7 +2,7 @@
 #define _FACE_CENTERED_GRID3D_HPP
 
 #include "../common/grid3d.hpp"
-#include "../common/math_utils.hpp"
+#include "../common/array3.hpp"
 
 
 class FaceCenteredGrid3D : public Grid3D

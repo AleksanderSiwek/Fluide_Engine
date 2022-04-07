@@ -1,7 +1,8 @@
 #ifndef GRID_3D_HPP
 #define GRID_3D_HPP
 
-#include "../common/array3.hpp"
+#include "../common/vector3.hpp"
+#include "../common/math_utils.hpp"
 
 
 class Grid3D
@@ -23,6 +24,14 @@ class Grid3D
         Vector3<double> GridIndexToPosition(Vector3<size_t> position) 
         { 
             return GridIndexToPosition(position.x, position.y, position.z);
+        }
+
+        Vector3<size_t> PositionToGridIndex(Vector3<double> position)
+        {
+            Vector3<double> inverserSpacing(1 / _gridSpacing.x, 1 / _gridSpacing.y, 1 / _gridSpacing.z);
+            return Vector3<size_t>( (size_t)floor(position.x * inverserSpacing.x),
+                                    (size_t)floor(position.y * inverserSpacing.y),
+                                    (size_t)floor(position.z * inverserSpacing.z));
         }
 
         void SetOrigin(Vector3<double> origin) { _origin = origin; }

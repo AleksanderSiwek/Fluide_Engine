@@ -128,22 +128,17 @@ void PICSimulator::OnEndAdvanceTimeStep(double timeIntervalInSeconds)
 void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 {
     const auto& size = _fluid.velocityGrid.GetSize();
-    auto& velX = _fluid.velocityGrid.GetDataXRef();
-    auto& velY = _fluid.velocityGrid.GetDataXRef();
-    auto& velZ = _fluid.velocityGrid.GetDataXRef();
-    for(size_t forceIdx = 0; forceIdx < _externalForces.size(); forceIdx++)
+    auto& velGrid = _fluid.velocityGrid;
+    for(size_t i = 0; i < size.x; i++)
     {
-        for(size_t i = 0; i < size.x; i++)
+        for(size_t j = 0; j < size.y; j++)
         {
-            for(size_t j = 0; j < size.y; j++)
+            for(size_t k = 0; k < size.z; k++)
             {
-                for(size_t k = 0; k < size.z; k++)
-                {
-                    velX(i, j, k) += timeIntervalInSeconds * 0;
-                    velY(i, j, k) += timeIntervalInSeconds * (-9.81);
-                    velZ(i, j, k) += timeIntervalInSeconds * 0;
-                    ApplyBoundryCondition();
-                }
+                velGrid.x(i, j, k) += timeIntervalInSeconds * 0;
+                velGrid.y(i, j, k) += timeIntervalInSeconds * (-9.81);
+                velGrid.z(i, j, k) += timeIntervalInSeconds * 0;
+                ApplyBoundryCondition();
             }
         }
     }
@@ -252,6 +247,72 @@ unsigned int PICSimulator::NumberOfSubTimeSteps(double tmeIntervalInSecons) cons
 
 void PICSimulator::TransferParticles2Grid()
 {
+    auto& velGrid = _fluid.velocityGrid;
+    const auto& size = velGrid.GetSize();
+    size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
+    auto& particlesPos = _fluid.particleSystem.GetVectorValues(0);
+    auto& particlesVel = _fluid.particleSystem.GetVectorValues(1);
+    auto& markers = _fluid.markers;
+    Array3<double> weightsArray(size, 0);
+
+    velGrid.Fill(0, 0, 0);
+    markers.Resize(size);
+
+    Vector3<size_t> gridIndexes[8];
+    double weights[8];
+    for(size_t particleCnt = 0; particleCnt < numberOfParticles; particleCnt++)
+    {
+        Vector3<size_t> gridCellIndex = velGrid.PositionToGridIndex(particlesPos[particleCnt]);
+        Vector3<double> gridCellPosition = velGrid.GridIndexToPosition(gridCellIndex);
+        Vector3<double> pToCellPos = (particlesPos[particleCnt] - gridCellPosition) / velGrid.GetGridSpacing();
+
+        gridIndexes[0] = Vector3<size_t>(gridCellIndex.x,     gridCellIndex.y,     gridCellIndex.z);
+        gridIndexes[1] = Vector3<size_t>(gridCellIndex.x + 1, gridCellIndex.y,     gridCellIndex.z);
+        gridIndexes[2] = Vector3<size_t>(gridCellIndex.x,     gridCellIndex.y + 1, gridCellIndex.z);
+        gridIndexes[3] = Vector3<size_t>(gridCellIndex.x + 1, gridCellIndex.y + 1, gridCellIndex.z);
+        gridIndexes[4] = Vector3<size_t>(gridCellIndex.x,     gridCellIndex.y,     gridCellIndex.z + 1);
+        gridIndexes[5] = Vector3<size_t>(gridCellIndex.x + 1, gridCellIndex.y,     gridCellIndex.z + 1);
+        gridIndexes[6] = Vector3<size_t>(gridCellIndex.x,     gridCellIndex.y + 1, gridCellIndex.z + 1);
+        gridIndexes[7] = Vector3<size_t>(gridCellIndex.x + 1, gridCellIndex.y + 1, gridCellIndex.z + 1);
+
+        weights[0] = (1.00 - pToCellPos.x) * (1.00 - pToCellPos.y) * (1.00 - pToCellPos.z);
+        weights[1] = pToCellPos.x * (1.00 - pToCellPos.y) * (1.00 - pToCellPos.z);
+        weights[2] = (1.00 - pToCellPos.x) * pToCellPos.y * (1.00 - pToCellPos.z);
+        weights[3] = pToCellPos.x * pToCellPos.y * (1.00 - pToCellPos.z);
+        weights[4] = (1.00 - pToCellPos.x) * (1.00 - pToCellPos.y) * pToCellPos.z;
+        weights[5] = pToCellPos.x * (1.00 - pToCellPos.y) * pToCellPos.z;
+        weights[6] = (1.00 - pToCellPos.x) * pToCellPos.y * pToCellPos.z; 
+        weights[7] = pToCellPos.x * pToCellPos.y * pToCellPos.z; 
+
+        for(size_t i = 0; i < 8; i++)
+        {
+            Vector3<size_t> idx = gridIndexes[i];
+            if(idx.x < 0 || idx.y < 0 || idx.z < 0 ||idx.x >= size.x || idx.y >= size.y || idx.z >= size.z)
+                continue;
+            velGrid.x(idx.x ,idx.y, idx.z) += particlesVel[particleCnt].x * weights[i];
+            velGrid.y(idx.x ,idx.y, idx.z) += particlesVel[particleCnt].y * weights[i];
+            velGrid.z(idx.x ,idx.y, idx.z) += particlesVel[particleCnt].z * weights[i];  
+            markers(idx) = FLUID_MARK;
+
+            weightsArray(idx) += weights[i];         
+        }
+    }  
+
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(weightsArray(i, j, k) > 0.0)
+                {
+                    velGrid.x(i, j, k) /= weightsArray(i, j, k);
+                    velGrid.y(i, j, k) /= weightsArray(i, j, k);
+                    velGrid.z(i, j, k) /= weightsArray(i, j, k);  
+                }
+            }
+        }
+    } 
 
 }
 
