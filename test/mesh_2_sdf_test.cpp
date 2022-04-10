@@ -20,8 +20,8 @@ TEST(MeshSignedDistanceFieldTest, DistanceField_Test)
             for(int k = 0; k < size.z; k++)
             {
                 auto pos = sdf.GridIndexToPosition(i, j, k);
-                std::cout << "sdf(" << i << ", " << j << ", " << k << ") = " << sdf(i, j, k) << "\n";
-                std::cout << "position = " << pos.x << ", " << pos.y << ", " << pos.z << "\n\n";
+                // std::cout << "sdf(" << i << ", " << j << ", " << k << ") = " << sdf(i, j, k) << "\n";
+                // std::cout << "position = " << pos.x << ", " << pos.y << ", " << pos.z << "\n\n";
             }
         }
     }

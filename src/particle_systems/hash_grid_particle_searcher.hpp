@@ -6,6 +6,7 @@
 #include "particle_system_searcher.hpp"
 #include "../common/grid3d.hpp"
 
+// TO DO: fix for speedup
 
 class HashGridParticleSearcher : public ParticleSystemSearcher
 {
@@ -19,21 +20,23 @@ class HashGridParticleSearcher : public ParticleSystemSearcher
         std::vector<size_t> GetNearbyPointsIndexes(Vector3<double> position, double radious) override;
 
         size_t GetHashKeyFromPosition(const Vector3<double>& position) const;
-        Vector3<size_t> GetBucketIndex(const Vector3<double>& position) const;
-        size_t GetHashKeyFromBucketIndex(const Vector3<size_t>& bucketIndex) const;
-        void GetNearbyKeys(const Vector3<double>& position, size_t* nearbyKeys) const;
+        Vector3<int> GetBucketIndex(const Vector3<double>& position) const;
+        size_t GetHashKeyFromBucketIndex(const Vector3<int>& bucketIndex) const;
+        void GetNearbyKeys(const Vector3<double>& position, std::vector<size_t>& nearbyKeys, double radious) const;
 
     private:
         Vector3<size_t> _size;
         double _gridSpacing;
         std::vector<Vector3<double>> _points;
-        std::vector<size_t> _keys;
-        std::vector<size_t> _startIndexTable;
-        std::vector<size_t> _endIndexTable;
-        std::vector<size_t> _sortedIndexes;
+        std::vector<std::vector<size_t>> _buckets;
+        Vector3<int> _lowestBucketIdx=0;
+        Vector3<int> _highestBucketIdx=0;
 
         void ClearAll();
         void AllocateMemory(size_t numberOfParticles);
+        void SetLowestBucketIdx(const Vector3<int>& bucketIdx);
+        void SetHighestBucketIdx(const Vector3<int>& bucketIdx);
+        bool IsInBucketRange(const Vector3<int>& bucketIdx) const;
 };
 
 #endif // _HASH_GRID_PARTICLE_SEARCHER_HPP

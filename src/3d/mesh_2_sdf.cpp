@@ -1,5 +1,4 @@
 #include "mesh_2_sdf.hpp"
-#include <iostream>
 
 Mesh2SDF::Mesh2SDF()
 {
@@ -68,7 +67,6 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
 
 void Mesh2SDF::ComputeSigns(const TriangleMesh& mesh, ScalarGrid3D& sdf)
 {
-    std::cout << "Compute Signs! \n";
     Vector3<size_t> size = sdf.GetSize(); 
     Array3<bool> isInside(size.x, size.y, size.z, false);
 
