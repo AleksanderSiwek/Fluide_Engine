@@ -4,9 +4,12 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <memory>
+
+#include "./hash_grid_particle_searcher.hpp"
 #include "../common/vector3.hpp"
 
-// TO DO search neighbours 
+
 class ParticleSystem
 {
     public:
@@ -15,8 +18,9 @@ class ParticleSystem
         ~ParticleSystem();
 
         void Resize(size_t numberOfParticles);
-        void AddPartices(size_t numberOfParticles, std::vector<Vector3<double>> positions);
+        void BuildSearcher(std::string name, double radious);
 
+        void AddPartices(size_t numberOfParticles, std::vector<Vector3<double>> positions);
         void AddScalarValue(std::string name, double initialValue=0);
         void AddVectorValue(std::string name, Vector3<double> initialValue=(0, 0, 0));
 
@@ -30,6 +34,7 @@ class ParticleSystem
         void SetVectorValue(std::string name,size_t particleIdx, Vector3<double> value);
         void SetMass(double mass);
         void SetRadius(double radius);
+        void SetParticleSystemSearcher(std::shared_ptr<ParticleSystemSearcher> particleSearcher);
 
         size_t GetParticleNumber() const;
         std::vector<double>& GetScalarValues(size_t idx);
@@ -66,7 +71,7 @@ class ParticleSystem
         std::map<std::string, size_t> _vectorDataDict;
         std::vector<std::vector<double>> _scalarData;
         std::vector<std::vector<Vector3<double>>> _vectorData;
-
+        std::shared_ptr<ParticleSystemSearcher> _particleSearcher;
 };
 
 #endif // PARTICLE_SYSTEH_HPP

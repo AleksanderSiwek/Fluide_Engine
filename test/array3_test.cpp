@@ -218,6 +218,12 @@ TEST(Array3Test, GetElementBracesSizeT_test)
     EXPECT_EQ(0, arr(0, 1, 2));
 }
 
+TEST(Array3Test, GetElementSizeOne_test)
+{
+    Array3<int> arr(1, 1, 1, 0);
+    EXPECT_EQ(0, arr(0, 0, 0));
+}
+
 TEST(Array3Test, SetElementBracesVector3_test)
 {
     Array3<int> arr(2, 2, 3, 0);

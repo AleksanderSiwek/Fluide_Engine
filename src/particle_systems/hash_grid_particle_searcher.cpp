@@ -11,9 +11,7 @@ HashGridParticleSearcher::~HashGridParticleSearcher()
 
 }
 
-// TO DO: DELETE!
-#include <iostream>
-void HashGridParticleSearcher::build(const std::vector<Vector3<double>>& points)
+void HashGridParticleSearcher::Build(const std::vector<Vector3<double>>& points)
 {
     size_t numberOfParticles = points.size();
     if(numberOfParticles == 0) return;
@@ -29,9 +27,6 @@ void HashGridParticleSearcher::build(const std::vector<Vector3<double>>& points)
         SetLowestBucketIdx(bucketIdx);
         SetHighestBucketIdx(bucketIdx);
     }
-
-    std::cout << "Lowest bucket: " << _lowestBucketIdx.x << ", " << _lowestBucketIdx.y << ", " << _lowestBucketIdx.z << "\n";
-    std::cout << "Highest bucket: " << _highestBucketIdx.x << ", " << _highestBucketIdx.y << ", " << _highestBucketIdx.z << "\n";
 }
 
 void HashGridParticleSearcher::ClearAll()
@@ -140,63 +135,6 @@ void HashGridParticleSearcher::GetNearbyKeys(const Vector3<double>& position, st
             }
         }
     }
-
-    std::cout << "Nerbay IDX found: " << nearbyKeys.size() << "\n\n";
-
-    // Vector3<int> nearbyBucketInexes[8];
-    // for (int i = 0; i < 8; i++) {
-    //     nearbyBucketInexes[i] = originIndex;
-    // }
-
-    // if ((originIndex.x + 0.5f) * _gridSpacing <= position.x) 
-    // {
-    //     nearbyBucketInexes[4].x += 1;
-    //     nearbyBucketInexes[5].x += 1;
-    //     nearbyBucketInexes[6].x += 1;
-    //     nearbyBucketInexes[7].x += 1;
-    // } 
-    // else 
-    // {
-    //     nearbyBucketInexes[4].x -= 1;
-    //     nearbyBucketInexes[5].x -= 1;
-    //     nearbyBucketInexes[6].x -= 1;
-    //     nearbyBucketInexes[7].x -= 1;
-    // }
-
-    // if ((originIndex.y + 0.5f) * _gridSpacing <= position.y) 
-    // {
-    //     nearbyBucketInexes[2].y += 1;
-    //     nearbyBucketInexes[3].y += 1;
-    //     nearbyBucketInexes[6].y += 1;
-    //     nearbyBucketInexes[7].y += 1;
-    // }
-    // else 
-    // {
-    //     nearbyBucketInexes[2].y -= 1;
-    //     nearbyBucketInexes[3].y -= 1;
-    //     nearbyBucketInexes[6].y -= 1;
-    //     nearbyBucketInexes[7].y -= 1;
-    // }
-
-    // if ((originIndex.z + 0.5f) * _gridSpacing <= position.z) 
-    // {
-    //     nearbyBucketInexes[1].z += 1;
-    //     nearbyBucketInexes[3].z += 1;
-    //     nearbyBucketInexes[5].z += 1;
-    //     nearbyBucketInexes[7].z += 1;
-    // } 
-    // else 
-    // {
-    //     nearbyBucketInexes[1].z -= 1;
-    //     nearbyBucketInexes[3].z -= 1;
-    //     nearbyBucketInexes[5].z -= 1;
-    //     nearbyBucketInexes[7].z -= 1;
-    // }
-
-    // for(size_t i = 0; i < 8; i++)
-    // {
-    //     nearbyKeys[i] = GetHashKeyFromBucketIndex(nearbyBucketInexes[i]);
-    // }
 }
 
 void HashGridParticleSearcher::SetLowestBucketIdx(const Vector3<int>& bucketIdx)

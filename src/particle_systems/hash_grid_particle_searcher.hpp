@@ -15,7 +15,7 @@ class HashGridParticleSearcher : public ParticleSystemSearcher
 
         ~HashGridParticleSearcher();
 
-        void build(const std::vector<Vector3<double>>& points) override;
+        void Build(const std::vector<Vector3<double>>& points) override;
         bool HasNearbyPoint(Vector3<double> position, double radious) override;
         std::vector<size_t> GetNearbyPointsIndexes(Vector3<double> position, double radious) override;
 

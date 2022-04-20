@@ -12,7 +12,7 @@ class ParticleSystemSearcher
         ParticleSystemSearcher() {}
         virtual ~ParticleSystemSearcher() {}
 
-        virtual void build(const std::vector<Vector3<double>>&points) = 0;
+        virtual void Build(const std::vector<Vector3<double>>&points) = 0;
         virtual bool HasNearbyPoint(Vector3<double> position, double radious) = 0;
         virtual std::vector<size_t> GetNearbyPointsIndexes(Vector3<double> position, double radious) = 0;
 };

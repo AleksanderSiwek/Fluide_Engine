@@ -6,9 +6,10 @@ PICSimulator::PICSimulator(const Vector3<size_t>& resolution, const Vector3<doub
     _fluid.velocityGrid.Resize(resolution);
     _fluid.velocityGrid.SetGridSpacing(gridSpacing);
     _fluid.velocityGrid.SetOrigin(gridOrigin);
+    _fluid.markers.Resize(resolution);
     _fluid.particleSystem.AddVectorValue("position");
     _fluid.particleSystem.AddVectorValue("velocity");
-
+    
     _maxClf = 5.0;
 
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
@@ -110,13 +111,17 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 
     ComputeDiffusion(timeIntervalInSeconds);
     ComputePressure(timeIntervalInSeconds);
+    ComputeAdvection(timeIntervalInSeconds);
 
     EndAdvanceTimeStep(timeIntervalInSeconds);
 }
 
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
 {
-
+    TransferParticles2Grid();
+    BuildSignedDistanceField();
+    ExtrapolateVelocityToAir();
+    ApplyBoundryCondition();
 }
 
 void PICSimulator::OnEndAdvanceTimeStep(double timeIntervalInSeconds)
@@ -156,6 +161,14 @@ void PICSimulator::ComputePressure(double timeIntervalInSeconds)
     FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
     _pressureSolver->Solve(currentVelocity, FluidMarkers(_fluid.velocityGrid.GetSize()), timeIntervalInSeconds, _fluid.density, &(_fluid.velocityGrid));
     ApplyBoundryCondition();
+}
+
+void PICSimulator::ComputeAdvection(double timeIntervalInSeconds)
+{
+    ExtrapolateVelocityToAir();
+    ApplyBoundryCondition();
+    TransferGrid2Particles();
+    MoveParticles(timeIntervalInSeconds);
 }
 
 void PICSimulator::MoveParticles(double timeIntervalInSeconds)
@@ -326,5 +339,101 @@ void PICSimulator::TransferGrid2Particles()
     for(size_t i = 0; i < numberOfParticles; i++)
     {
         particlesVel[i] = velGrid.Sample(particlesPos[i]);
+    }
+}
+
+void PICSimulator::BuildSignedDistanceField()
+{
+    auto& sdf = _fluid.sdf;
+    auto& particleSystem = _fluid.particleSystem;
+    const auto& gridSpacing = sdf.GetGridSpacing();
+    double maxH = std::max(gridSpacing.x, std::max(gridSpacing.y, gridSpacing.z));
+    double radious = 1.2 * maxH / std::sqrt(2.0);
+    double sdfBandRadious = 2.0 * radious;
+    particleSystem.BuildSearcher("position", 2 * radious);
+    // TO DO:
+    //  ForEachPoint()
+    //  ForEachNerbyPoint()
+    //  ExtrapolateIntoCollider()
+}
+
+void PICSimulator::ExtrapolateVelocityToAir()
+{
+    auto& markers = _fluid.markers;
+    auto& xVel = _fluid.velocityGrid.GetDataXRef();
+    auto& yVel = _fluid.velocityGrid.GetDataYRef();
+    auto& zVel = _fluid.velocityGrid.GetDataZRef();
+
+    size_t numberOfIterations = static_cast<size_t>(std::ceil(MaxCfl()));
+    ExtrapolateToRegion(xVel, markers, numberOfIterations);
+    ExtrapolateToRegion(yVel, markers, numberOfIterations);
+    ExtrapolateToRegion(zVel, markers, numberOfIterations);
+}
+
+void PICSimulator::ExtrapolateToRegion(Array3<double>& array, const FluidMarkers& valid, size_t numberOfIterations)
+{
+    const auto& size = array.GetSize();
+    FluidMarkers valid0(valid);
+    FluidMarkers valid1(valid);
+    
+    for(size_t iter = 0; iter < numberOfIterations; iter++)
+    {
+        for(int i = 0; i < size.x; i++)
+        {
+            for(int j = 0; j < size.y; j++)
+            {
+                for(int k = 0; k < size.z; k++)
+                {
+                    double sum = 0;
+                    size_t cnt = 0;
+
+                    if(valid0(i, j, k) != FLUID_MARK)
+                    {
+                        if(i + 1 < size.x && valid0(i + 1, j, k) == FLUID_MARK)
+                        {
+                            sum += array(i + 1, j, k);
+                            cnt++;
+                        }
+                        
+                        if(i - 1 >= 0 && valid0(i - 1, j, k) == FLUID_MARK)
+                        {
+                            sum += array(i - 1, j, k);
+                            cnt++;
+                        }
+
+                        if(j + 1 < size.y && valid0(i, j + 1, k) == FLUID_MARK)
+                        {
+                            sum += array(i, j + 1, k);
+                            cnt++;
+                        }
+
+                        if(j - 1 >= 0 && valid0(i, j - 1, k) == FLUID_MARK)
+                        {
+                            sum += array(i, j - 1, k);
+                            cnt++;
+                        }
+
+                        if(k + 1 < size.z && valid0(i, j, k + 1) == FLUID_MARK)
+                        {
+                            sum += array(i, j, k + 1);
+                            cnt++;
+                        }
+
+                        if(k - 1 >= 0 && valid0(i, j, k - 1) == FLUID_MARK)
+                        {
+                            sum += array(i, j, k - 1);
+                            cnt++;
+                        }
+
+                        if(cnt > 0)
+                        {
+                            array(i, j, k) = sum / cnt;
+                            valid1(i, j, k) = FLUID_MARK;
+                        }
+                    }
+                }
+            }
+        }
+        valid0.Fill(valid1);
     }
 }

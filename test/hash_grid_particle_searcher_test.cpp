@@ -19,7 +19,7 @@ TEST(HashGridParticleSearcher, HasNearbyPoint_Test)
     particles.push_back(Vector3<double>(5, 5, 5.001));
     particles.push_back(Vector3<double>(3.1, 2.1, 5));
     
-    searcher.build(particles);
+    searcher.Build(particles);
 
     EXPECT_EQ(false, searcher.HasNearbyPoint(Vector3<double>(3.5, 3.5, 3.5), 1));
     EXPECT_EQ(true, searcher.HasNearbyPoint(Vector3<double>(5.5, 5.5, 5.5), 1));
@@ -42,7 +42,7 @@ TEST(HashGridParticleSearcher, GetNearbyPointsIndexes_Test)
     particles.push_back(Vector3<double>(5, 5, 5.001));
     particles.push_back(Vector3<double>(3.1, 2.1, 5));
 
-    searcher.build(particles);
+    searcher.Build(particles);
     std::vector<size_t> nearbyIdx = searcher.GetNearbyPointsIndexes(Vector3<double>(5.5, 5.5, 5.5), 4.21);
     std::cout << "nearbyIdx size: " << nearbyIdx.size() << "\n";
     for(size_t i = 0; i < nearbyIdx.size(); i++)

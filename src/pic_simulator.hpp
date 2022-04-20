@@ -40,6 +40,8 @@ class PICSimulator : public PhysicsAnimation
         double MaxCfl() const;
         void SetMaxClf(double maxClf);
 
+        void ExtrapolateToRegion(Array3<double>& array, const FluidMarkers& valid, size_t numberOfIterations);
+
     protected:
         void OnInitialize() override;
         void OnAdvanceTimeStep(double timeIntervalInSeconds) override;
@@ -49,11 +51,11 @@ class PICSimulator : public PhysicsAnimation
         virtual void ComputeExternalForces(double timeIntervalInSeconds);
         virtual void ComputeDiffusion(double timeIntervalInSeconds);
         virtual void ComputePressure(double timeIntervalInSeconds);
+        virtual void ComputeAdvection(double timeIntervalInSeconds);
         virtual void MoveParticles(double timeIntervalInSeconds);
 
         void ApplyBoundryCondition();
 
-    protected:
         unsigned int NumberOfSubTimeSteps(double tmeIntervalInSecons) const override;
         virtual void TransferParticles2Grid();
         virtual void TransferGrid2Particles();
@@ -71,7 +73,8 @@ class PICSimulator : public PhysicsAnimation
 
         void BeginAdvanceTimeStep(double tmeIntervalInSecons);
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
-        
+        void BuildSignedDistanceField();
+        void ExtrapolateVelocityToAir();       
 };
 
 #endif // _PIC_SIMULATOR_HPP
