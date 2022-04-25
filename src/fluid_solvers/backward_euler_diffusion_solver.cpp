@@ -10,23 +10,45 @@ BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
 
 }
 
-void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
-    output->Resize(source_grid.GetSize());
-    Vector3<double> spacing = source_grid.GetGridSpacing();
+    output->Resize(sourceGrid.GetSize());
+    Vector3<double> spacing = sourceGrid.GetGridSpacing();
     Vector3<double> c = timeIntervalInSeconds * viscosity / (spacing * spacing);
 
-    BuildSystem(source_grid.GetDataXRef(), c, fluidMarkers);
+    BuildSystem(sourceGrid.GetDataXRef(), c, _fluidMarkers);
     _systemSolver->Solve(&_system);
     output->GetDataXPtr()->Fill(_system.x);
 
-    BuildSystem(source_grid.GetDataYRef(), c, fluidMarkers);
+    BuildSystem(sourceGrid.GetDataYRef(), c, _fluidMarkers);
     _systemSolver->Solve(&_system);
     output->GetDataYPtr()->Fill(_system.x);
 
-    BuildSystem(source_grid.GetDataZRef(), c, fluidMarkers);
+    BuildSystem(sourceGrid.GetDataZRef(), c, _fluidMarkers);
     _systemSolver->Solve(&_system);
     output->GetDataZPtr()->Fill(_system.x);
+}
+
+void BackwardEulerDiffusionSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
+{
+    _fluidMarkers.Resize(size);
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(fluidSdf.Sample(sourceGrid.GridIndexToPosition(i, j, k)) < 0)
+                {
+                    _fluidMarkers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    _fluidMarkers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
 }
 
 void BackwardEulerDiffusionSolver::BuildSystem(const Array3<double>& arr, Vector3<double> c, const FluidMarkers& fluidMarkers)
@@ -128,3 +150,5 @@ void BackwardEulerDiffusionSolver::BuildVectors(const Array3<double>& arr, Vecto
         }
     }
 }
+
+

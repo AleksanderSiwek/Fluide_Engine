@@ -17,16 +17,16 @@ class Grid3D
 
         virtual ~Grid3D() { }
 
-        Vector3<double> GridIndexToPosition(size_t i, size_t j, size_t k) 
+        Vector3<double> GridIndexToPosition(size_t i, size_t j, size_t k) const
         { 
-            return Vector3<double>(_gridSpacing.x/2 + i * _gridSpacing.x, _gridSpacing.y/2 + j * _gridSpacing.y, _gridSpacing.z/2 + k * _gridSpacing.z); 
+            return Vector3<double>(_gridSpacing.x + i * _gridSpacing.x, _gridSpacing.y + j * _gridSpacing.y, _gridSpacing.z + k * _gridSpacing.z); 
         }
-        Vector3<double> GridIndexToPosition(Vector3<size_t> position) 
+        Vector3<double> GridIndexToPosition(Vector3<size_t> position) const
         { 
             return GridIndexToPosition(position.x, position.y, position.z);
         }
 
-        Vector3<size_t> PositionToGridIndex(Vector3<double> position)
+        Vector3<size_t> PositionToGridIndex(Vector3<double> position) const
         {
             Vector3<double> inverserSpacing(1 / _gridSpacing.x, 1 / _gridSpacing.y, 1 / _gridSpacing.z);
             return Vector3<size_t>( (size_t)floor(position.x * inverserSpacing.x),

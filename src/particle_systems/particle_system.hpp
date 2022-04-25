@@ -36,6 +36,7 @@ class ParticleSystem
         void SetRadius(double radius);
         void SetParticleSystemSearcher(std::shared_ptr<ParticleSystemSearcher> particleSearcher);
 
+        ParticleSystemSearcher* GetSearcher();
         size_t GetParticleNumber() const;
         std::vector<double>& GetScalarValues(size_t idx);
         std::vector<double>& GetScalarValues(const std::string& name);

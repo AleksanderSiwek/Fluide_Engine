@@ -152,7 +152,7 @@ void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 void PICSimulator::ComputeDiffusion(double timeIntervalInSeconds)
 {
     FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
-    _diffusionSolver->Solve(currentVelocity, FluidMarkers(_fluid.velocityGrid.GetSize()), timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
+    _diffusionSolver->Solve(currentVelocity, _fluid.sdf, timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
     ApplyBoundryCondition();
 }
 
@@ -240,6 +240,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 void PICSimulator::ApplyBoundryCondition()
 {
     // TO DO
+    // It works only for colliders, thats why its skipped right now
 }
 
 void PICSimulator::BeginAdvanceTimeStep(double tmeIntervalInSecons)
@@ -345,16 +346,33 @@ void PICSimulator::TransferGrid2Particles()
 void PICSimulator::BuildSignedDistanceField()
 {
     auto& sdf = _fluid.sdf;
+    const auto& sdfSize = sdf.GetSize();
     auto& particleSystem = _fluid.particleSystem;
     const auto& gridSpacing = sdf.GetGridSpacing();
     double maxH = std::max(gridSpacing.x, std::max(gridSpacing.y, gridSpacing.z));
     double radious = 1.2 * maxH / std::sqrt(2.0);
     double sdfBandRadious = 2.0 * radious;
-    particleSystem.BuildSearcher("position", 2 * radious);
-    // TO DO:
-    //  ForEachPoint()
-    //  ForEachNerbyPoint()
-    //  ExtrapolateIntoCollider()
+    // TO DO: do this prettier cause tihs looks like ...
+    particleSystem.BuildSearcher("position", 2 * radious); 
+    auto searcher = particleSystem.GetSearcher();
+
+    for(size_t i = 0; i < sdfSize.x; i++)
+    {
+        for(size_t j = 0;  j < sdfSize.y; j++)
+        {
+            for(size_t k = 0; k < sdfSize.z ; k++)
+            {
+                Vector3<double> gridPosition = sdf.GridIndexToPosition(i, j, k);
+                double minDistance = sdfBandRadious;
+                searcher->ForEachNearbyPoint(gridPosition, sdfBandRadious, [&](size_t, const Vector3<double>& x)
+                {
+                    minDistance = std::min(minDistance, Collisions::DistanceToPoint(x, gridPosition));
+                });
+                sdf(i, j, k) = minDistance - radious;
+            }
+        }
+    }
+    ExtrapolateIntoCollieder();
 }
 
 void PICSimulator::ExtrapolateVelocityToAir()
@@ -436,4 +454,31 @@ void PICSimulator::ExtrapolateToRegion(Array3<double>& array, const FluidMarkers
         }
         valid0.Fill(valid1);
     }
+}
+
+void PICSimulator::ExtrapolateIntoCollieder()
+{
+    auto& sdf = _fluid.sdf;
+    const auto& size = sdf.GetSize();
+    FluidMarkers markers(size);
+    for(int i = 0; i < size.x; i++)
+    {
+        for(int j = 0; j < size.y; j++)
+        {
+            for(int k = 0; k < size.z; k++)
+            {
+                if(sdf(i, j, k) < 0)
+                {
+                    markers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    markers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
+
+    size_t depth = static_cast<size_t>(std::ceil(_maxClf));
+    ExtrapolateToRegion(sdf, markers, depth);
 }

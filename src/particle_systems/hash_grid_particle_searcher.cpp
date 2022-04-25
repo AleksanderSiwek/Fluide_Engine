@@ -92,6 +92,33 @@ std::vector<size_t> HashGridParticleSearcher::GetNearbyPointsIndexes(Vector3<dou
     return nearbyIndexes;
 }
 
+void HashGridParticleSearcher::ForEachNearbyPoint(const Vector3<double>& position, double radius, const ForEachPointCallback callback) const 
+{
+    if(_buckets.empty())
+    {
+        return;
+    }
+
+    std::vector<size_t> nearbyKeys;
+    GetNearbyKeys(position, nearbyKeys, radius);
+    const double radiusSquared = radius * radius;
+
+    for(size_t i = 0; i < nearbyKeys.size(); i++)
+    {
+        const auto& bucket = _buckets[nearbyKeys[i]];
+        const size_t numberOfPartcilesInBucket = bucket.size();
+        for(size_t j = 0; j < numberOfPartcilesInBucket; j++)
+        {
+            size_t pointIdx = bucket[j];
+            double distance = (_points[pointIdx] - position).GetLength();
+            if(distance * distance < radiusSquared)
+            {
+                callback(pointIdx, _points[pointIdx]);
+            }
+        }
+    }
+}
+
 size_t HashGridParticleSearcher::GetHashKeyFromPosition(const Vector3<double>& position) const
 {
     return GetHashKeyFromBucketIndex(GetBucketIndex(position));

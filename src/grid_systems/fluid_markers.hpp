@@ -2,6 +2,7 @@
 #define _FLUID_MARKERS_HPP
 
 #include "../common/array3.hpp"
+#include "../common/grid3d.hpp"
 
 
 enum FluidMarker

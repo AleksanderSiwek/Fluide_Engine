@@ -23,7 +23,7 @@ FaceCenteredGrid3D::~FaceCenteredGrid3D()
 
 Vector3<size_t> FaceCenteredGrid3D::GetSize() const
 {
-    return (_size - Vector3<size_t>(1, 1, 1));
+    return (_size); //- Vector3<size_t>(1, 1, 1)); // TO DO
 }
 
 Vector3<size_t> FaceCenteredGrid3D::GetActualSize() const
@@ -103,33 +103,37 @@ Vector3<double> FaceCenteredGrid3D::GetElement(size_t i, size_t j, size_t k) con
 
 Vector3<double> FaceCenteredGrid3D::Sample(const Vector3<double>& position) const
 {
-    size_t i, j, k;
-    double factorX, factorY, factorZ;
-    i = j = k = 0;
-    factorX = factorY = factorZ = 0;
+    // int i, j, k;
+    // double factorX, factorY, factorZ ;
+    // i = j = k = 0;
+    // factorX = factorY = factorZ = 0;
 
-    Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
-    Vector3<size_t> size = GetSize();
+    // Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
+    // const auto& size = GetSize();
+    // int sizeX = static_cast<int>(size.x);
+    // int sizeY = static_cast<int>(size.y);
+    // int sizeZ = static_cast<int>(size.z);
 
-    GetBarycentric<double>(normalizedPoistion.x, 0, size.x - 1, &i, &factorX);
-    GetBarycentric<double>(normalizedPoistion.x, 0, size.x - 1, &i, &factorX);
-    GetBarycentric<double>(normalizedPoistion.x, 0, size.x - 1, &i, &factorX);
+    // GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
+    // GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
+    // GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
 
-    size_t ip1 = std::min(i + 1, size.x - 1);
-    size_t jp1 = std::min(j + 1, size.y - 1);
-    size_t kp1 = std::min(k + 1, size.z - 1);
+    // size_t ip1 = std::min(i + 1, sizeX - 1);
+    // size_t jp1 = std::min(j + 1, sizeY - 1);
+    // size_t kp1 = std::min(k + 1, sizeZ - 1);
 
-    return Trilerp<Vector3<double>, double>( GetElement(i, j, k),
-                                    GetElement(ip1, j, k),
-                                    GetElement(i, jp1, k),
-                                    GetElement(ip1, jp1, k),
-                                    GetElement(i, j, kp1),
-                                    GetElement(ip1, j, kp1),
-                                    GetElement(i, jp1, kp1),
-                                    GetElement(ip1, jp1, kp1),
-                                    factorX,
-                                    factorY,
-                                    factorZ);
+    // return Trilerp<double, double>( GetElement(i, j, k),
+    //                                 GetElement(ip1, j, k),
+    //                                 GetElement(i, jp1, k),
+    //                                 GetElement(ip1, jp1, k),
+    //                                 GetElement(i, j, kp1),
+    //                                 GetElement(ip1, j, kp1),
+    //                                 GetElement(i, jp1, kp1),
+    //                                 GetElement(ip1, jp1, kp1),
+    //                                 factorX,
+    //                                 factorY,
+    //                                 factorZ);
+    return 0;
 }
 
 Vector3<double> FaceCenteredGrid3D::ValueAtCellCenter(size_t i, size_t j, size_t k) const
@@ -248,5 +252,5 @@ void FaceCenteredGrid3D::CalculateDataOrigins()
 
 void FaceCenteredGrid3D::SetSize(Vector3<size_t> size)
 {
-    _size = size + Vector3<size_t>(1);
+    _size = size; // TO DO + Vector3<size_t>(1);
 }

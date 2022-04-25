@@ -32,7 +32,7 @@ inline S Trilerp(const S& x000, const S& x100, const S& x010, const S& x110, con
 }  
 
 template<typename T>
-inline void GetBarycentric(T x, size_t iLow, size_t iHigh, size_t* i, T* f) {
+inline void GetBarycentric(T x, int iLow, int iHigh, int* i, T* f) {
     T s = std::floor(x);
     *i = static_cast<int>(s);
     int siLow = static_cast<int>(iLow);

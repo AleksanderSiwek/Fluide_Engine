@@ -2,6 +2,7 @@
 #define _PIC_SIMULATOR_HPP
 
 #include <memory>
+#include <algorithm>
 
 #include "physics_animation.hpp"
 #include "fluid3.hpp"
@@ -16,6 +17,7 @@
 #include "file_systems/file_system.hpp"
 #include "forces/external_force.hpp"
 #include "3d/bounding_box_3d.hpp"
+#include "3d/collisions.hpp"
 
 
 class PICSimulator : public PhysicsAnimation
@@ -74,7 +76,8 @@ class PICSimulator : public PhysicsAnimation
         void BeginAdvanceTimeStep(double tmeIntervalInSecons);
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
         void BuildSignedDistanceField();
-        void ExtrapolateVelocityToAir();       
+        void ExtrapolateVelocityToAir();  
+        void ExtrapolateIntoCollieder();
 };
 
 #endif // _PIC_SIMULATOR_HPP

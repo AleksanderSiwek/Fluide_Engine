@@ -119,6 +119,11 @@ void ParticleSystem::SetParticleSystemSearcher(std::shared_ptr<ParticleSystemSea
     _particleSearcher = particleSearcher;
 }
 
+ParticleSystemSearcher* ParticleSystem::GetSearcher()
+{
+    return _particleSearcher.get();
+}
+
 size_t ParticleSystem::GetParticleNumber() const
 {
     return _numberOfParticles;
