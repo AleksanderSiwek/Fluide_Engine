@@ -40,9 +40,9 @@ TEST(FaceCenteredGrid3DTest, Constructor_test)
     EXPECT_EQ(1, spacing.x);
     EXPECT_EQ(2, spacing.y);
     EXPECT_EQ(3, spacing.z);
-    EXPECT_EQ(1, grid.x(2, 2, 2));
-    EXPECT_EQ(1, grid.y(2, 2, 2));
-    EXPECT_EQ(1, grid.z(2, 2, 2));
+    EXPECT_EQ(1, grid.x(1, 1, 1));
+    EXPECT_EQ(1, grid.y(1, 1, 1));
+    EXPECT_EQ(1, grid.z(1, 1, 1));
 }
 
 TEST(FaceCenteredGrid3DTest, CalculationOrigin_test)

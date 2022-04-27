@@ -19,7 +19,7 @@ class Grid3D
 
         Vector3<double> GridIndexToPosition(size_t i, size_t j, size_t k) const
         { 
-            return Vector3<double>(_gridSpacing.x + i * _gridSpacing.x, _gridSpacing.y + j * _gridSpacing.y, _gridSpacing.z + k * _gridSpacing.z); 
+            return Vector3<double>(_origin.x + i * _gridSpacing.x, _origin.y + j * _gridSpacing.y, _origin.z + k * _gridSpacing.z); 
         }
         Vector3<double> GridIndexToPosition(Vector3<size_t> position) const
         { 

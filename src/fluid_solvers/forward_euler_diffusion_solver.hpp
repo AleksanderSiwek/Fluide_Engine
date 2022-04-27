@@ -12,7 +12,7 @@ class ForwardEulerDiffusionSolver : public DiffusionSolver
         ~ForwardEulerDiffusionSolver();  
 
         void Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
-        double CalculateLaplacian(const Array3<double>& grid, const FluidMarkers& fluidMarkers, Vector3<double> gridSpacing, size_t i, size_t j, size_t k);
+        double CalculateLaplacian(const Array3<double>& grid, Vector3<double> gridSpacing, size_t i, size_t j, size_t k);
         void BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
 
     private:

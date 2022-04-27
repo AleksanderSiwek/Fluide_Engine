@@ -71,6 +71,20 @@ TEST(ScalarGrid3DTest, Sample_test)
     EXPECT_EQ(4, grid.Sample(Vector3<double>(1, 2, 1)));
 }
 
+TEST(ScalarGrid3DTest, Sample2_test)
+{
+    const Vector3<size_t> size(3, 3, 3);
+    ScalarGrid3D grid(size, 1, 0.5, 1);
+    grid(1, 1, 1) = 4;
+
+    EXPECT_EQ(1, grid.Sample(grid.GridIndexToPosition(0, 0, 0)));
+    EXPECT_EQ(1, grid.Sample(grid.GridIndexToPosition(1, 0, 0)));
+    EXPECT_EQ(1, grid.Sample(grid.GridIndexToPosition(0, 1, 0)));
+    EXPECT_EQ(1, grid.Sample(grid.GridIndexToPosition(1, 1, 0)));
+    EXPECT_EQ(1, grid.Sample(grid.GridIndexToPosition(0, 0, 1)));
+    EXPECT_EQ(4, grid.Sample(grid.GridIndexToPosition(1, 1, 1)));
+}
+
 // TEST(ScalarGrid3DTest, Gradient_test)
 // {
 //     ScalarGrid3D grid(2, 1, (1, 2, 3), 1);

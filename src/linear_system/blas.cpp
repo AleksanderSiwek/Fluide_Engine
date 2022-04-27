@@ -3,12 +3,13 @@
 
 double BLAS::Dot(const SystemVector& a, const SystemVector& b)
 {
+    const auto& size = a.GetSize();
     double result = 0;
-    for(size_t i = 0; i < a.GetSize().x; i++)
+    for(size_t i = 0; i < size.x; i++)
     {
-        for(size_t j = 0; j < a.GetSize().y; j++)
+        for(size_t j = 0; j < size.y; j++)
         {
-            for(size_t k = 0 ; k < a.GetSize().z; k++)
+            for(size_t k = 0 ; k < size.z; k++)
             {
                 result += a(i, j, k) * b(i, j, k);
             }
@@ -19,7 +20,7 @@ double BLAS::Dot(const SystemVector& a, const SystemVector& b)
 
 void BLAS::Residual(const SystemMatrix& A, const SystemVector& x, const SystemVector& b, SystemVector* result)
 {
-    Vector3<size_t> size = x.GetSize();
+    const auto& size = x.GetSize();
 
     for(size_t i = 0; i < size.x; i++)
     {

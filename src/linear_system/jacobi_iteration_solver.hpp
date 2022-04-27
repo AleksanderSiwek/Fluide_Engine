@@ -19,9 +19,10 @@ class JacobiIterationSolver : public LinearSystemSolver
         double _tolerance;
 
         SystemVector _xTemp;
+        SystemVector _residual;
 
         void Relax(LinearSystem* system);
-        double CalculateTolerance(const SystemVector& x);
+        double CalculateTolerance(LinearSystem* system);
 };
 
 
