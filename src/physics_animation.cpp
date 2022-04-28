@@ -61,7 +61,7 @@ void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
     _currentTime = _currentFrame.GetTimeInSeconds();
 
     const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / NumberOfSubTimeSteps(timeIntervalInSeconds);
-    for(size_t i = 0; i < _numberOfSubTimesteps; i++)
+    for(size_t i = 0; i < NumberOfSubTimeSteps(timeIntervalInSeconds); i++)
     {
         OnAdvanceTimeStep(subTimestepInterval);
         _currentTime += subTimestepInterval;

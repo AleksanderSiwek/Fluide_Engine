@@ -103,47 +103,59 @@ Vector3<double> FaceCenteredGrid3D::GetElement(size_t i, size_t j, size_t k) con
 
 Vector3<double> FaceCenteredGrid3D::Sample(const Vector3<double>& position) const
 {
-    // int i, j, k;
-    // double factorX, factorY, factorZ ;
-    // i = j = k = 0;
-    // factorX = factorY = factorZ = 0;
+    int i, j, k;
+    double factorX, factorY, factorZ ;
+    i = j = k = 0;
+    factorX = factorY = factorZ = 0;
 
-    // Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
-    // const auto& size = GetSize();
-    // int sizeX = static_cast<int>(size.x);
-    // int sizeY = static_cast<int>(size.y);
-    // int sizeZ = static_cast<int>(size.z);
+    Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
+    const auto& size = GetSize();
+    int sizeX = static_cast<int>(size.x);
+    int sizeY = static_cast<int>(size.y);
+    int sizeZ = static_cast<int>(size.z);
 
-    // GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
-    // GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
-    // GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
+    GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
+    GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
+    GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
 
-    // size_t ip1 = std::min(i + 1, sizeX - 1);
-    // size_t jp1 = std::min(j + 1, sizeY - 1);
-    // size_t kp1 = std::min(k + 1, sizeZ - 1);
+    size_t ip1 = std::min(i + 1, sizeX - 1);
+    size_t jp1 = std::min(j + 1, sizeY - 1);
+    size_t kp1 = std::min(k + 1, sizeZ - 1);
 
-    // return Trilerp<double, double>( GetElement(i, j, k),
-    //                                 GetElement(ip1, j, k),
-    //                                 GetElement(i, jp1, k),
-    //                                 GetElement(ip1, jp1, k),
-    //                                 GetElement(i, j, kp1),
-    //                                 GetElement(ip1, j, kp1),
-    //                                 GetElement(i, jp1, kp1),
-    //                                 GetElement(ip1, jp1, kp1),
-    //                                 factorX,
-    //                                 factorY,
-    //                                 factorZ);
-    return 0;
+    return Trilerp<Vector3<double>, double>( GetElement(i, j, k),
+                                    GetElement(ip1, j, k),
+                                    GetElement(i, jp1, k),
+                                    GetElement(ip1, jp1, k),
+                                    GetElement(i, j, kp1),
+                                    GetElement(ip1, j, kp1),
+                                    GetElement(i, jp1, kp1),
+                                    GetElement(ip1, jp1, kp1),
+                                    factorX,
+                                    factorY,
+                                    factorZ);
+    //return 0;
 }
 
 Vector3<double> FaceCenteredGrid3D::ValueAtCellCenter(size_t i, size_t j, size_t k) const
 {
-    return 0.5 * Vector3<double>(x(i, j, k) + x(i+1, j, k), y(i, j, k) + y(i, j+1, k), z(i, j, k) + z(i, j, k+1));
+    double left = _dataX(i, j, k);
+    double right = i + 1 <  GetSize().x ? _dataX(i + 1, j, k) : 0.0;
+    double down = _dataY(i, j ,k);
+    double up = j + 1 < GetSize().y ? _dataY(i, j + 1, k) : 0.0;
+    double back = _dataZ(i, j, k);
+    double front = k + 1 < GetSize().z ? _dataZ(i, j, k + 1) : 0.0;
+    return 0.5 * Vector3<double>(left + right, down + up, back + front);
 }
 
-double FaceCenteredGrid3D:: DivergenceAtCallCenter(size_t i, size_t j, size_t k) const
+double FaceCenteredGrid3D::DivergenceAtCallCenter(size_t i, size_t j, size_t k) const
 {
-    return (x(i, j, k) - x(i+1, j, k))/_gridSpacing.x + (y(i, j, k) - y(i, j+1, k))/_gridSpacing.y + (z(i, j, k) - z(i, j, k+1))/_gridSpacing.z;
+    double left = _dataX(i, j, k);
+    double right = i + 1 <  GetSize().x ? _dataX(i + 1, j, k) : 0.0;
+    double down = _dataY(i, j ,k);
+    double up = j + 1 < GetSize().y ? _dataY(i, j + 1, k) : 0.0;
+    double back = _dataZ(i, j, k);
+    double front = k + 1 < GetSize().z ? _dataZ(i, j, k + 1) : 0.0;
+    return (left - right)/_gridSpacing.x + (down - up)/_gridSpacing.y + (back - front)/_gridSpacing.z;
 }
 
 Vector3<double> FaceCenteredGrid3D::CurlAtCellCentre(size_t i, size_t j, size_t k) const

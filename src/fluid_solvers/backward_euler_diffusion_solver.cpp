@@ -2,7 +2,7 @@
 
 BackwardEulerDiffusionSolver::BackwardEulerDiffusionSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 1, 0.0000000001);
+    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.000001);
 }
 
 BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
@@ -18,37 +18,31 @@ void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, c
     Vector3<double> spacing = sourceGrid.GetGridSpacing();
     Vector3<double> c = (timeIntervalInSeconds * viscosity) / (spacing * spacing);
 
-    std::cout << "dt = " << timeIntervalInSeconds << "\n";
-    std::cout << "viscosity = " << viscosity << "\n";
-    std::cout << "grid spacing = " << (spacing * spacing).x << ", " << (spacing * spacing).y << ", " << (spacing * spacing).z << "\n";
-    std::cout << "c = " << c.x << ", " << c.y << ", " << c.z << "\n";
-    const auto& size = sourceGrid.GetSize();
-    std::cout << "Size Diffusion Solver: (" << size.x << ", " << size.y << ", " << size.z << ")\n";
+    const auto& size = _fluidMarkers.GetSize();
     for(size_t j = size.y ; j > 0; j--)
     {
         for(size_t k = 0; k < size.z; k++)
         {
             for(size_t i = 0; i < size.x; i++)
             {
-                std::cout << (_fluidMarkers(i, j - 1, k) == FLUID_MARK ? "F" : "A") << " ";
+                std::cout << ((_fluidMarkers(i, j - 1, k) == FLUID_MARK) ? "F" : "A") << " ";
             }
-            std::cout << "  ";
+            std::cout << "      ";
         }
         std::cout << "\n";
     }
-    std::cout << "\n";
 
     BuildSystem(sourceGrid.GetDataXRef(), c);
     _systemSolver->Solve(&_system);
     output->GetDataXPtr()->Fill(_system.x);
 
-    // BuildSystem(sourceGrid.GetDataYRef(), c);
-    // _systemSolver->Solve(&_system);
-    // output->GetDataYPtr()->Fill(_system.x);
+    BuildSystem(sourceGrid.GetDataYRef(), c);
+    _systemSolver->Solve(&_system);
+    output->GetDataYPtr()->Fill(_system.x);
 
-    // BuildSystem(sourceGrid.GetDataZRef(), c);
-    // _systemSolver->Solve(&_system);
-    // output->GetDataZPtr()->Fill(_system.x);
+    BuildSystem(sourceGrid.GetDataZRef(), c);
+    _systemSolver->Solve(&_system);
+    output->GetDataZPtr()->Fill(_system.x);
 }
 
 void BackwardEulerDiffusionSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
@@ -77,24 +71,7 @@ void BackwardEulerDiffusionSolver::BuildSystem(const Array3<double>& arr, Vector
 {
     BuildMatrix(arr.GetSize(), c);
     BuildVectors(arr, c);
-
-    // std::cout << "System build\n";
-    // const auto& size = arr.GetSize();
-    // size_t sizeVectorized = size.x * size.y * size.z;
-    // const auto& A = _system.A.GetRawData();
-    // const auto& x = _system.x.GetRawData();
-    // const auto& b = _system.b.GetRawData();
-    // std::cout << "A.ce A.ri A.up A.do *   x = b\n";
-    // for(size_t i = 0; i < sizeVectorized; i++)
-    // {
-    //     std::cout << A[i].center << ", " << A[i].right << ", " << A[i].up << ", " << A[i].front << "  *  ";
-    //     std::cout << x[i] << " = " << b[i] << "\n";
-    // }
-    // std::cout << "\n";
 }
-
-// TO DO: Check dirichlet and neuman boundry types
-// This is dirichhlet type of boundry
 
 void BackwardEulerDiffusionSolver::BuildMatrix(Vector3<size_t> size, Vector3<double> c)
 {
@@ -169,8 +146,6 @@ void BackwardEulerDiffusionSolver::BuildMatrix(Vector3<size_t> size, Vector3<dou
 void BackwardEulerDiffusionSolver::BuildVectors(const Array3<double>& arr, Vector3<double> c)
 {
     const auto& size = arr.GetSize();
-    std::cout << "Size BuildVectors: (" << size.x << ", " << size.y << ", " << size.z << ")\n";
-
     _system.x.Resize(size);
     _system.b.Resize(size);
 

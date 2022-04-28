@@ -3,6 +3,7 @@
 
 #include "../grid_systems/face_centered_grid3d.hpp"
 #include "../grid_systems/fluid_markers.hpp"
+#include "../3d/scalar_grid3d.hpp"
 
 class PressureSolver
 {
@@ -11,7 +12,7 @@ class PressureSolver
 
         virtual ~PressureSolver();
 
-        virtual void Solve(FaceCenteredGrid3D& source_grid, const FluidMarkers& fluidMarkers, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
+        virtual void Solve(FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 };
 
 #endif // PRESSURE_SOLVER_HPP

@@ -18,14 +18,22 @@
 #include "forces/external_force.hpp"
 #include "3d/bounding_box_3d.hpp"
 #include "3d/collisions.hpp"
+#include "3d/mesh_2_sdf.hpp"
 
 
 class PICSimulator : public PhysicsAnimation
 {
     public:
-        PICSimulator(const Vector3<size_t>& resolution, const Vector3<double> gridSpacing, const Vector3<double> gridOrigin);
+        PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain);
         
         ~PICSimulator();
+
+        // TO DO DELETE
+        FluidMarkers GetMarkers() const;
+        void PrintGrid(const Array3<double>& input) const;
+        void PrintMarkers();
+
+        void InitializeFrom3dMesh(const TriangleMesh& mesh);
 
         void SetViscosity(double viscosity);
         void SetDensity(double density);
@@ -64,6 +72,7 @@ class PICSimulator : public PhysicsAnimation
 
     private:
         Fluid3 _fluid;
+        BoundingBox3D _domain;
 
         std::shared_ptr<DiffusionSolver> _diffusionSolver;
         std::shared_ptr<PressureSolver> _pressureSolver;
@@ -72,12 +81,18 @@ class PICSimulator : public PhysicsAnimation
 
         FileSystem _fileSystem;
         double _maxClf;
+        size_t _particlesPerBlok;
+
+        const std::string PARTICLE_POSITION_KEY = "postion";
+        const std::string PARTICLE_VELOCITY_KEY = "velocity";
 
         void BeginAdvanceTimeStep(double tmeIntervalInSecons);
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
         void BuildSignedDistanceField();
         void ExtrapolateVelocityToAir();  
         void ExtrapolateIntoCollieder();
+
+        void InitializeParticles();
 };
 
 #endif // _PIC_SIMULATOR_HPP

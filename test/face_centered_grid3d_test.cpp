@@ -61,3 +61,22 @@ TEST(FaceCenteredGrid3DTest, ValueAtCellCenter_test)
     EXPECT_EQ(3, valueAtCenter.y);
     EXPECT_EQ(3, valueAtCenter.z);
 }
+
+TEST(FaceCenteredGrid3DTest, Sample_test)
+{
+    FaceCenteredGrid3D grid(3, 0, 1, 1);
+    grid.GetDataXRef().Fill(1);
+    grid.GetDataYRef().Fill(2);
+    grid.GetDataZRef().Fill(3);
+    grid.GetDataXRef()(2, 2, 2) = 2;
+    grid.GetDataYRef()(2, 2, 2) = 4;
+    grid.GetDataZRef()(2, 2, 2) = 6;
+    Vector3<double> position(1.5, 1.5, 1.5);
+    Vector3<double> sampledData = grid.Sample(position);
+    EXPECT_EQ(1.5, sampledData.x);
+    EXPECT_EQ(3, sampledData.y);
+    EXPECT_EQ(4.5, sampledData.z);
+}
+
+
+

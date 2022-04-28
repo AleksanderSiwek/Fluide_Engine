@@ -1,16 +1,31 @@
 #include "pic_simulator.hpp"
 
+#include <random>
 
-PICSimulator::PICSimulator(const Vector3<size_t>& resolution, const Vector3<double> gridSpacing, const Vector3<double> gridOrigin)
+// TO DO: DELETE
+#include <iostream>
+#include <iomanip>
+
+PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain)
+    : _domain(domain)
 {
-    _fluid.velocityGrid.Resize(resolution);
+    auto domainSize = _domain.GetSize();
+    Vector3<double> gridSpacing(domainSize.x / gridSize.x, domainSize.y / gridSize.y, domainSize.z / gridSize.z);
+
+    _fluid.velocityGrid.Resize(gridSize);
     _fluid.velocityGrid.SetGridSpacing(gridSpacing);
-    _fluid.velocityGrid.SetOrigin(gridOrigin);
-    _fluid.markers.Resize(resolution);
-    _fluid.particleSystem.AddVectorValue("position");
-    _fluid.particleSystem.AddVectorValue("velocity");
-    
+    _fluid.velocityGrid.SetOrigin(domain.GetOrigin());
+    _fluid.sdf.Resize(gridSize);
+    _fluid.sdf.SetGridSpacing(gridSpacing);
+    _fluid.sdf.SetOrigin(domain.GetOrigin());
+    _fluid.markers.Resize(gridSize);
+    _fluid.particleSystem.AddVectorValue(PARTICLE_POSITION_KEY);
+    _fluid.particleSystem.AddVectorValue(PARTICLE_VELOCITY_KEY);
+    _fluid.viscosity = 0.5;
+    _fluid.density = 1;
+
     _maxClf = 5.0;
+    _particlesPerBlok = 32;
 
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
@@ -19,6 +34,77 @@ PICSimulator::PICSimulator(const Vector3<size_t>& resolution, const Vector3<doub
 PICSimulator::~PICSimulator()
 {
 
+}
+
+FluidMarkers PICSimulator::GetMarkers() const
+{
+    FluidMarkers markers;
+    const auto& size = _fluid.sdf.GetSize();
+    markers.Resize(size);
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(_fluid.sdf(i, j, k) < 0)
+                {
+                    markers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    markers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
+    return markers;
+}
+
+void PICSimulator::PrintGrid(const Array3<double>& input) const
+{
+    const auto& size = input.GetSize();
+    std::cout << std::setprecision(2) << std::fixed;
+    for(size_t j = size.y ; j > 0; j--)
+    {
+        for(size_t k = 0; k < size.z; k++)
+        {
+            for(size_t i = 0; i < size.x; i++)
+            {
+                std::cout << input(i, j - 1, k) << " ";
+            }
+            std::cout << "      ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
+void PICSimulator::PrintMarkers() 
+{
+    auto markers = GetMarkers();
+    const auto& size = markers.GetSize();
+    for(size_t j = size.y ; j > 0; j--)
+    {
+        for(size_t k = 0; k < size.z; k++)
+        {
+            for(size_t i = 0; i < size.x; i++)
+            {
+                std::cout << ((markers(i, j - 1, k) == FLUID_MARK) ? "F" : "A") << " ";
+            }
+            std::cout << "      ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
+void PICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
+{
+    Mesh2SDF converter;
+    converter.Build(mesh, _fluid.sdf);
+
+    InitializeParticles();
 }
 
 void PICSimulator::SetViscosity(double viscosity)
@@ -106,14 +192,33 @@ void PICSimulator::OnInitialize()
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
     BeginAdvanceTimeStep(timeIntervalInSeconds);
+    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
+
+    const auto& positions = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
+    const auto& velocities = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
+    std::cout << "Particle position before move [0] = " << positions[0].x << ", " << positions[0].y << ", " << positions[0].z << "\n";
+    std::cout << "Particle velocities before move [0] = " << velocities[0].x << ", " << velocities[0].y << ", " << velocities[0].z << "\n\n";
 
     ComputeExternalForces(timeIntervalInSeconds);
+    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
 
     ComputeDiffusion(timeIntervalInSeconds);
+    // PrintGrid(_fluid.velocityGrid.GetDataYRef());
+
     ComputePressure(timeIntervalInSeconds);
+    // PrintGrid(_fluid.velocityGrid.GetDataYRef());
+
     ComputeAdvection(timeIntervalInSeconds);
+    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
+
+    const auto& positions1 = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
+    const auto& velocities1 = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
+    std::cout << "Particle position after move [0] = " << positions1[0].x << ", " << positions1[0].y << ", " << positions1[0].z << "\n";
+    std::cout << "Particle velocities before move [0] = " << velocities1[0].x << ", " << velocities1[0].y << ", " << velocities1[0].z << "\n";
 
     EndAdvanceTimeStep(timeIntervalInSeconds);
+
+    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
 }
 
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
@@ -159,7 +264,7 @@ void PICSimulator::ComputeDiffusion(double timeIntervalInSeconds)
 void PICSimulator::ComputePressure(double timeIntervalInSeconds)
 {
     FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
-    _pressureSolver->Solve(currentVelocity, FluidMarkers(_fluid.velocityGrid.GetSize()), timeIntervalInSeconds, _fluid.density, &(_fluid.velocityGrid));
+    _pressureSolver->Solve(currentVelocity, _fluid.sdf, timeIntervalInSeconds, _fluid.density, &(_fluid.velocityGrid));
     ApplyBoundryCondition();
 }
 
@@ -174,10 +279,10 @@ void PICSimulator::ComputeAdvection(double timeIntervalInSeconds)
 void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 {
     auto& velGrid = _fluid.velocityGrid;
-    BoundingBox3D fluidBBox(velGrid.GetOrigin(), velGrid.GetDiemensions());
+    BoundingBox3D fluidBBox = _domain;
     size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
-    auto& particlesPos = _fluid.particleSystem.GetVectorValues(0);
-    auto& particlesVel = _fluid.particleSystem.GetVectorValues(1);
+    auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
+    auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
 
     for(size_t i = 0; i < numberOfParticles; i++)
     {
@@ -186,7 +291,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
         Vector3<double> pVel1 = particlesVel[i];
 
         unsigned int numSubSteps = static_cast<unsigned int>(std::max(MaxCfl(), 1.0));
-        double dt = timeIntervalInSeconds / numberOfParticles;
+        double dt = timeIntervalInSeconds / numSubSteps;
         for(unsigned int t = 0; t < numSubSteps; t++)
         {
             Vector3<double> pVel0 = velGrid.Sample(pPos0);
@@ -199,37 +304,37 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
         if(pPos1.x <= fluidBBox.GetOrigin().x)
         {
             pPos1.x = fluidBBox.GetOrigin().x;
-            pVel1.x = 0.0;
+            pVel1.x = std::min(std::abs(pVel1.x), _maxClf) * (std::abs(pVel1.x)/pVel1.x) * (-1);
         }
 
         if(pPos1.x >= fluidBBox.GetOrigin().x + fluidBBox.GetSize().x)
         {
             pPos1.x = fluidBBox.GetOrigin().x + fluidBBox.GetSize().x;
-            pVel1.x = 0.0;
+            pVel1.x = std::min(std::abs(pVel1.x), _maxClf) * (std::abs(pVel1.x)/pVel1.x) * (-1);
         }
 
         if(pPos1.y <= fluidBBox.GetOrigin().y)
         {
             pPos1.y = fluidBBox.GetOrigin().y;
-            pVel1.y = 0.0;
+            pVel1.y = std::min(std::abs(pVel1.y), _maxClf) * (std::abs(pVel1.y)/pVel1.y) * (-1);
         }
 
         if(pPos1.y >= fluidBBox.GetOrigin().y + fluidBBox.GetSize().y)
         {
             pPos1.y = fluidBBox.GetOrigin().y + fluidBBox.GetSize().y;
-            pVel1.y = 0.0;
+            pVel1.y = std::min(std::abs(pVel1.y), _maxClf) * (std::abs(pVel1.y)/pVel1.y) * (-1);
         }
 
         if(pPos1.z <= fluidBBox.GetOrigin().z)
         {
             pPos1.z = fluidBBox.GetOrigin().z;
-            pVel1.z = 0.0;
+            pVel1.z = std::min(std::abs(pVel1.z), _maxClf) * (std::abs(pVel1.z)/pVel1.z) * (-1);
         }
 
         if(pPos1.z >= fluidBBox.GetOrigin().z + fluidBBox.GetSize().z)
         {
             pPos1.z = fluidBBox.GetOrigin().z + fluidBBox.GetSize().z;
-            pVel1.z = 0.0;
+            pVel1.z = std::min(std::abs(pVel1.z), _maxClf) * (std::abs(pVel1.z)/pVel1.z) * (-1);
         }
     
         particlesPos[i] = pPos1;
@@ -264,8 +369,8 @@ void PICSimulator::TransferParticles2Grid()
     auto& velGrid = _fluid.velocityGrid;
     const auto& size = velGrid.GetSize();
     size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
-    auto& particlesPos = _fluid.particleSystem.GetVectorValues(0);
-    auto& particlesVel = _fluid.particleSystem.GetVectorValues(1);
+    auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
+    auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
     auto& markers = _fluid.markers;
     Array3<double> weightsArray(size, 0);
 
@@ -334,8 +439,8 @@ void PICSimulator::TransferGrid2Particles()
 {
     auto& velGrid = _fluid.velocityGrid;
     size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
-    auto& particlesPos = _fluid.particleSystem.GetVectorValues(0);
-    auto& particlesVel = _fluid.particleSystem.GetVectorValues(1);
+    auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
+    auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
 
     for(size_t i = 0; i < numberOfParticles; i++)
     {
@@ -352,8 +457,7 @@ void PICSimulator::BuildSignedDistanceField()
     double maxH = std::max(gridSpacing.x, std::max(gridSpacing.y, gridSpacing.z));
     double radious = 1.2 * maxH / std::sqrt(2.0);
     double sdfBandRadious = 2.0 * radious;
-    // TO DO: do this prettier cause tihs looks like ...
-    particleSystem.BuildSearcher("position", 2 * radious); 
+    particleSystem.BuildSearcher(PARTICLE_POSITION_KEY, 2 * radious); 
     auto searcher = particleSystem.GetSearcher();
 
     for(size_t i = 0; i < sdfSize.x; i++)
@@ -479,6 +583,41 @@ void PICSimulator::ExtrapolateIntoCollieder()
         }
     }
 
-    size_t depth = static_cast<size_t>(std::ceil(_maxClf));
-    ExtrapolateToRegion(sdf, markers, depth);
+    // size_t depth = static_cast<size_t>(std::ceil(_maxClf));
+    // ExtrapolateToRegion(sdf, markers, depth);
+}
+
+void PICSimulator::InitializeParticles()
+{
+    const auto& size = _fluid.sdf.GetSize();
+    const auto& sdf = _fluid.sdf;
+    const auto& velGrid = _fluid.velocityGrid;
+    const auto& gridSpacing = velGrid.GetGridSpacing();
+    auto& particles = _fluid.particleSystem;
+
+    std::vector<Vector3<double>> positions;
+
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                const Vector3<double> pos = velGrid.GridIndexToPosition(i, j, k);
+                if(sdf.Sample(pos) < 0)
+                {
+                    // Initialzie particles
+                    for(size_t particleIdx = 0; particleIdx < _particlesPerBlok; particleIdx++)
+                    {
+                        double x = gridSpacing.x * ( (double)std::rand() / (double)RAND_MAX ) + pos.x;
+                        double y = gridSpacing.y * ( (double)std::rand() / (double)RAND_MAX ) + pos.y;
+                        double z = gridSpacing.z * ( (double)std::rand() / (double)RAND_MAX ) + pos.z;
+                        positions.push_back(Vector3<double>(x, y, z));
+                    }
+                }
+            }
+        }
+    }
+
+    particles.AddParticles(positions.size(), positions, PARTICLE_POSITION_KEY);
 }

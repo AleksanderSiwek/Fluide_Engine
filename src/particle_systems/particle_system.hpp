@@ -20,7 +20,7 @@ class ParticleSystem
         void Resize(size_t numberOfParticles);
         void BuildSearcher(std::string name, double radious);
 
-        void AddPartices(size_t numberOfParticles, std::vector<Vector3<double>> positions);
+        void AddParticles(size_t numberOfParticles, const std::vector<Vector3<double>>& vectorVal, const std::string& name);
         void AddScalarValue(std::string name, double initialValue=0);
         void AddVectorValue(std::string name, Vector3<double> initialValue=(0, 0, 0));
 

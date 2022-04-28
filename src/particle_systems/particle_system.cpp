@@ -3,7 +3,6 @@
 
 ParticleSystem::ParticleSystem(size_t numberOfParticles) : _numberOfParticles(numberOfParticles)
 {
-    _vectorDataDict["position"] = 0;
     _vectorData.push_back(std::vector<Vector3<double>>(numberOfParticles, 0));
     _particleSearcher = std::make_shared<HashGridParticleSearcher>(Vector3<size_t>(1, 1, 1), 1);
 }
@@ -34,13 +33,13 @@ void ParticleSystem::BuildSearcher(std::string name, double radious)
     _particleSearcher->Build(_vectorData[_vectorDataDict[name]]);
 }
 
-void ParticleSystem::AddPartices(size_t numberOfParticles, std::vector<Vector3<double>> positions)
+void ParticleSystem::AddParticles(size_t numberOfParticles, const std::vector<Vector3<double>>& vectorVal, const std::string& name)
 {
     _numberOfParticles += numberOfParticles;
     Resize(_numberOfParticles);
     for(size_t i = 0; i < numberOfParticles; i++)
     {
-        _vectorData[_vectorDataDict["position"]][_numberOfParticles - numberOfParticles  + i] = positions[i];
+        _vectorData[_vectorDataDict[name]][_numberOfParticles - numberOfParticles  + i] = vectorVal[i];
     }
 }
 
