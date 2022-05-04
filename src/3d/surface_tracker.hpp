@@ -2,8 +2,7 @@
 #define _SURFACE_TRACKER_HPP
 
 #include "triangle_mesh.hpp"
-
-typedef std::vector<Vector3<double>> PointCloud;
+#include "scalar_grid3d.hpp"
 
 
 class SurfaceTracker
@@ -13,7 +12,7 @@ class SurfaceTracker
 
         virtual ~SurfaceTracker();
 
-        virtual void BuildSurface(const PointCloud& pointCloud, TriangleMesh* mesh) = 0;
+        virtual void BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* mesh) = 0;
 };
 
 

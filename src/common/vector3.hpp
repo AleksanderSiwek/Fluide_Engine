@@ -130,6 +130,7 @@ class Vector3
             x = y * vect.z - z * vect.y;
             y = z * vect.x - x * vect.z;
             z = x * vect.y - y * vect.x;
+            return *this;
         }
 
         void Normalize()
