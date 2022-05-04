@@ -11,6 +11,7 @@ class BoundingBox3D
         ~BoundingBox3D();
 
         bool IsInside(Vector3<double> point) const;
+        Vector3<double> Corner(size_t idx) const;
 
         Vector3<double> GetOrigin() const;
         Vector3<double> GetSize() const;

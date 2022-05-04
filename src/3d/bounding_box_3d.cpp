@@ -20,6 +20,16 @@ bool BoundingBox3D::IsInside(Vector3<double> point) const
     return isInX && isInY && isInZ;
 }
 
+Vector3<double> BoundingBox3D::Corner(size_t idx) const
+{
+    static const double h = static_cast<double>(1) / 2;
+    static const Vector3<double> offset[8] = {
+        {-h, -h, -h}, {+h, -h, -h}, {-h, +h, -h}, {+h, +h, -h},
+        {-h, -h, +h}, {+h, -h, +h}, {-h, +h, +h}, {+h, +h, +h}};
+
+    return Vector3<double>(_size.x, _size.y, _size.z) * offset[idx] + _origin + 0.5 * _size;
+}
+
 
 Vector3<double> BoundingBox3D::GetOrigin() const
 {
