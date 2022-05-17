@@ -7,7 +7,7 @@
 void _PrintArray3(const Array3<double>& input)
 {
     const auto& size = input.GetSize();
-    std::cout << std::setprecision(2) << std::fixed;
+    std::cout << std::setprecision(3) << std::fixed;
     std::cout << "Size: (" << size.x << ", " << size.y << ", " << size.z << ")\n";
     for(size_t j = size.y ; j > 0; j--)
     {
@@ -85,4 +85,51 @@ TEST(BackwardEulerDiffusionSolverTest, Solve_test)
     solver.Solve(input, sdf, 0.5, 0.1, &output);
 
     _PrintArray3(output.GetDataXRef());
+}
+
+#include "../src/fluid_solvers/single_phase_pressure_solver.hpp"
+TEST(BackwardEulerDiffusionSolverTest, Solve2_test)
+{
+    const Vector3<size_t> size(5, 5, 5);
+    FaceCenteredGrid3D input(size, 0, 1, 0);
+    ScalarGrid3D sdf(size, 0, Vector3<double>(0.5, 0.5, 0.5));
+    SinglePhasePressureSolver solver;
+
+    auto& xData = input.GetDataXRef();
+    auto& yData = input.GetDataYRef();
+    auto& zData = input.GetDataZRef();
+
+    xData(0, 0, 0) = yData(0, 0, 0) = zData(0, 0, 0) = 5;
+    xData(1, 0, 0) = yData(1, 0, 0) = zData(1, 0, 0) = 5;
+    xData(0, 1, 0) = yData(0, 1, 0) = zData(0, 1, 0) = 5;
+    xData(1, 1, 0) = yData(1, 1, 0) = zData(1, 1, 0) = 10;
+    xData(0, 0, 1) = yData(0, 0, 1) = zData(0, 0, 1) = 10;
+    xData(1, 0, 1) = yData(1, 0, 1) = zData(1, 0, 1) = 2;
+    xData(0, 1, 1) = yData(0, 1, 1) = zData(0, 1, 1) = 2;
+    xData(1, 1, 1) = yData(1, 1, 1) = zData(1, 1, 1) = 2;
+
+    sdf.Fill(5);
+    sdf(0, 0, 0) = -5;
+    sdf(1, 0, 0) = -5;
+    sdf(0, 1, 0) = -5;
+    sdf(1, 1, 0) = -5;
+    sdf(0, 0, 1) = -5;
+    sdf(1, 0, 1) = -5;
+    sdf(0, 1, 1) = -5;
+    sdf(1, 1, 1) = -5;
+
+    std::cout << "GetXPos(1, 1, 1): " << input.GetXPos(1, 1, 1).x << ", " << input.GetXPos(1, 1, 1).y << ", " << input.GetXPos(1, 1, 1).z << "\n" ;
+    std::cout << "Is Inside: " << sdf.Sample(input.GetXPos(1, 1, 1)) << "\n";
+    std::cout << "GetXPos(2, 2, 1): " << input.GetXPos(2, 2, 1).x << ", " << input.GetXPos(2, 2, 1).y << ", " << input.GetXPos(2, 2, 1).z << "\n" ;
+    std::cout << "Is Inside: " << sdf.Sample(input.GetXPos(2, 2, 1)) << "\n";
+
+    auto div = input.DivergenceAtCallCenter(0, 0, 0);
+    
+
+    FaceCenteredGrid3D output;
+    solver.Solve(input, sdf, 1, 0.05, &output);
+
+    _PrintArray3(output.GetDataXRef());
+    _PrintArray3(output.GetDataZRef());
+    _PrintArray3(output.GetDataYRef());
 }

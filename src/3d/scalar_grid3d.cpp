@@ -60,8 +60,27 @@ double ScalarGrid3D::Sample(const Vector3<double>& position) const
 
 Vector3<double> ScalarGrid3D::Gradient(const Vector3<double>& position) const
 {
-    // TO DO
-    return 0;
+    std::array<Vector3<size_t>, 8> indexes;
+    std::array<double, 8> weights;
+    GetCooridnatesAndWeights(GetSize(), GetOrigin(), GetGridSpacing(), position, indexes, weights);
+    const auto& ds = GetSize();
+
+    Vector3<double> result;
+    for(int idx = 0; idx < 8; idx++)
+    {
+        size_t i = indexes[idx].x;
+        size_t j = indexes[idx].y;
+        size_t k = indexes[idx].z;
+        double left = GetElement((i > 0) ? i - 1 : i, j, k);
+        double right = GetElement((i + 1 < ds.x) ? i + 1 : i, j, k);
+        double down = GetElement(i, (j > 0) ? j - 1 : j, k);
+        double up = GetElement(i, (j + 1 < ds.y) ? j + 1 : j, k);
+        double back = GetElement(i, j, (k > 0) ? k - 1 : k);
+        double front = GetElement(i, j, (k + 1 < ds.z) ? k + 1 : k);
+        result += weights[idx] * 0.5 * Vector3<double>(right - left, up - down, front - back) / GetGridSpacing();
+    }
+
+    return result;
 }
 
 double ScalarGrid3D::Laplacian(const Vector3<double>& position) const

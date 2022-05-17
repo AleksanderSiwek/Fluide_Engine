@@ -42,16 +42,44 @@ void PrintMarkers(const FluidMarkers& input)
     std::cout << "\n";
 }
 
+void PrintMinMax(const ScalarGrid3D& sdf)
+{
+    const auto& size = sdf.GetSize();
+    double min = sdf(0, 0, 0);
+    double max = sdf(0, 0, 0);
+
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(sdf(i, j, k) < min)
+                {
+                    min = sdf(i, j, k);
+                }
+                if(sdf(i, j, k) > max)
+                {
+                    max = sdf(i, j, k);
+                }
+            } 
+        }
+    }
+
+    std::cout << "Min: " << min << "\n";
+    std::cout << "Max: " << max << "\n";
+}
+
 TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 {
     const Vector3<size_t> size(3, 3, 3);
     BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(1, 1, 1));
     PICSimulator simulator(size, domain);
-    FluidMarkers markers(size, AIR_MARK);
+    Array3<int> markers(size, AIR_MARK);
     Array3<double> vel(size, 0);
     vel(0, 0, 0) = 2;
     vel(1, 1, 0) = 8;
-    vel(2, 2, 2) = 4;
+    vel(1, 0, 0) = 4;
 
     std::cout << "Start: \n";
     for(size_t i = 0; i < size.x; i++)
@@ -67,11 +95,12 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
         std::cout << "\n";
     }
     
-    markers(0, 0, 0) = FLUID_MARK;
-    markers(1, 1, 0) = FLUID_MARK;
-    markers(2, 2, 2) = FLUID_MARK;
+    markers(0, 0, 0) = 0;
+    markers(1, 1, 0) = 0;
+    markers(1, 0, 0) = 0;
 
-    simulator.ExtrapolateToRegion(vel, markers, 30);
+    const auto prevVel(vel);
+    ExtrapolateToRegion(prevVel, markers, 30, vel);
 
     std::cout << "\nEnd: \n";
     for(size_t i = 0; i < size.x; i++)
@@ -90,8 +119,8 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    const Vector3<size_t> size(5, 5, 5);
-    BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(5, 5, 5));
+    const Vector3<size_t> size(30, 30, 30);
+    BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(4, 4, 4));
 
     TriangleMesh mesh;
     OBJManager objLoader;
@@ -99,15 +128,17 @@ TEST(PICSimulatorTest, Simulate_test)
 
     PICSimulator simulator(size, domain);
     simulator.InitializeFrom3dMesh(mesh);
+    simulator.SetViscosity(0.0);
 
-    Frame frame(0.1);
+    Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 15; i++)
+    for(size_t i = 0; i < 60; i++)
     {
         std::cout << "Iteration = " << i << "\n";
-        const auto& markers = simulator.GetMarkers();
-        PrintMarkers(markers);
         simulator.AdvanceSingleFrame();
+        simulator.GetSurface(&mesh);
+        objLoader.Save("../../simulation_test_" + std::to_string(i) + ".obj", mesh);
+        mesh.Clear();
         std::cout << "\n\n";
     }
 }

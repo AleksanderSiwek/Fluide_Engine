@@ -31,9 +31,9 @@ TEST(FaceCenteredGrid3DTest, Constructor_test)
     EXPECT_EQ(2, size.x);
     EXPECT_EQ(2, size.y);
     EXPECT_EQ(2, size.z);
-    EXPECT_EQ(3, actualSize.x);
-    EXPECT_EQ(3, actualSize.y);
-    EXPECT_EQ(3, actualSize.z);
+    EXPECT_EQ(2, actualSize.x);
+    EXPECT_EQ(2, actualSize.y);
+    EXPECT_EQ(2, actualSize.z);
     EXPECT_EQ(1, origin.x);
     EXPECT_EQ(1, origin.y);
     EXPECT_EQ(1, origin.z);
@@ -64,16 +64,18 @@ TEST(FaceCenteredGrid3DTest, ValueAtCellCenter_test)
 
 TEST(FaceCenteredGrid3DTest, Sample_test)
 {
-    FaceCenteredGrid3D grid(3, 0, 1, 1);
+    Vector3<size_t> size(3, 3, 3);
+    Vector3<double> spacing(0.5, 0.5, 0.5);
+    FaceCenteredGrid3D grid(size, 0, spacing, 1);
     grid.GetDataXRef().Fill(1);
     grid.GetDataYRef().Fill(2);
     grid.GetDataZRef().Fill(3);
-    grid.GetDataXRef()(2, 2, 2) = 2;
-    grid.GetDataYRef()(2, 2, 2) = 4;
-    grid.GetDataZRef()(2, 2, 2) = 6;
-    Vector3<double> position(1.5, 1.5, 1.5);
+    grid.GetDataXRef()(1, 0, 0) = 3;
+    grid.GetDataYRef()(0, 1, 0) = 4;
+    grid.GetDataZRef()(0, 0, 1) = 6;
+    Vector3<double> position(0.25, 0.25, 0.25);
     Vector3<double> sampledData = grid.Sample(position);
-    EXPECT_EQ(1.5, sampledData.x);
+    EXPECT_EQ(2, sampledData.x);
     EXPECT_EQ(3, sampledData.y);
     EXPECT_EQ(4.5, sampledData.z);
 }

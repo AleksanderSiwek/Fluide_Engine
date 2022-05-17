@@ -17,8 +17,10 @@
 #include "file_systems/file_system.hpp"
 #include "forces/external_force.hpp"
 #include "3d/bounding_box_3d.hpp"
+#include "3d/marching_cubes_solver.hpp"
 #include "3d/collisions.hpp"
 #include "3d/mesh_2_sdf.hpp"
+#include "fluid_solvers/blocked_boundry_condition_solver.hpp"
 
 
 class PICSimulator : public PhysicsAnimation
@@ -45,12 +47,12 @@ class PICSimulator : public PhysicsAnimation
         Vector3<double> GetOrigin() const;
         Vector3<size_t> GetResolution() const;
         Vector3<double> GetGridSpacing() const;
+        void GetSurface(TriangleMesh* mesh);
+        const ScalarGrid3D& GetFluidSdf() const;
 
         double Cfl(double timeIntervalInSceonds) const;
         double MaxCfl() const;
         void SetMaxClf(double maxClf);
-
-        void ExtrapolateToRegion(Array3<double>& array, const FluidMarkers& valid, size_t numberOfIterations);
 
     protected:
         void OnInitialize() override;
@@ -77,6 +79,7 @@ class PICSimulator : public PhysicsAnimation
         std::shared_ptr<DiffusionSolver> _diffusionSolver;
         std::shared_ptr<PressureSolver> _pressureSolver;
         std::shared_ptr<BoundryConditionSolver> _boundryConditionSolver;
+        std::shared_ptr<SurfaceTracker> _surfaceTracker;
         std::vector<std::shared_ptr<VectorField3>> _externalForces;
 
         FileSystem _fileSystem;
@@ -90,7 +93,7 @@ class PICSimulator : public PhysicsAnimation
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
         void BuildSignedDistanceField();
         void ExtrapolateVelocityToAir();  
-        void ExtrapolateIntoCollieder();
+        void ExtrapolateIntoCollider();
 
         void InitializeParticles();
 };

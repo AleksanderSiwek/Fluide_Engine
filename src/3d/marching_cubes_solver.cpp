@@ -30,6 +30,14 @@ void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* me
     const auto& origin = sdf.GetOrigin();
     const auto& invGridSpacing = 1.0 / gridSpacing;
 
+    CalculateXYZMeshPart(sdf, size, vertexMap, mesh);
+    CalculateXYMeshPart(sdf, size, mesh);
+    CalculateYZMeshPart(sdf, size, mesh);
+    CalculateXZMeshPart(sdf, size, mesh);
+}
+
+void MarchingCubesSolver::CalculateXYZMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, MarchingCubeVertexMap& vertexMap, TriangleMesh* mesh)
+{
     int numX = static_cast<int>(size.x);
     int numY = static_cast<int>(size.y);
     int numZ = static_cast<int>(size.z); 
@@ -45,7 +53,51 @@ void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* me
             }
         }
     }
+}
 
+void MarchingCubesSolver::CalculateXYMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, TriangleMesh* mesh)
+{
+    MarchingCubeVertexMap vertexMapBack;
+    MarchingCubeVertexMap vertexMapFront;
+
+    for(int j = 0; j < size.y - 1; j++)
+    {
+        for(int i = 0; i < size.x - 1; i++)
+        {
+            Vector3<int> iter(i, j, 0);
+            SolveXY(sdf, iter, vertexMapBack, vertexMapFront, mesh);
+        }
+    }
+}
+
+void MarchingCubesSolver::CalculateYZMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, TriangleMesh* mesh)
+{
+    MarchingCubeVertexMap vertexMapLeft;
+    MarchingCubeVertexMap vertexMapRight;
+
+    for(int k = 0; k < size.z - 1; k++)
+    {
+        for(int j = 0; j < size.y - 1; j++)
+        {
+            Vector3<int> iter(0, j, k);
+            SolveYZ(sdf, iter, vertexMapLeft, vertexMapRight, mesh);
+        }
+    }
+}
+
+void MarchingCubesSolver::CalculateXZMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, TriangleMesh* mesh)
+{
+    MarchingCubeVertexMap vertexMapDown;
+    MarchingCubeVertexMap vertexMapUp;
+
+    for(int k = 0; k < size.z - 1; k++)
+    {
+        for(int i = 0; i < size.x - 1; i++)
+        {
+            Vector3<int> iter(i, 0, k);
+            SolveXZ(sdf, iter, vertexMapDown, vertexMapUp, mesh);
+        }
+    }
 }
 
 Vector3<double> MarchingCubesSolver::Gradient(const ScalarGrid3D& sdf, int i, int j, int k)
@@ -92,6 +144,18 @@ Vector3<double> MarchingCubesSolver::Gradient(const ScalarGrid3D& sdf, int i, in
     ret.y = 0.5f * invGridSpacing.y * (sdf(i, jp, k) - sdf(i, jm, k));
     ret.z = 0.5f * invGridSpacing.z * (sdf(i, j, kp) - sdf(i, j, km));
     return ret;
+}
+
+size_t MarchingCubesSolver::GlobalVertexId(size_t i, size_t j, size_t k, const Vector3<size_t>& dim, size_t localVertexId)
+{
+    static const int vertexOffset3D[8][3] = {{0, 0, 0}, {2, 0, 0}, {2, 0, 2},
+                                            {0, 0, 2}, {0, 2, 0}, {2, 2, 0},
+                                            {2, 2, 2}, {0, 2, 2}};
+
+    return ((2 * k + vertexOffset3D[localVertexId][2]) * 2 * dim.y +
+        (2 * j + vertexOffset3D[localVertexId][1])) *
+            2 * dim.x +
+        (2 * i + vertexOffset3D[localVertexId][0]);
 }
 
 size_t MarchingCubesSolver::GlobalEdgeId(size_t i, size_t j, size_t k, const Vector3<size_t>& dim, size_t localEdgeId) 
@@ -205,6 +269,7 @@ void MarchingCubesSolver::SolveSingleCube(const ScalarGrid3D& sdf, Vector3<int> 
         }
     }
 
+    // Build triangles
     for(itrTri = 0; itrTri < 5; itrTri++)
     {
         if(_triangleConnectionTable3D[idxFlagSize][3 * itrTri] < 0)
@@ -228,6 +293,275 @@ void MarchingCubesSolver::SolveSingleCube(const ScalarGrid3D& sdf, Vector3<int> 
                 mesh->AddNormal(SafeNormalize(n[_triangleConnectionTable3D[idxFlagSize][triKey]]));
                 mesh->AddVertex(e[_triangleConnectionTable3D[idxFlagSize][triKey]]);
                 vertexMap.insert(std::make_pair(vKey, face[vert]));
+            }
+        }
+        mesh->AddTriangle(Triangle3D_t(face[0], face[1], face[2], mesh->GetNormals().size() - 1));
+    }
+}
+
+void MarchingCubesSolver::SolveXY(const ScalarGrid3D& sdf, Vector3<int> iter, MarchingCubeVertexMap& vertexMapBack, MarchingCubeVertexMap& vertexMapFront, TriangleMesh* mesh)
+{ 
+    const auto& size = sdf.GetSize();
+    std::array<double, 4> data;
+    std::array<size_t, 8> vertexAndEdgeIdx;
+    std::array<Vector3<double>, 4> corners;
+    Vector3<double> normal;
+    BoundingBox3D bbox;
+
+    int i = iter.x;
+    int j = iter.y;
+    
+    // Back
+    int k = 0;
+    normal = Vector3<double>(0, 0, -1);
+
+    data[0] = sdf(i + 1, j, k);
+    data[1] = sdf(i, j, k);
+    data[2] = sdf(i, j + 1, k);
+    data[3] = sdf(i + 1, j + 1, k);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 1);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 0);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 4);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 5);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 0);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 8);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 4);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 9);
+    corners[0] = sdf.GridIndexToPosition(i + 1, j, k);
+    corners[1] = sdf.GridIndexToPosition(i , j, k);
+    corners[2] = sdf.GridIndexToPosition(i, j + 1, k);
+    corners[3] = sdf.GridIndexToPosition(i + 1, j + 1, k);
+
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapBack, mesh);
+
+    // Front
+    k = (int)size.z - 2;
+    normal = Vector3<double>(0, 0, 1);
+
+    data[0] = sdf(i, j, k + 1);
+    data[1] = sdf(i + 1, j, k + 1);
+    data[2] = sdf(i + 1, j + 1, k + 1);
+    data[3] = sdf(i, j + 1, k + 1);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 3);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 2);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 6);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 7);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 2);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 10);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 6);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 11);
+    corners[0] = sdf.GridIndexToPosition(i, j, k + 1);
+    corners[1] = sdf.GridIndexToPosition(i + 1, j, k + 1);
+    corners[2] = sdf.GridIndexToPosition(i + 1, j + 1, k + 1);
+    corners[3] = sdf.GridIndexToPosition(i, j + 1, k + 1);
+    
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapFront, mesh);
+
+}
+
+void MarchingCubesSolver::SolveYZ(const ScalarGrid3D& sdf, Vector3<int> iter, MarchingCubeVertexMap& vertexMapLeft, MarchingCubeVertexMap& vertexMapRight, TriangleMesh* mesh)
+{
+    const auto& size = sdf.GetSize();
+    std::array<double, 4> data;
+    std::array<size_t, 8> vertexAndEdgeIdx;
+    std::array<Vector3<double>, 4> corners;
+    Vector3<double> normal;
+    BoundingBox3D bbox;
+
+    int j = iter.y;
+    int k = iter.z;
+
+    // Left
+    int i = 0;
+    normal = Vector3<double>(-1, 0, 0);
+
+    data[0] = sdf(i, j, k);
+    data[1] = sdf(i, j, k + 1);
+    data[2] = sdf(i, j + 1, k + 1);
+    data[3] = sdf(i, j + 1, k);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 0);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 3);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 7);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 4);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 3);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 11);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 7);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 8);
+    corners[0] = sdf.GridIndexToPosition(i, j, k);
+    corners[1] = sdf.GridIndexToPosition(i, j, k + 1);
+    corners[2] = sdf.GridIndexToPosition(i, j + 1, k + 1);
+    corners[3] = sdf.GridIndexToPosition(i, j + 1, k);
+
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapLeft, mesh);
+
+    // Right
+    i = (int)size.x - 2;
+    normal = Vector3<double>(1, 0, 0);
+
+    data[0] = sdf(i + 1, j, k + 1);
+    data[1] = sdf(i + 1, j, k);
+    data[2] = sdf(i + 1, j + 1, k);
+    data[3] = sdf(i + 1, j + 1, k + 1);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 2);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 1);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 5);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 6);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 1);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 9);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 5);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 10);
+    corners[0] = sdf.GridIndexToPosition(i + 1, j, k + 1);
+    corners[1] = sdf.GridIndexToPosition(i + 1, j, k);
+    corners[2] = sdf.GridIndexToPosition(i + 1, j + 1, k);
+    corners[3] = sdf.GridIndexToPosition(i + 1, j + 1, k + 1);
+    
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapRight, mesh);
+}
+
+void MarchingCubesSolver::SolveXZ(const ScalarGrid3D& sdf, Vector3<int> iter,MarchingCubeVertexMap& vertexMapDown, MarchingCubeVertexMap& vertexMapUp, TriangleMesh* mesh)
+{
+    const auto& size = sdf.GetSize();
+    std::array<double, 4> data;
+    std::array<size_t, 8> vertexAndEdgeIdx;
+    std::array<Vector3<double>, 4> corners;
+    Vector3<double> normal;
+    BoundingBox3D bbox;
+
+    int i = iter.x;
+    int k = iter.z;
+
+    // Down
+    int j = 0;
+    normal = Vector3<double>(0, -1, 0);
+
+    data[0] = sdf(i, j, k);
+    data[1] = sdf(i + 1, j, k);
+    data[2] = sdf(i + 1, j, k + 1);
+    data[3] = sdf(i, j, k + 1);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 0);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 1);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 2);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 3);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 0);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 1);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 2);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 3);
+    corners[0] = sdf.GridIndexToPosition(i, j, k);
+    corners[1] = sdf.GridIndexToPosition(i + 1, j, k);
+    corners[2] = sdf.GridIndexToPosition(i + 1, j, k + 1);
+    corners[3] = sdf.GridIndexToPosition(i, j, k + 1);
+
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapDown, mesh);
+
+    // Up
+    j = (int)size.y - 2;
+    normal = Vector3<double>(0, 1, 0);
+
+    data[0] = sdf(i + 1, j + 1, k);
+    data[1] = sdf(i, j + 1, k);
+    data[2] = sdf(i, j + 1, k + 1);
+    data[3] = sdf(i + 1, j + 1, k + 1);
+    vertexAndEdgeIdx[0] = GlobalVertexId(i, j, k, size, 5);
+    vertexAndEdgeIdx[1] = GlobalVertexId(i, j, k, size, 4);
+    vertexAndEdgeIdx[2] = GlobalVertexId(i, j, k, size, 7);
+    vertexAndEdgeIdx[3] = GlobalVertexId(i, j, k, size, 6);
+    vertexAndEdgeIdx[4] = GlobalEdgeId(i, j, k, size, 4);
+    vertexAndEdgeIdx[5] = GlobalEdgeId(i, j, k, size, 7);
+    vertexAndEdgeIdx[6] = GlobalEdgeId(i, j, k, size, 6);
+    vertexAndEdgeIdx[7] = GlobalEdgeId(i, j, k, size, 5);
+    corners[0] = sdf.GridIndexToPosition(i + 1, j + 1, k);
+    corners[1] = sdf.GridIndexToPosition(i, j + 1, k);
+    corners[2] = sdf.GridIndexToPosition(i, j + 1, k + 1);
+    corners[3] = sdf.GridIndexToPosition(i + 1, j + 1, k + 1);
+    
+    SolveSingleSquare(data, vertexAndEdgeIdx, normal, corners, vertexMapUp, mesh);
+}
+
+void MarchingCubesSolver::SolveSingleSquare(const std::array<double, 4>& data, const std::array<size_t, 8>& vertexAndEdgeIdx, 
+                                            const Vector3<double>& normal, const std::array<Vector3<double>, 4>& corners, 
+                                            MarchingCubeVertexMap& vertexMap, TriangleMesh* mesh)
+{
+    int itrVertex, itrEdge, itrTri;
+    int idxFlags = 0, idxEdgeFlags = 0;
+    int idxVertexOfTheEdge[2];
+
+    double phi0, phi1, alpha;
+    Vector3<double> pos, pos0, pos1;
+    Vector3<double> e[4];
+
+    for (itrVertex = 0; itrVertex < 4; itrVertex++) {
+        if (data[itrVertex] <= _isoValue) {
+            idxFlags |= 1 << itrVertex;
+        }
+    }
+
+    if (idxFlags == 0) {
+        return;
+    }
+
+    idxEdgeFlags = _squareEdgeFlags[idxFlags];
+
+    for (itrEdge = 0; itrEdge < 4; itrEdge++) {
+        if (idxEdgeFlags & (1 << itrEdge)) {
+            idxVertexOfTheEdge[0] = _edgeConnection2D[itrEdge][0];
+            idxVertexOfTheEdge[1] = _edgeConnection2D[itrEdge][1];
+
+            pos0 = corners[idxVertexOfTheEdge[0]];
+            pos1 = corners[idxVertexOfTheEdge[1]];
+
+            phi0 = data[idxVertexOfTheEdge[0]] - _isoValue;
+            phi1 = data[idxVertexOfTheEdge[1]] - _isoValue;
+
+            if (std::fabs(phi0) + std::fabs(phi1) > 1e-12) {
+                alpha = std::fabs(phi0) / (std::fabs(phi0) + std::fabs(phi1));
+            } else {
+                alpha = 0.5f;
+            }
+
+            if (alpha < 0.000001f) {
+                alpha = 0.000001f;
+            }
+            if (alpha > 0.999999f) {
+                alpha = 0.999999f;
+            }
+
+            pos = ((1.f - alpha) * pos0 + alpha * pos1);
+
+            e[itrEdge] = pos;
+        }
+    }
+
+    for (itrTri = 0; itrTri < 4; ++itrTri) 
+    {
+        if (_triangleConnectionTable2D[idxFlags][3 * itrTri] < 0) {
+            break;
+        }
+
+        size_t face[3];
+
+        for (int j = 0; j < 3; ++j) 
+        {
+            int idxVertex = _triangleConnectionTable2D[idxFlags][3 * itrTri + j];
+
+            MarchingCubeVertexHashKey vKey = vertexAndEdgeIdx[idxVertex];
+            MarchingCubeVertexId vId;
+            if (QueryVertexId(vertexMap, vKey, &vId)) 
+            {
+                face[j] = vId;
+            } 
+            else 
+            {
+                face[j] = mesh->GetVerticies().size();
+                mesh->AddNormal(normal);
+                if (idxVertex < 4) 
+                {
+                    mesh->AddVertex(corners[idxVertex]);
+                } 
+                else 
+                {
+                    mesh->AddVertex(e[idxVertex - 4]);
+                }
+                vertexMap.insert(std::make_pair(vKey, face[j]));
             }
         }
         mesh->AddTriangle(Triangle3D_t(face[0], face[1], face[2], mesh->GetNormals().size() - 1));
@@ -573,4 +907,32 @@ const int MarchingCubesSolver::_triangleConnectionTable3D[256][16] = {          
     {  0,  9,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, // 0x203,   1111 1101   O   {  0, 9,  9, 1,  1, 0
     {  0,  3,  8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, // 0x109,   1111 1110   O   {  0, 3,  3, 8,  8, 0
     { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }  // 0x000,   1111 1111   X
+};
+
+const int MarchingCubesSolver::_squareEdgeFlags[16] = {
+    0x000, 0x009, 0x003, 0x00a, 0x006, 0x00f, 0x005, 0x00c,
+    0x00c, 0x005, 0x00f, 0x006, 0x00a, 0x003, 0x009, 0x000
+};
+
+const int MarchingCubesSolver::_edgeConnection2D[4][2] = {
+    {0, 1}, {1, 2}, {2, 3}, {3, 0}
+};
+
+const int MarchingCubesSolver::_triangleConnectionTable2D[16][13] = {
+    { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    {  0,  4,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    {  4,  1,  5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    {  0,  1,  7,  1,  5,  7, -1, -1, -1, -1, -1, -1, -1 },
+    {  5,  2,  6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    {  0,  4,  7,  2,  6,  5, -1, -1, -1, -1, -1, -1, -1 },
+    {  4,  1,  6,  1,  2,  6, -1, -1, -1, -1, -1, -1, -1 },
+    {  0,  1,  7,  7,  1,  6,  1,  2,  6, -1, -1, -1, -1 },
+    {  7,  6,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+    {  0,  4,  6,  0,  6,  3, -1, -1, -1, -1, -1, -1, -1 },
+    {  3,  7,  6,  6,  7,  4,  6,  4,  5,  1,  5,  4, -1 },
+    {  0,  6,  3,  0,  5,  6,  0,  1,  5, -1, -1, -1, -1 },
+    {  7,  5,  3,  5,  2,  3, -1, -1, -1, -1, -1, -1, -1 },
+    {  3,  0,  4,  3,  4,  5,  3,  5,  2, -1, -1, -1, -1 },
+    {  2,  3,  7,  2,  7,  4,  2,  4,  1, -1, -1, -1, -1 },
+    {  0,  1,  3,  1,  2,  3, -1, -1, -1, -1, -1, -1, -1 },
 };

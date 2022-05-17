@@ -15,14 +15,14 @@ TEST(MarchingCubesSolverTest, BuildMesh_test)
     ScalarGrid3D sdf(size, 1, origin, gridSpacing);
     TriangleMesh mesh;
 
+    sdf(0, 1, 1) = -1;
+    sdf(0, 1, 0) = -1;
+    sdf(0, 0, 1) = -1;
+    sdf(0, 0, 0) = -1;
     sdf(1, 1, 1) = -1;
-    sdf(2, 1, 1) = -1;
-    sdf(1, 2, 1) = -1;
-    sdf(2, 2, 1) = -1;
-    sdf(1, 1, 2) = -1;
-    sdf(2, 1, 2) = -1;
-    sdf(1, 2, 2) = -1;
-    sdf(2, 2, 2) = -1;
+    sdf(1, 1, 0) = -1;
+    sdf(1, 0, 1) = -1;
+    sdf(1, 0, 0) = -1;
 
     solver.BuildSurface(sdf, &mesh);
 

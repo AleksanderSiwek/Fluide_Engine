@@ -28,7 +28,9 @@ void JacobiIterationSolver::Solve(LinearSystem* system)
         if(i != 0 && i % _toleranceCheckInterval == 0)
         {
             if(CalculateTolerance(system) < _tolerance)
+            {
                 break;
+            }
         }
     }
 }

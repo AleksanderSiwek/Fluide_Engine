@@ -91,6 +91,11 @@ class Vector3
             return sqrt(x * x + y * y + z * z);
         }
 
+        double GetLengthSquared() const
+        {
+            return x * x + y * y + z * z;
+        }
+
         double Sum() const
         {
             return x + y + z;
@@ -142,6 +147,11 @@ class Vector3
         {
             double val = sqrt(x * x + y * y + z * z);
             return Vector3<T>(x/val, y/val, z/val);
+        }
+
+        Vector3<T> Project(Vector3<T> normal)
+        {
+            return Subtract(normal.Multiply(Dot(normal)));
         }
 
         bool IsEqual(const Vector3<T>& v) const

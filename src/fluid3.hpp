@@ -16,6 +16,9 @@ class Fluid3
 
         FaceCenteredGrid3D velocityGrid;
         FluidMarkers markers;
+        Array3<int> xMarkers;
+        Array3<int> yMarkers;
+        Array3<int> zMarkers;
         ScalarGrid3D sdf;
         ParticleSystem particleSystem;
         double viscosity;

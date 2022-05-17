@@ -22,10 +22,12 @@ void HashGridParticleSearcher::Build(const std::vector<Vector3<double>>& points)
     for(size_t i = 0; i < points.size(); i++)
     {
         _points[i] = points[i];
-        Vector3<int> bucketIdx = GetBucketIndex(points[i]);
-        _buckets[GetHashKeyFromBucketIndex(bucketIdx)].push_back(i);
-        SetLowestBucketIdx(bucketIdx);
-        SetHighestBucketIdx(bucketIdx);
+        size_t key = GetHashKeyFromPosition(points[i]);
+        _buckets[key].push_back(i);
+        // Vector3<int> bucketIdx = GetBucketIndex(points[i]);
+        // _buckets[GetHashKeyFromBucketIndex(bucketIdx)].push_back(i);
+        // SetLowestBucketIdx(bucketIdx);
+        // SetHighestBucketIdx(bucketIdx);
     }
 }
 
@@ -45,8 +47,8 @@ bool HashGridParticleSearcher::HasNearbyPoint(Vector3<double> position, double r
 {
     if(_buckets.empty()) return false;
 
-    std::vector<size_t> nearbyKeys;
-    GetNearbyKeys(position, nearbyKeys, radious);
+    std::array<size_t, 8> nearbyKeys;
+    GetNearbyKeys(position, nearbyKeys);
 
     const double radiousSquared = radious * radious;
 
@@ -71,8 +73,8 @@ std::vector<size_t> HashGridParticleSearcher::GetNearbyPointsIndexes(Vector3<dou
     std::vector<size_t> nearbyIndexes;
     if(_buckets.empty()) return nearbyIndexes;
 
-    std::vector<size_t> nearbyKeys;
-    GetNearbyKeys(position, nearbyKeys, radious);
+    std::array<size_t, 8> nearbyKeys;
+    GetNearbyKeys(position, nearbyKeys);
 
     const double radiousSquared = radious * radious;
 
@@ -99,24 +101,28 @@ void HashGridParticleSearcher::ForEachNearbyPoint(const Vector3<double>& positio
         return;
     }
 
-    std::vector<size_t> nearbyKeys;
-    GetNearbyKeys(position, nearbyKeys, radius);
-    const double radiusSquared = radius * radius;
+    std::array<size_t, 8> nearbyKeys;
+    GetNearbyKeys(position, nearbyKeys);
 
-    for(size_t i = 0; i < nearbyKeys.size(); i++)
+    const double queryRadiusSquared = radius * radius;
+
+    for (int i = 0; i < 8; i++) 
     {
         const auto& bucket = _buckets[nearbyKeys[i]];
-        const size_t numberOfPartcilesInBucket = bucket.size();
-        for(size_t j = 0; j < numberOfPartcilesInBucket; j++)
+        size_t numberOfPointsInBucket = bucket.size();
+
+        for (size_t j = 0; j < numberOfPointsInBucket; ++j) 
         {
-            size_t pointIdx = bucket[j];
-            double distance = (_points[pointIdx] - position).GetLength();
-            if(distance * distance < radiusSquared)
+            size_t pointIndex = bucket[j];
+            double distanceSquared = (_points[pointIndex] - position).GetLengthSquared();
+            if (distanceSquared <= queryRadiusSquared) 
             {
-                callback(pointIdx, _points[pointIdx]);
+                callback(pointIndex, _points[pointIndex]);
             }
         }
+
     }
+
 }
 
 size_t HashGridParticleSearcher::GetHashKeyFromPosition(const Vector3<double>& position) const
@@ -145,22 +151,55 @@ size_t HashGridParticleSearcher::GetHashKeyFromBucketIndex(const Vector3<int>& b
     return static_cast<size_t>((wrappedIdx.z * _size.y + wrappedIdx.y) * _size.x + wrappedIdx.x);
 }
 
-void HashGridParticleSearcher::GetNearbyKeys(const Vector3<double>& position, std::vector<size_t>& nearbyKeys, double radious) const
+void HashGridParticleSearcher::GetNearbyKeys(const Vector3<double>& position, std::array<size_t, 8>& nearbyKeys) const
 {
     Vector3<int> originIndex = GetBucketIndex(position);
-    int searchRadious = static_cast<int>(std::ceil(radious / _gridSpacing));
-    for(int i = originIndex.x - searchRadious; i <= originIndex.x + searchRadious; i++)
+    Vector3<int> nearbyBucketIndices[8];
+
+     for (int i = 0; i < 8; i++) 
     {
-        for(int j = originIndex.y - searchRadious; j <= originIndex.y + searchRadious; j++)
-        {
-            for(int k = originIndex.z - searchRadious; k <= originIndex.z + searchRadious; k++)
-            {
-                Vector3<int> bucketIdx(i, j, k);
-                if(!IsInBucketRange(bucketIdx))
-                    continue;
-                nearbyKeys.push_back(GetHashKeyFromBucketIndex(bucketIdx));    
-            }
-        }
+        nearbyBucketIndices[i] = originIndex;
+    }
+
+    if ((originIndex.x + 0.5f) * _gridSpacing <= position.x) {
+        nearbyBucketIndices[4].x += 1;
+        nearbyBucketIndices[5].x += 1;
+        nearbyBucketIndices[6].x += 1;
+        nearbyBucketIndices[7].x += 1;
+    } else {
+        nearbyBucketIndices[4].x -= 1;
+        nearbyBucketIndices[5].x -= 1;
+        nearbyBucketIndices[6].x -= 1;
+        nearbyBucketIndices[7].x -= 1;
+    }
+
+    if ((originIndex.y + 0.5f) * _gridSpacing <= position.y) {
+        nearbyBucketIndices[2].y += 1;
+        nearbyBucketIndices[3].y += 1;
+        nearbyBucketIndices[6].y += 1;
+        nearbyBucketIndices[7].y += 1;
+    } else {
+        nearbyBucketIndices[2].y -= 1;
+        nearbyBucketIndices[3].y -= 1;
+        nearbyBucketIndices[6].y -= 1;
+        nearbyBucketIndices[7].y -= 1;
+    }
+
+    if ((originIndex.z + 0.5f) * _gridSpacing <= position.z) {
+        nearbyBucketIndices[1].z += 1;
+        nearbyBucketIndices[3].z += 1;
+        nearbyBucketIndices[5].z += 1;
+        nearbyBucketIndices[7].z += 1;
+    } else {
+        nearbyBucketIndices[1].z -= 1;
+        nearbyBucketIndices[3].z -= 1;
+        nearbyBucketIndices[5].z -= 1;
+        nearbyBucketIndices[7].z -= 1;
+    }
+
+    for (int i = 0; i < 8; i++) 
+    {
+        nearbyKeys[i] = GetHashKeyFromBucketIndex(nearbyBucketIndices[i]);
     }
 }
 

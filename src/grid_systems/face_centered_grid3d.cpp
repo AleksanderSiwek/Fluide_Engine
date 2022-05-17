@@ -23,7 +23,7 @@ FaceCenteredGrid3D::~FaceCenteredGrid3D()
 
 Vector3<size_t> FaceCenteredGrid3D::GetSize() const
 {
-    return (_size); //- Vector3<size_t>(1, 1, 1)); // TO DO
+    return _size; //- Vector3<size_t>(1, 1, 1)); // TO DO
 }
 
 Vector3<size_t> FaceCenteredGrid3D::GetActualSize() const
@@ -103,37 +103,10 @@ Vector3<double> FaceCenteredGrid3D::GetElement(size_t i, size_t j, size_t k) con
 
 Vector3<double> FaceCenteredGrid3D::Sample(const Vector3<double>& position) const
 {
-    int i, j, k;
-    double factorX, factorY, factorZ ;
-    i = j = k = 0;
-    factorX = factorY = factorZ = 0;
-
-    Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
-    const auto& size = GetSize();
-    int sizeX = static_cast<int>(size.x);
-    int sizeY = static_cast<int>(size.y);
-    int sizeZ = static_cast<int>(size.z);
-
-    GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
-    GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
-    GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
-
-    size_t ip1 = std::min(i + 1, sizeX - 1);
-    size_t jp1 = std::min(j + 1, sizeY - 1);
-    size_t kp1 = std::min(k + 1, sizeZ - 1);
-
-    return Trilerp<Vector3<double>, double>( GetElement(i, j, k),
-                                    GetElement(ip1, j, k),
-                                    GetElement(i, jp1, k),
-                                    GetElement(ip1, jp1, k),
-                                    GetElement(i, j, kp1),
-                                    GetElement(ip1, j, kp1),
-                                    GetElement(i, jp1, kp1),
-                                    GetElement(ip1, jp1, kp1),
-                                    factorX,
-                                    factorY,
-                                    factorZ);
-    //return 0;
+    double x = SampleArray(position, _dataXOrigin, _dataX);
+    double y = SampleArray(position, _dataYOrigin, _dataY);
+    double z = SampleArray(position, _dataZOrigin, _dataZ);
+    return Vector3<double>(x, y, z);
 }
 
 Vector3<double> FaceCenteredGrid3D::ValueAtCellCenter(size_t i, size_t j, size_t k) const
@@ -150,12 +123,12 @@ Vector3<double> FaceCenteredGrid3D::ValueAtCellCenter(size_t i, size_t j, size_t
 double FaceCenteredGrid3D::DivergenceAtCallCenter(size_t i, size_t j, size_t k) const
 {
     double left = _dataX(i, j, k);
-    double right = i + 1 <  GetSize().x ? _dataX(i + 1, j, k) : 0.0;
+    double right =  i + 1 < _size.x ? _dataX(i + 1, j ,k) : _dataX(i, j ,k);
     double down = _dataY(i, j ,k);
-    double up = j + 1 < GetSize().y ? _dataY(i, j + 1, k) : 0.0;
+    double up = j + 1 < _size.y ? _dataY(i, j + 1, k) :_dataY(i, j, k) ;
     double back = _dataZ(i, j, k);
-    double front = k + 1 < GetSize().z ? _dataZ(i, j, k + 1) : 0.0;
-    return (left - right)/_gridSpacing.x + (down - up)/_gridSpacing.y + (back - front)/_gridSpacing.z;
+    double front = k + 1 < _size.z ? _dataZ(i, j, k + 1) : _dataZ(i, j, k);
+    return (right - left)/_gridSpacing.x + (up - down)/_gridSpacing.y + (front - back)/_gridSpacing.z;
 }
 
 Vector3<double> FaceCenteredGrid3D::CurlAtCellCentre(size_t i, size_t j, size_t k) const
@@ -255,14 +228,72 @@ Array3<double>& FaceCenteredGrid3D::GetDataZRef()
     return _dataZ;
 }
 
+Vector3<double> FaceCenteredGrid3D::GetXPos(size_t i, size_t j, size_t k) const
+{
+    return _dataXOrigin + _gridSpacing * Vector3<double>((double)i, (double)j, (double)k);
+}
+
+Vector3<double> FaceCenteredGrid3D::GetYPos(size_t i, size_t j, size_t k) const
+{
+    return _dataYOrigin + _gridSpacing * Vector3<double>((double)i, (double)j, (double)k);
+}
+
+Vector3<double> FaceCenteredGrid3D::GetZPos(size_t i, size_t j, size_t k) const
+{
+    return _dataZOrigin + _gridSpacing * Vector3<double>((double)i, (double)j, (double)k);
+}
+
+Vector3<double> FaceCenteredGrid3D::GetCellCenterPos(size_t i, size_t j, size_t k) const
+{
+    return _origin + 0.5 * _gridSpacing + Vector3<double>(_gridSpacing.x * i, _gridSpacing.y * j, _gridSpacing.z * k);
+}
+
+
 void FaceCenteredGrid3D::CalculateDataOrigins()
 {
-    _dataXOrigin = GetOrigin() + 0.5 * Vector3<double>(0, GetGridSpacing().y, GetGridSpacing().z);
-    _dataYOrigin = GetOrigin() + 0.5 * Vector3<double>(GetGridSpacing().x, 0, GetGridSpacing().z);
-    _dataZOrigin = GetOrigin() + 0.5 * Vector3<double>(GetGridSpacing().x, GetGridSpacing().y, 0);
+    // _dataXOrigin = GetOrigin() + GetGridSpacing() * Vector3<double>(0, 0.5, 0.5);
+    // _dataYOrigin = GetOrigin() + GetGridSpacing() * Vector3<double>(0.5, 0, 0.5);
+    // _dataZOrigin = GetOrigin() + GetGridSpacing() * Vector3<double>(0.5, 0.5, 0);
+    _dataXOrigin = _origin + _gridSpacing * Vector3<double>(0, 0.5, 0.5);
+    _dataYOrigin = _origin + _gridSpacing * Vector3<double>(0.5, 0, 0.5);
+    _dataZOrigin = _origin + _gridSpacing * Vector3<double>(0.5, 0.5, 0);
 }
 
 void FaceCenteredGrid3D::SetSize(Vector3<size_t> size)
 {
     _size = size; // TO DO + Vector3<size_t>(1);
+}
+
+double FaceCenteredGrid3D::SampleArray(const Vector3<double>& position, const Vector3<double>& origin, const Array3<double>& arr) const
+{
+    int i, j, k;
+    double factorX, factorY, factorZ ;
+    i = j = k = 0;
+    factorX = factorY = factorZ = 0;
+
+    Vector3<double> normalizedPoistion = (position - origin) / _gridSpacing;
+    const auto& size = arr.GetSize();
+    int sizeX = static_cast<int>(size.x);
+    int sizeY = static_cast<int>(size.y);
+    int sizeZ = static_cast<int>(size.z);
+
+    GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
+    GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
+    GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
+
+    size_t ip1 = std::min(i + 1, sizeX - 1);
+    size_t jp1 = std::min(j + 1, sizeY - 1);
+    size_t kp1 = std::min(k + 1, sizeZ - 1);
+
+    return Trilerp<double, double>(arr(i, j, k),
+                                            arr(ip1, j, k),
+                                            arr(i, jp1, k),
+                                            arr(ip1, jp1, k),
+                                            arr(i, j, kp1),
+                                            arr(ip1, j, kp1),
+                                            arr(i, jp1, kp1),
+                                            arr(ip1, jp1, kp1),
+                                            factorX,
+                                            factorY,
+                                            factorZ);
 }

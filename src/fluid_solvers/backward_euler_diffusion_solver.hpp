@@ -22,6 +22,9 @@ class BackwardEulerDiffusionSolver : public DiffusionSolver
         std::shared_ptr<LinearSystemSolver> _systemSolver;
 
         void BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildXMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildYMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildZMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
         void BuildSystem(const Array3<double>& arr, Vector3<double> c);
         void BuildMatrix(Vector3<size_t> size, Vector3<double> c);
         void BuildVectors(const Array3<double>& arr, Vector3<double> c);

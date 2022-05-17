@@ -50,3 +50,28 @@ TEST(HashGridParticleSearcher, GetNearbyPointsIndexes_Test)
         std::cout << "point: (" << particles[nearbyIdx[i]].x << ", " << particles[nearbyIdx[i]].y << ", " << particles[nearbyIdx[i]].z << "), idx: " << nearbyIdx[i] << "\n";
     }
 }
+
+TEST(HashGridParticleSearcher, ForEachNearbyIdx_Test)
+{
+    std::vector<Vector3<double>> points;
+    points.push_back(Vector3<double>(0, 1, 3));
+    points.push_back(Vector3<double>(2, 5, 4));
+    points.push_back(Vector3<double>(-1, 3, 0));
+
+    std::cout << "Test" << "\n";
+    HashGridParticleSearcher searcher(Vector3<size_t>(4, 4, 4), 2.0 * std::sqrt(10));
+    searcher.Build(points);
+
+    int cnt = 0;
+    searcher.ForEachNearbyPoint(Vector3<double>(0, 0, 0), std::sqrt(10.0), [&](size_t i, const Vector3<double>& pt) 
+    {
+            EXPECT_TRUE(i == 0 || i == 2);
+            if (i == 0) {
+                EXPECT_EQ(points[0], pt);
+            } else if (i == 2) {
+                EXPECT_EQ(points[2], pt);
+            }
+            ++cnt;
+        });
+    EXPECT_EQ(2, cnt);   
+}

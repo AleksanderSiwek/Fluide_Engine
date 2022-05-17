@@ -1,6 +1,8 @@
 #ifndef _BOUNDRY_CONDITION_SOLVER_HPP
 #define _BOUNDRY_CONDITION_SOLVER_HPP
 
+#include "../grid_systems/face_centered_grid3d.hpp"
+
 
 class BoundryConditionSolver
 {
@@ -9,7 +11,7 @@ class BoundryConditionSolver
 
         virtual ~BoundryConditionSolver();
 
-        virtual void Solve() = 0;
+        virtual void ConstrainVelocity(FaceCenteredGrid3D& velocity, size_t depth) = 0;
 };
 
 #endif // _BOUNDRY_CONDITION_SOLVER_HPP

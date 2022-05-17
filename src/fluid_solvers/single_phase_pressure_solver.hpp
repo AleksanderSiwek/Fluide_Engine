@@ -5,7 +5,6 @@
 #include "pressure_solver.hpp"
 #include "../linear_system/jacobi_iteration_solver.hpp"
 
-// TO DO: Change _systemSolver to pointer to astract LinearSystemSolver
 // TO DO: REFACTOR!!!!!
 
 class SinglePhasePressureSolver : public PressureSolver
@@ -21,6 +20,8 @@ class SinglePhasePressureSolver : public PressureSolver
         
         void SetLinearSystemSolver(const std::shared_ptr<LinearSystemSolver>& solver);
         
+        Array3<double> GetPressure() const;
+
     private:
         LinearSystem _system;
         std::shared_ptr<LinearSystemSolver> _systemSolver;

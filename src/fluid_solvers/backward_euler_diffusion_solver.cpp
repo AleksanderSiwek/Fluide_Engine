@@ -10,36 +10,23 @@ BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
 
 }
 
-#include <iostream>
 void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     output->Resize(sourceGrid.GetSize());
-    BuildMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
     Vector3<double> spacing = sourceGrid.GetGridSpacing();
     Vector3<double> c = (timeIntervalInSeconds * viscosity) / (spacing * spacing);
 
-    const auto& size = _fluidMarkers.GetSize();
-    for(size_t j = size.y ; j > 0; j--)
-    {
-        for(size_t k = 0; k < size.z; k++)
-        {
-            for(size_t i = 0; i < size.x; i++)
-            {
-                std::cout << ((_fluidMarkers(i, j - 1, k) == FLUID_MARK) ? "F" : "A") << " ";
-            }
-            std::cout << "      ";
-        }
-        std::cout << "\n";
-    }
-
+    BuildXMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataXRef(), c);
     _systemSolver->Solve(&_system);
     output->GetDataXPtr()->Fill(_system.x);
-
+    
+    BuildYMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataYRef(), c);
     _systemSolver->Solve(&_system);
     output->GetDataYPtr()->Fill(_system.x);
 
+    BuildZMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataZRef(), c);
     _systemSolver->Solve(&_system);
     output->GetDataZPtr()->Fill(_system.x);
@@ -55,6 +42,71 @@ void BackwardEulerDiffusionSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, co
             for(size_t k = 0; k < size.z; k++)
             {
                 if(fluidSdf.Sample(sourceGrid.GridIndexToPosition(i, j, k)) < 0)
+                {
+                    _fluidMarkers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    _fluidMarkers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
+}
+
+void BackwardEulerDiffusionSolver::BuildXMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
+{
+    _fluidMarkers.Resize(size);
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(fluidSdf.Sample(sourceGrid.GetXPos(i, j, k)) < 0)
+                {
+                    _fluidMarkers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    _fluidMarkers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
+}
+void BackwardEulerDiffusionSolver::BuildYMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
+{
+    _fluidMarkers.Resize(size);
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(fluidSdf.Sample(sourceGrid.GetYPos(i, j, k)) < 0)
+                {
+                    _fluidMarkers(i, j, k) = FLUID_MARK;
+                }
+                else
+                {
+                    _fluidMarkers(i, j, k) = AIR_MARK;
+                }
+            }
+        }
+    }
+}
+
+void BackwardEulerDiffusionSolver::BuildZMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
+{
+    _fluidMarkers.Resize(size);
+    for(size_t i = 0; i < size.x; i++)
+    {
+        for(size_t j = 0; j < size.y; j++)
+        {
+            for(size_t k = 0; k < size.z; k++)
+            {
+                if(fluidSdf.Sample(sourceGrid.GetZPos(i, j, k)) < 0)
                 {
                     _fluidMarkers(i, j, k) = FLUID_MARK;
                 }

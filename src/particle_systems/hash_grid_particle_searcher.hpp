@@ -2,6 +2,7 @@
 #define _HASH_GRID_PARTICLE_SEARCHER_HPP
 
 #include <algorithm>
+#include <array>
 
 #include "particle_system_searcher.hpp"
 #include "../common/grid3d.hpp"
@@ -23,7 +24,7 @@ class HashGridParticleSearcher : public ParticleSystemSearcher
         size_t GetHashKeyFromPosition(const Vector3<double>& position) const;
         Vector3<int> GetBucketIndex(const Vector3<double>& position) const;
         size_t GetHashKeyFromBucketIndex(const Vector3<int>& bucketIndex) const;
-        void GetNearbyKeys(const Vector3<double>& position, std::vector<size_t>& nearbyKeys, double radious) const;
+        void GetNearbyKeys(const Vector3<double>& position, std::array<size_t, 8>& nearbyKeys) const;
 
     private:
         Vector3<size_t> _size;

@@ -50,6 +50,11 @@ class FaceCenteredGrid3D : public Grid3D
         Array3<double>& GetDataYRef();
         Array3<double>& GetDataZRef();
 
+        Vector3<double> GetXPos(size_t i, size_t j, size_t k) const;
+        Vector3<double> GetYPos(size_t i, size_t j, size_t k) const;
+        Vector3<double> GetZPos(size_t i, size_t j, size_t k) const;
+        Vector3<double> GetCellCenterPos(size_t i, size_t j, size_t k) const;
+
     private:
         Vector3<double> _dataXOrigin;
         Vector3<double> _dataYOrigin;
@@ -63,6 +68,7 @@ class FaceCenteredGrid3D : public Grid3D
 
         void CalculateDataOrigins();
         void SetSize(Vector3<size_t> size);
+        double SampleArray(const Vector3<double>& position, const Vector3<double>& origin, const Array3<double>& arr) const;
 };
 
 #endif // _FACE_CENTERED_GRID3D_HPP

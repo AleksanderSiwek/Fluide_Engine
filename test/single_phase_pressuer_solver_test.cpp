@@ -46,12 +46,85 @@ TEST(SinglePhasePressureSolverTest, Solve_test)
     sdf(2, 3, 2) = -1;
     sdf(3, 3, 2) = -1;
 
-    ___PrintArray3(input.GetDataXRef());
+    //___PrintArray3(input.GetDataXRef());
 
     FaceCenteredGrid3D output;
     solver.Solve(input, sdf, 1, 0.1, &output);
 
-    ___PrintArray3(output.GetDataXRef());
+    //___PrintArray3(output.GetDataXRef());
 //     __PrintArray3(output.GetDataYRef());
 //     __PrintArray3(output.GetDataZRef());
+}
+
+TEST(SinglePhasePressureSolverTest, SolveSinglePhase) 
+{
+    std::cout << "Solve Single Phase\n";
+    Vector3<size_t> size(4, 4, 4);
+    FaceCenteredGrid3D vel(size);
+    ScalarGrid3D sdf(size, -1, Vector3<double>(0, 0, 0));
+    vel.Fill(0, 0, 0);
+
+    for (size_t k = 0; k < 4; ++k) 
+    {
+        for (size_t j = 0; j < 4; ++j) 
+        {
+            for (size_t i = 0; i < 4; ++i) 
+            {
+                if (j == 0 || j == 3) 
+                {
+                    vel.y(i, j, k) = 0.0;
+                } 
+                else 
+                {
+                    vel.y(i, j, k) = 1.0;
+                }
+            }
+        }
+    }
+
+    SinglePhasePressureSolver solver;
+    solver.Solve(vel, sdf, 1, 1, &vel);
+
+    for (size_t k = 0; k < 3; ++k) 
+    {
+        for (size_t j = 0; j < 3; ++j) 
+        {
+            for (size_t i = 0; i < 4; ++i) 
+            {
+                EXPECT_NEAR(0.0, vel.x(i, j, k), 1e-6);
+            }
+        }
+    }
+
+    for (size_t k = 0; k < 3; ++k) 
+    {
+        for (size_t j = 0; j < 4; ++j) 
+        {
+            for (size_t i = 0; i < 3; ++i) 
+            {
+                EXPECT_NEAR(0.0, vel.y(i, j, k), 1e-6);
+            }
+        }
+    }
+
+    for (size_t k = 0; k < 4; ++k) 
+    {
+        for (size_t j = 0; j < 3; ++j) 
+        {
+            for (size_t i = 0; i < 3; ++i) 
+            {
+                EXPECT_NEAR(0.0, vel.z(i, j, k), 1e-6);
+            }
+        }
+    }
+
+    const auto& pressure = solver.GetPressure();
+    for (size_t k = 0; k < 3; ++k) {
+        for (size_t j = 0; j < 2; ++j) {
+            for (size_t i = 0; i < 3; ++i) {
+                EXPECT_NEAR(pressure(i, j + 1, k) - pressure(i, j, k), -1.0,
+                            1e-6);
+            }
+        }
+    }
 }

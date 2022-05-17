@@ -3,7 +3,7 @@
 
 SinglePhasePressureSolver::SinglePhasePressureSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.000001);
+    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.0000000000001);
 }
 
 SinglePhasePressureSolver::~SinglePhasePressureSolver()
@@ -15,12 +15,10 @@ void SinglePhasePressureSolver::Solve(FaceCenteredGrid3D& sourceGrid, const Scal
 {
     output->Resize(sourceGrid.GetSize());
     BuildMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
-
     BuildSystem(sourceGrid, density, timeIntervalInSeconds);
     _systemSolver->Solve(&_system);
     ApplyPressure(sourceGrid, density, timeIntervalInSeconds, output);
 }
-
 
 void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
 {
@@ -31,7 +29,7 @@ void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const
         {
             for(size_t k = 0; k < size.z; k++)
             {
-                if(fluidSdf.Sample(sourceGrid.GridIndexToPosition(i, j, k)) < 0)
+                if(fluidSdf.Sample(sourceGrid.GetCellCenterPos(i, j, k)) < 0)
                 {
                     _fluidMarkers(i, j, k) = FLUID_MARK;
                 }
@@ -44,10 +42,17 @@ void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const
     }
 }
 
+Array3<double> SinglePhasePressureSolver::GetPressure() const
+{
+    return _system.x;
+}
+
+
 void SinglePhasePressureSolver::ApplyPressure(const FaceCenteredGrid3D& input, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     const auto& pressure = _system.x;
-    Vector3<double> scaler = timeIntervalInSeconds / ( density * input.GetGridSpacing());
+    //Vector3<double> scaler = timeIntervalInSeconds / ( density * input.GetGridSpacing());
+    Vector3<double> scaler = 1.0 / input.GetGridSpacing();
     Vector3<size_t> size = input.GetSize();
 
     const auto& inX = input.GetDataXRef();
@@ -57,6 +62,10 @@ void SinglePhasePressureSolver::ApplyPressure(const FaceCenteredGrid3D& input, d
     auto& outY = output->GetDataYRef();
     auto& outZ = output->GetDataZRef();
 
+    outX.Fill(inX);
+    outY.Fill(inY);
+    outZ.Fill(inZ);
+
     for(size_t i = 0; i < size.x; i++)
     {
         for(size_t j = 0; j < size.y; j++)
@@ -65,32 +74,18 @@ void SinglePhasePressureSolver::ApplyPressure(const FaceCenteredGrid3D& input, d
             {
                 if(_fluidMarkers(i, j, k) == FLUID_MARK)
                 {
-                    if(i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK)
+                    if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
                     {
                         outX(i + 1, j, k) = inX(i + 1, j, k) + scaler.x * (pressure(i + 1, j, k) - pressure(i, j, k));
                     }
-                    // else
-                    // {
-                    //     outX(i, j, k) = inX(i, j, k);
-                    // }
-
-                    if(j + 1 < size.y && _fluidMarkers(i , j + 1, k) != BOUNDRY_MARK)
+                    if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
                     {
                         outY(i, j + 1, k) = inY(i, j + 1, k) + scaler.y * (pressure(i, j + 1, k) - pressure(i, j, k));
                     }
-                    // else
-                    // {
-                    //     outY(i, j, k) = inY(i, j, k);
-                    // }
-
-                    if(k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK)
+                    if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
                     {
-                        outZ(i, j, k + 1) = inZ(i, j, k + 1) + scaler.z * (pressure(i, j, k + 1) - pressure(i, j, k ));
+                        outZ(i, j, k + 1) = inZ(i, j, k + 1) + scaler.z * (pressure(i, j, k + 1) - pressure(i, j, k));
                     }
-                    // else
-                    // {
-                    //     outZ(i, j, k) = inZ(i, j, k);
-                    // }
                 }
             }
         }   
@@ -127,32 +122,44 @@ void SinglePhasePressureSolver::BuildSystem(const FaceCenteredGrid3D& input, dou
                 {
                     b(i, j, k) = input.DivergenceAtCallCenter(i, j, k);
 
-                    if(i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK)
+                    if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
                     {
                         row.center += invHSqr.x;
-                        if(_fluidMarkers(i + 1, j, k) == FLUID_MARK)
+                        if (_fluidMarkers(i + 1, j, k) == FLUID_MARK) 
+                        {
                             row.right -= invHSqr.x;
+                        }
                     }
                     if(i > 0 && _fluidMarkers(i - 1, j, k) != BOUNDRY_MARK)
+                    {
                         row.center += invHSqr.x;
-
-                    if(j + 1 < size.y && _fluidMarkers(i , j + 1, k) != BOUNDRY_MARK)
+                    }
+                    
+                    if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
                     {
                         row.center += invHSqr.y;
-                        if(_fluidMarkers(i, j + 1, k) == FLUID_MARK)
+                        if (_fluidMarkers(i, j + 1, k) == FLUID_MARK) 
+                        {
                             row.up -= invHSqr.y;
+                        }
                     }
                     if(j > 0 && _fluidMarkers(i, j - 1, k) != BOUNDRY_MARK)
+                    {
                         row.center += invHSqr.y;
+                    }
 
-                    if(k + 1 < size.z && _fluidMarkers(i , j, k + 1) != BOUNDRY_MARK)
+                    if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
                     {
                         row.center += invHSqr.z;
-                        if(_fluidMarkers(i, j, k + 1) == FLUID_MARK)
+                        if (_fluidMarkers(i, j, k + 1) == FLUID_MARK) 
+                        {
                             row.front -= invHSqr.z;
+                        }
                     }
                     if(k > 0 && _fluidMarkers(i, j, k - 1) != BOUNDRY_MARK)
+                    {
                         row.center += invHSqr.z;
+                    }
                 }
                 else
                 {
