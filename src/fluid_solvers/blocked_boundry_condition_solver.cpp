@@ -269,12 +269,12 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
 void BlockedBoundryConditionSolver::UpdateCollider(Vector3<size_t> size, Vector3<double> gridSpacing, Vector3<double> gridOrigin)
 {
     _colliderSdf.Resize(size);
-    _colliderSdf.Fill(MAX_DISTANCE);
+    _colliderSdf.ParallelFill(MAX_DISTANCE);
     _colliderSdf.SetGridSpacing(gridSpacing);
     _colliderSdf.SetOrigin(gridOrigin);
 
     _colliderVel.Resize(size);
-    _colliderVel.Fill(Vector3<double>(0, 0, 0));
+    _colliderVel.ParallelFill(Vector3<double>(0, 0, 0));
 }
 
 double BlockedBoundryConditionSolver::FractionInsideSdf(double phi0, double phi1) const

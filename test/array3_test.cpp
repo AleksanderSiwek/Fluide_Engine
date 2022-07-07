@@ -101,8 +101,33 @@ TEST(Array3Test, IsEqual_test)
 
 TEST(Array3Test, FillValue_test)
 {
-    Array3<int> arr(2, 2, 2, 1);
+    Vector3<size_t> size(20, 20, 20);
+    Array3<int> arr(size, 0);
+    auto start = std::chrono::steady_clock::now();
+    std::cout << "Fill: ";
     arr.Fill(5);
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    EXPECT_EQ(5, arr.GetElement(0, 0, 0));
+    EXPECT_EQ(5, arr.GetElement(1, 0, 0));
+    EXPECT_EQ(5, arr.GetElement(0, 1, 0));
+    EXPECT_EQ(5, arr.GetElement(1, 1, 0));
+    EXPECT_EQ(5, arr.GetElement(0, 0, 1));
+    EXPECT_EQ(5, arr.GetElement(1, 0, 1));
+    EXPECT_EQ(5, arr.GetElement(0, 1, 1));
+    EXPECT_EQ(5, arr.GetElement(1, 1, 1));
+}
+
+TEST(Array3Test, ParallelFillValue_test)
+{
+    Vector3<size_t> size(20, 20, 20);
+    Array3<int> arr(size, 0);
+    auto start = std::chrono::steady_clock::now();
+    std::cout << "ParallelFill: ";
+    arr.ParallelFill(5);
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
     EXPECT_EQ(5, arr.GetElement(0, 0, 0));
     EXPECT_EQ(5, arr.GetElement(1, 0, 0));
     EXPECT_EQ(5, arr.GetElement(0, 1, 0));
@@ -257,4 +282,16 @@ TEST(Array3Test, SquareBracesSet_test)
     Array3<int> arr(1, 2, 3, 4);
     arr[3] = 8;
     EXPECT_EQ(8, arr[3]);
+}
+
+TEST(Array3Test, ParallelForEachIndex_test)
+{
+    int factor = 5;
+    Vector3<size_t> size(5, 5, 5);
+    Array3<int> arr(size, 1);
+    arr.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        arr(i, j, k) = arr(i, j, k) * factor;
+    });
+    EXPECT_EQ(5, arr(0, 0, 1));
 }

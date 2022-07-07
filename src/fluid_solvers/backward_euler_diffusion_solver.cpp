@@ -1,8 +1,10 @@
 #include "backward_euler_diffusion_solver.hpp"
 
+#include "../linear_system/cuda_jacobi_iteration_solver.hpp"
+
 BackwardEulerDiffusionSolver::BackwardEulerDiffusionSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.000001);
+    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.000001);
 }
 
 BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()

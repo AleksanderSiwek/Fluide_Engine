@@ -119,7 +119,7 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    const Vector3<size_t> size(30, 30, 30);
+    const Vector3<size_t> size(100, 100, 100);
     BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(4, 4, 4));
 
     TriangleMesh mesh;

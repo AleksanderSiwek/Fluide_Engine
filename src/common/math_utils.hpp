@@ -114,77 +114,65 @@ inline void ExtrapolateToRegion(const Array3<double>& input, const Array3<int>& 
     Array3<int> valid0(valid);
     Array3<int> valid1(valid);
     
-    for(int i = 0; i < size.x; i++)
+    valid0.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(int j = 0; j < size.y; j++)
-        {
-            for(int k = 0; k < size.z; k++)
-            {
-                valid0(i, j, k) = valid(i, j, k);
-                output(i, j, k) = input(i, j, k);
-            }
-        }
-    }
+        valid0(i, j, k) = valid(i, j, k);
+        output(i, j, k) = input(i, j, k);
+    });
 
     for (unsigned int iter = 0; iter < numberOfIterations; ++iter)
     {
-        for(int i = 0; i < size.x; i++)
+        valid0.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
         {
-            for(int j = 0; j < size.y; j++)
+            double sum = 0;
+            unsigned int count = 0;
+
+            if (!valid0(i, j, k)) 
             {
-                for(int k = 0; k < size.z; k++)
+                if (i + 1 < size.x && valid0(i + 1, j, k)) 
                 {
-                    double sum = 0;
-                    unsigned int count = 0;
-
-                    if (!valid0(i, j, k)) 
-                    {
-                        if (i + 1 < size.x && valid0(i + 1, j, k)) 
-                        {
-                            sum += output(i + 1, j, k);
-                            ++count;
-                        }
-                        if (i > 0 && valid0(i - 1, j, k)) 
-                        {
-                            sum += output(i - 1, j, k);
-                            ++count;
-                        }
-
-                        if (j + 1 < size.y && valid0(i, j + 1, k)) 
-                        {
-                            sum += output(i, j + 1, k);
-                            ++count;
-                        }
-                        if (j > 0 && valid0(i, j - 1, k)) 
-                        {
-                            sum += output(i, j - 1, k);
-                            ++count;
-                        }
-
-                        if (k + 1 < size.z && valid0(i, j, k + 1)) 
-                        {
-                            sum += output(i, j, k + 1);
-                            ++count;
-                        }
-                        if (k > 0 && valid0(i, j, k - 1)) 
-                        {
-                            sum += output(i, j, k - 1);
-                            ++count;
-                        }
-
-                        if (count > 0) 
-                        {
-                            output(i, j, k)= sum / count;
-                            valid1(i, j, k) = 1;
-                        }
-                    } 
-                    else 
-                    {
-                        valid1(i, j, k) = 1;
-                    }
+                    sum += output(i + 1, j, k);
+                    ++count;
                 }
+                if (i > 0 && valid0(i - 1, j, k)) 
+                {
+                    sum += output(i - 1, j, k);
+                    ++count;
+                }
+
+                if (j + 1 < size.y && valid0(i, j + 1, k)) 
+                {
+                    sum += output(i, j + 1, k);
+                    ++count;
+                }
+                if (j > 0 && valid0(i, j - 1, k)) 
+                {
+                    sum += output(i, j - 1, k);
+                    ++count;
+                }
+
+                if (k + 1 < size.z && valid0(i, j, k + 1)) 
+                {
+                    sum += output(i, j, k + 1);
+                    ++count;
+                }
+                if (k > 0 && valid0(i, j, k - 1)) 
+                {
+                    sum += output(i, j, k - 1);
+                    ++count;
+                }
+
+                if (count > 0) 
+                {
+                    output(i, j, k)= sum / count;
+                    valid1(i, j, k) = 1;
+                }
+            } 
+            else 
+            {
+                valid1(i, j, k) = 1;
             }
-        }
+        });
         valid0.Swap(valid1);
     }
 }

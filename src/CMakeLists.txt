@@ -19,5 +19,16 @@ file(GLOB SOURCES *.cpp
         ./file_systems/*.cpp
         ./3d/*cpp)
 
-add_library(PROJECT_LIB ${SOURCES})
-add_executable(${PROJECT_BINARY} ${HEADERS} ${SOURCES})
+file(GLOB CUDA_SOURCES *.cu 
+        ./common/*.cu 
+        ./forces/*.cu 
+        ./grid_systems/*.cu 
+        ./particle_systems/*.cu 
+        ./fluid_solvers/*.cu 
+        ./linear_system/*.cu 
+        ./file_systems/*.cu
+        ./3d/*cu)
+
+add_library(PROJECT_LIB ${SOURCES} ${CUDA_SOURCES})
+add_executable(${PROJECT_BINARY} ${HEADERS} ${SOURCES} ${CUDA_SOURCES})
+set_target_properties(${PROJECT_BINARY} PROPERTIES LINK_OPTIONS -nodefaultlibs)

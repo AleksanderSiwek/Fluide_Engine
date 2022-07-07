@@ -5,7 +5,12 @@ set(PROJECT_LIB Fluid_Engine_lib)
 set(PROJECT_BINARY Fluid_Engine_binary)
 set(PROJECT_TESTS Fluid_Engine_tests)
 
-project(${PROJECT_NAME} C CXX)
+project(${PROJECT_NAME} LANGUAGES C CXX CUDA)
+
+# CUDA configuration
+enable_language(CUDA)
+#find_package(CUDA REQUIRED)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -gencode arch=compute_22,code=sm_22)
 
 include_directories(googletest/googletest/include/gtest/)
 

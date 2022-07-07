@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "vector3.hpp"
+#include "parallel_utils.hpp"
 
 
 template <typename T>
@@ -48,6 +49,16 @@ class Array3
         std::vector<T>* GetRawDataPtr()
         {
             return &_data;
+        }
+
+        const T& GetElement(size_t i) const
+        {        
+            return _data[i];
+        }
+       
+        T& GetElement(size_t i)
+        {      
+            return _data[i];
         }
 
         const T& GetElement(size_t i, size_t j, size_t k) const
@@ -120,6 +131,51 @@ class Array3
                 else
                     _data[i] = T();
             }
+        }
+
+        void ParallelFill(T value)
+        {
+            parallel_utils::ForEach(_data.size(), [&](size_t i)
+            {
+                _data[i] = value;
+            });
+        }
+
+        void ParallelFill(const Array3& array)
+        {
+            parallel_utils::ForEach(_data.size(), [&](size_t i)
+            {
+                _data[i] = array.GetElement(i);
+            });
+        }
+
+        void ParallelFill(const std::vector<T>& data)
+        {
+            parallel_utils::ForEach(_data.size(), [&](size_t i)
+            {
+                _data[i] = data[i];
+            });
+        }
+
+        template <typename Callback>
+        void ForEachIndex(Callback& functor)
+        {
+            for(size_t i = 0; i < _size.x; i++)
+            {
+                for(size_t j = 0; j < _size.y; j++)
+                {
+                    for(size_t k = 0; k < _size.z; k++)
+                    {
+                        functor(i, j, k);
+                    }
+                }
+            }
+        }
+
+        template <typename Callback>
+        void ParallelForEachIndex(Callback& functor)
+        {
+            parallel_utils::ForEach3(_size.x, _size.y, _size.z, functor);
         }
 
         void Swap(Array3<T>& arr)
@@ -220,7 +276,7 @@ class Array3
         void CreateTable(const T& initialValue)
         {
             _data = std::vector<T>(_size.x * _size.y * _size.z);
-            Fill(initialValue);
+            ParallelFill(initialValue);
         }
 };
 

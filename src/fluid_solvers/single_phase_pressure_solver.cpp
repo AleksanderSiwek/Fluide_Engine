@@ -1,9 +1,10 @@
 #include "single_phase_pressure_solver.hpp"
 
+#include "../linear_system/cuda_jacobi_iteration_solver.hpp"
 
 SinglePhasePressureSolver::SinglePhasePressureSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.0000000000001);
+    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.0000000000001);
 }
 
 SinglePhasePressureSolver::~SinglePhasePressureSolver()
@@ -62,34 +63,28 @@ void SinglePhasePressureSolver::ApplyPressure(const FaceCenteredGrid3D& input, d
     auto& outY = output->GetDataYRef();
     auto& outZ = output->GetDataZRef();
 
-    outX.Fill(inX);
-    outY.Fill(inY);
-    outZ.Fill(inZ);
+    outX.ParallelFill(inX);
+    outY.ParallelFill(inY);
+    outZ.ParallelFill(inZ);
 
-    for(size_t i = 0; i < size.x; i++)
+    _fluidMarkers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if(_fluidMarkers(i, j, k) == FLUID_MARK)
         {
-            for(size_t k = 0; k < size.z; k++)
+            if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
             {
-                if(_fluidMarkers(i, j, k) == FLUID_MARK)
-                {
-                    if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
-                    {
-                        outX(i + 1, j, k) = inX(i + 1, j, k) + scaler.x * (pressure(i + 1, j, k) - pressure(i, j, k));
-                    }
-                    if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
-                    {
-                        outY(i, j + 1, k) = inY(i, j + 1, k) + scaler.y * (pressure(i, j + 1, k) - pressure(i, j, k));
-                    }
-                    if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
-                    {
-                        outZ(i, j, k + 1) = inZ(i, j, k + 1) + scaler.z * (pressure(i, j, k + 1) - pressure(i, j, k));
-                    }
-                }
+                outX(i + 1, j, k) = inX(i + 1, j, k) + scaler.x * (pressure(i + 1, j, k) - pressure(i, j, k));
             }
-        }   
-    }
+            if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
+            {
+                outY(i, j + 1, k) = inY(i, j + 1, k) + scaler.y * (pressure(i, j + 1, k) - pressure(i, j, k));
+            }
+            if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
+            {
+                outZ(i, j, k + 1) = inZ(i, j, k + 1) + scaler.z * (pressure(i, j, k + 1) - pressure(i, j, k));
+            }
+        }
+    });
 }
 
 void SinglePhasePressureSolver::SetLinearSystemSolver(const std::shared_ptr<LinearSystemSolver>& solver)

@@ -1,6 +1,7 @@
 #include "pic_simulator.hpp"
 
 #include <random>
+#include <concurrent_vector.h>  
 
 // TO DO: DELETE
 #include <iostream>
@@ -26,7 +27,7 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _fluid.density = 1;
 
     _maxClf = 5.0;
-    _particlesPerBlok = 128;
+    _particlesPerBlok = 16;
 
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
@@ -44,23 +45,17 @@ FluidMarkers PICSimulator::GetMarkers() const
     FluidMarkers markers;
     const auto& size = _fluid.sdf.GetSize();
     markers.Resize(size);
-    for(size_t i = 0; i < size.x; i++)
+    markers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if(_fluid.sdf(i, j, k) < 0)
         {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                if(_fluid.sdf(i, j, k) < 0)
-                {
-                    markers(i, j, k) = FLUID_MARK;
-                }
-                else
-                {
-                    markers(i, j, k) = AIR_MARK;
-                }
-            }
+            markers(i, j, k) = FLUID_MARK;
         }
-    }
+        else
+        {
+            markers(i, j, k) = AIR_MARK;
+        }
+    });
     return markers;
 }
 
@@ -165,25 +160,20 @@ const ScalarGrid3D& PICSimulator::GetFluidSdf() const
     return _fluid.sdf;
 }
 
-
 double PICSimulator::Cfl(double timeIntervalInSceonds) const
 {
     const auto& size = _fluid.velocityGrid.GetSize();
     const auto& gridSpacing = _fluid.velocityGrid.GetGridSpacing();
+    const auto& velocityGrid = _fluid.velocityGrid;
     double maxVelocity = 0.0;
-    for(size_t i = 0; i < size.x; i++)
+    velocityGrid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0; k < size.z; k++)
-            {
-               Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k) + timeIntervalInSceonds * Vector3<double>(0.0, -9.8, 0.0); 
-               maxVelocity = std::max(maxVelocity, vect.x);
-               maxVelocity = std::max(maxVelocity, vect.y);
-               maxVelocity = std::max(maxVelocity, vect.z);
-            }
-        }
-    }
+        Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k) + timeIntervalInSceonds * Vector3<double>(0.0, -9.8, 0.0); 
+        maxVelocity = std::max(maxVelocity, vect.x);
+        maxVelocity = std::max(maxVelocity, vect.y);
+        maxVelocity = std::max(maxVelocity, vect.z);
+    });
+
     double minGridSize = std::min(gridSpacing.x, std::min(gridSpacing.y, gridSpacing.z));
     return maxVelocity * timeIntervalInSceonds / minGridSize;
 }
@@ -205,9 +195,8 @@ void PICSimulator::OnInitialize()
 
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
+    auto globalStart = std::chrono::steady_clock::now();
     BeginAdvanceTimeStep(timeIntervalInSeconds);
-    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
-    std::cout << "Marker: " << _fluid.markers(10, 5, 10) << "\n";
     std::cout << std::setprecision(5) << std::fixed;
 
     auto start = std::chrono::steady_clock::now();
@@ -215,45 +204,30 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
     ComputeExternalForces(timeIntervalInSeconds);
     auto end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-    std::cout << "Vel(10, 10, 10): " << _fluid.velocityGrid.x(10, 10, 10) << ", " << _fluid.velocityGrid.y(10, 10, 10) << ", " <<  _fluid.velocityGrid.z(10, 10, 10) << "\n";
 
     std::cout << "Diffusion: ";
     start = std::chrono::steady_clock::now();
     ComputeDiffusion(timeIntervalInSeconds);
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-    std::cout << "Vel(10, 10, 10): " << _fluid.velocityGrid.x(10, 10, 10) << ", " << _fluid.velocityGrid.y(10, 10, 10) << ", " <<  _fluid.velocityGrid.z(10, 10, 10) << "\n";
 
     std::cout << "Pressure: ";
     start = std::chrono::steady_clock::now();
     ComputePressure(timeIntervalInSeconds);
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-    std::cout << "Vel(10, 10, 10): " << _fluid.velocityGrid.x(10, 10, 10) << ", " << _fluid.velocityGrid.y(10, 10, 10) << ", " <<  _fluid.velocityGrid.z(10, 10, 10) << "\n";
-    
 
     std::cout << "Advection: ";
     start = std::chrono::steady_clock::now();
     ComputeAdvection(timeIntervalInSeconds);
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-    std::cout << "Vel(10, 10, 10): " << _fluid.velocityGrid.x(10, 10, 10) << ", " << _fluid.velocityGrid.y(10, 10, 10) << ", " <<  _fluid.velocityGrid.z(10, 10, 10) << "\n";
-
 
     EndAdvanceTimeStep(timeIntervalInSeconds);
 
-    const auto& positions1 = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
-    const auto& velocities1 = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
-    uint64_t xCnt = 0;
-    uint64_t yCnt = 0;
-    uint64_t zCnt = 0;
-    for(size_t i = 0; i < positions1.size(); i++)
-    {
-        xCnt += positions1[i].x != 0 ? 1 : 0;
-        yCnt += positions1[i].y != 0 ? 1 : 0;
-        zCnt += positions1[i].z != 0 ? 1 : 0;
-    }
-    std::cout << "Counters: " << xCnt << ", " << yCnt << ", " << zCnt << "\n";
+    auto globalEnd = std::chrono::steady_clock::now();
+    std::cout << "Iteration enden in: ";
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(globalEnd - globalStart).count() / 1000000000.0 << " [s]\n";
 
     //PrintGrid(_fluid.velocityGrid.GetDataYRef());
 }
@@ -320,10 +294,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
     auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
     auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
     
-    std::cout << "\n  Before Position[0]: " << particlesPos[0].x << ", " << particlesPos[0].y << ", " << particlesPos[0].z << "\n";
-    std::cout << "  Before Velocity[0]: " << particlesVel[0].x << ", " << particlesVel[0].y << ", " << particlesVel[0].z << "\n";
-
-    for(size_t i = 0; i < numberOfParticles; i++)
+    _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
     {
         Vector3<double> pt0 = particlesPos[i];
         Vector3<double> pt1 = pt0;
@@ -371,10 +342,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 
         particlesPos[i] = pt1;
         particlesVel[i] = vel;
-    }
-
-    std::cout << "  Position[0]: " << particlesPos[0].x << ", " << particlesPos[0].y << ", " << particlesPos[0].z << "\n";
-    std::cout << "  Velocity[0]: " << particlesVel[0].x << ", " << particlesVel[0].y << ", " << particlesVel[0].z << "\n";
+    });
 }
 
 void PICSimulator::ApplyBoundryCondition()
@@ -407,7 +375,7 @@ void PICSimulator::TransferParticles2Grid()
     auto& velocities = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
 
     // Clear velocity to zero
-    flow.Fill(0, 0, 0);
+    flow.ParallelFill(0, 0, 0);
 
     // Weighted-average velocity
     auto& u = flow.GetDataXRef();
@@ -422,11 +390,11 @@ void PICSimulator::TransferParticles2Grid()
     xMarkers.Resize(size);
     yMarkers.Resize(size);
     zMarkers.Resize(size);
-    xMarkers.Fill(0);
-    yMarkers.Fill(0);
-    zMarkers.Fill(0);
+    xMarkers.ParallelFill(0);
+    yMarkers.ParallelFill(0);
+    zMarkers.ParallelFill(0);
 
-    for (size_t i = 0; i < numberOfParticles; ++i) 
+    _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
     {
         std::array<Vector3<size_t>, 8> indices;
         std::array<double, 8> weights;
@@ -454,49 +422,31 @@ void PICSimulator::TransferParticles2Grid()
             wWeight(indices[j]) += weights[j];
             zMarkers(indices[j]) = 1;
         }
-    }
+    });
 
-    for(size_t i = 0; i < size.x; i++)
+    u.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if (uWeight(i, j, k) > 0.0) 
         {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                if (uWeight(i, j, k) > 0.0) 
-                {
-                    u(i, j, k) /= uWeight(i, j, k);
-                }
-            }
+            u(i, j, k) /= uWeight(i, j, k);
         }
-    }
+    });
     
-    for(size_t i = 0; i < size.x; i++)
+    v.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if (vWeight(i, j, k) > 0.0) 
         {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                if (vWeight(i, j, k) > 0.0) 
-                {
-                    v(i, j, k) /= vWeight(i, j, k);
-                }
-            }
+            v(i, j, k) /= vWeight(i, j, k);
         }
-    }
+    });
 
-    for(size_t i = 0; i < size.x; i++)
+    w.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if (wWeight(i, j, k) > 0.0) 
         {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                if (wWeight(i, j, k) > 0.0) 
-                {
-                    w(i, j, k) /= wWeight(i, j, k);
-                }
-            }
+            w(i, j, k) /= wWeight(i, j, k);
         }
-    }
+    });
 }
 
 void PICSimulator::TransferGrid2Particles()
@@ -506,10 +456,10 @@ void PICSimulator::TransferGrid2Particles()
     auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
     auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
 
-    for(size_t i = 0; i < numberOfParticles; i++)
+    _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
     {
         particlesVel[i] = velGrid.Sample(particlesPos[i]);
-    }
+    });
 }
 
 void PICSimulator::BuildSignedDistanceField()
@@ -524,22 +474,16 @@ void PICSimulator::BuildSignedDistanceField()
 
     particleSystem.BuildSearcher(PARTICLE_POSITION_KEY, 2 * radious); 
     auto searcher = particleSystem.GetSearcher();
-    for(size_t i = 0; i < sdfSize.x; i++)
+    sdf.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0;  j < sdfSize.y; j++)
+        Vector3<double> gridPosition = sdf.GridIndexToPosition(i, j, k);
+        double minDistance = sdfBandRadious;
+        searcher->ForEachNearbyPoint(gridPosition, sdfBandRadious, [&](size_t, const Vector3<double>& x)
         {
-            for(size_t k = 0; k < sdfSize.z ; k++)
-            {
-                Vector3<double> gridPosition = sdf.GridIndexToPosition(i, j, k);
-                double minDistance = sdfBandRadious;
-                searcher->ForEachNearbyPoint(gridPosition, sdfBandRadious, [&](size_t, const Vector3<double>& x)
-                {
-                    minDistance = std::min(minDistance, Collisions::DistanceToPoint(gridPosition, x));
-                });
-                sdf(i, j, k) = minDistance - radious;
-            }
-        }
-    }
+            minDistance = std::min(minDistance, Collisions::DistanceToPoint(gridPosition, x));
+        });
+        sdf(i, j, k) = minDistance - radious;
+    });
     ExtrapolateIntoCollider();
 }
 
@@ -601,30 +545,23 @@ void PICSimulator::InitializeParticles()
     const auto& gridSpacing = velGrid.GetGridSpacing();
     auto& particles = _fluid.particleSystem;
 
-    std::vector<Vector3<double>> positions;
+    concurrency::concurrent_vector<Vector3<double>> positions;
 
-    for(size_t i = 0; i < size.x; i++)
+    velGrid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        const Vector3<double> pos = velGrid.GridIndexToPosition(i, j, k);
+        if(sdf.Sample(pos) < 0)
         {
-            for(size_t k = 0; k < size.z; k++)
+            // Initialzie particles
+            for(size_t particleIdx = 0; particleIdx < _particlesPerBlok; particleIdx++)
             {
-                const Vector3<double> pos = velGrid.GridIndexToPosition(i, j, k);
-                if(sdf.Sample(pos) < 0)
-                {
-                    // Initialzie particles
-                    for(size_t particleIdx = 0; particleIdx < _particlesPerBlok; particleIdx++)
-                    {
-                        double x = gridSpacing.x * ( (double)std::rand() / (double)RAND_MAX ) + pos.x;
-                        double y = gridSpacing.y * ( (double)std::rand() / (double)RAND_MAX ) + pos.y;
-                        double z = gridSpacing.z * ( (double)std::rand() / (double)RAND_MAX ) + pos.z;
-                        positions.push_back(Vector3<double>(x, y, z));
-                    }
-                }
+                double x = gridSpacing.x * ( (double)std::rand() / (double)RAND_MAX ) + pos.x;
+                double y = gridSpacing.y * ( (double)std::rand() / (double)RAND_MAX ) + pos.y;
+                double z = gridSpacing.z * ( (double)std::rand() / (double)RAND_MAX ) + pos.z;
+                positions.push_back(Vector3<double>(x, y, z));
             }
         }
-    }
+    });
 
-    std::cout << "Particle number: " << positions.size() << "\n";
-    particles.AddParticles(positions.size(), positions, PARTICLE_POSITION_KEY);
+    particles.AddParticles(positions.size(), std::vector<Vector3<double>>(positions.begin(), positions.end()), PARTICLE_POSITION_KEY);
 }

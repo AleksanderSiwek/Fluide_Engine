@@ -31,7 +31,7 @@ class MarchingCubesSolver : public SurfaceTracker
         void CalculateXZMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, TriangleMesh* mesh);
         void SolveXY(const ScalarGrid3D& sdf, Vector3<int> iter, MarchingCubeVertexMap& vertexMapBack, MarchingCubeVertexMap& vertexMapFront, TriangleMesh* mesh);
         void SolveYZ(const ScalarGrid3D& sdf, Vector3<int> iter, MarchingCubeVertexMap& vertexMapLeft, MarchingCubeVertexMap& vertexMapRight, TriangleMesh* mesh);
-        void SolveXZ(const ScalarGrid3D& sdf, Vector3<int> iter,MarchingCubeVertexMap& vertexMapDown, MarchingCubeVertexMap& vertexMapUp, TriangleMesh* mesh);   
+        void SolveXZ(const ScalarGrid3D& sdf, Vector3<int> iter, MarchingCubeVertexMap& vertexMapDown, MarchingCubeVertexMap& vertexMapUp, TriangleMesh* mesh);   
 
         Vector3<double> Gradient(const ScalarGrid3D& sdf, int i, int j, int k);
         size_t GlobalVertexId(size_t i, size_t j, size_t k, const Vector3<size_t>& dim, size_t localVertexId);

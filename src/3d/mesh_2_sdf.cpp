@@ -22,7 +22,7 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
     // TO DO: Clamping
     Vector3<size_t> size = sdf.GetSize();
     Vector3<double> gridSpacing = sdf.GetGridSpacing();
-    sdf.Fill(sdf.GetGridSpacing().Max() * (size.x + size.y + size.z));
+    sdf.ParallelFill(sdf.GetGridSpacing().Max() * (size.x + size.y + size.z));
 
     const auto& verticies = mesh.GetVerticies();
     const auto& triangles = mesh.GetTriangles();
@@ -46,22 +46,15 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
         // int jMax = Clamp<int>(int(fmax(vertexPos1.y, fmax(vertexPos2.y, vertexPos3.y))) + bandwidth, 0, (int)size.y - 1);
         // int kMax = Clamp<int>(int(fmax(vertexPos1.z, fmax(vertexPos2.z, vertexPos3.z))) + bandwidth, 0, (int)size.z - 1);
 
-        for(int i = 0; i < size.x; i++)
+        parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
         {
-            for(int j = 0; j < size.y; j++)
-            {
-                for(int k = 0; k < size.z; k++)
-                {
-                    double distance = Collisions::DistanceToTriangle(sdf.GridIndexToPosition(i, j, k), 
-                                                                        verticies[tris.point1Idx], 
-                                                                        verticies[tris.point2Idx], 
-                                                                        verticies[tris.point3Idx]);
-                    if(distance < sdf(i, j ,k))
-                        sdf(i, j, k) = distance;
-                }
-            }
-        }
-
+            double distance = Collisions::DistanceToTriangle(sdf.GridIndexToPosition(i, j, k), 
+                                                                verticies[tris.point1Idx], 
+                                                                verticies[tris.point2Idx], 
+                                                                verticies[tris.point3Idx]);
+            if(distance < sdf(i, j ,k))
+                sdf(i, j, k) = distance;
+        });
     }
 }
 
@@ -70,16 +63,9 @@ void Mesh2SDF::ComputeSigns(const TriangleMesh& mesh, ScalarGrid3D& sdf)
     Vector3<size_t> size = sdf.GetSize(); 
     Array3<bool> isInside(size.x, size.y, size.z, false);
 
-    for(int i = 0; i < size.x; i++)
+    parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
     {
-        for(int j = 0; j < size.y; j++)
-        {
-            for(int k = 0; k < size.z; k++)
-            {
                 if(mesh.IsInside(sdf.GridIndexToPosition(i, j, k)))
                     sdf(i, j, k) = sdf(i, j, k) * -1.0;
-            }
-        }
-    }
-
+    });
 }

@@ -55,6 +55,32 @@ void ParticleSystem::AddVectorValue(std::string name, Vector3<double> initialVal
     _vectorData.emplace_back(_numberOfParticles, initialValue);
 }
 
+void ParticleSystem::ForEachParticle(std::function<void(size_t)>& functor)
+{
+    for(size_t i = 0; i < _numberOfParticles; i++)
+    {
+        functor(i);
+    }
+}
+
+void ParticleSystem::ForEachParticle(const std::function<void(size_t)>& functor) const
+{
+    for(size_t i = 0; i < _numberOfParticles; i++)
+    {
+        functor(i);
+    }
+}
+
+void ParticleSystem::ParallelForEachParticle(std::function<void(size_t)>& functor)
+{
+    parallel_utils::ForEach(_numberOfParticles, functor);
+}
+
+void ParticleSystem::ParallelForEachParticle(const std::function<void(size_t)>& functor) const
+{
+    parallel_utils::ConstForEach(_numberOfParticles, functor);
+}
+
 void ParticleSystem::SetScalarValues(size_t idx, std::vector<double> values)
 {
     _scalarData[idx] = values;

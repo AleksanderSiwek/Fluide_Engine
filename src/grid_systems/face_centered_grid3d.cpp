@@ -59,6 +59,13 @@ void FaceCenteredGrid3D::Fill(const Array3<double>& dataX, const Array3<double>&
     _dataZ.Fill(dataZ);
 }
 
+void FaceCenteredGrid3D::ParallelFill(double xVal, double yVal, double zVal)
+{
+    _dataX.ParallelFill(xVal);
+    _dataY.ParallelFill(yVal);
+    _dataZ.ParallelFill(zVal);
+}
+
 bool FaceCenteredGrid3D::IsEqual(const FaceCenteredGrid3D& grid)
 {
     if(_dataX.IsEqual(grid.GetDataX()) && _dataY.IsEqual(grid.GetDataY()) && _dataZ.IsEqual(grid.GetDataZ()))
@@ -145,6 +152,44 @@ Vector3<double> FaceCenteredGrid3D::CurlAtCellCentre(size_t i, size_t j, size_t 
     double z_val = 0.5 * ((right.y - left.y) / _gridSpacing.x - (up.x - down.x) / _gridSpacing.y);
 
     return Vector3<double>(x_val, y_val, z_val);
+}
+
+void FaceCenteredGrid3D::ForEachIndex(std::function<void(size_t, size_t, size_t)>& functor)
+{
+    for(size_t i = 0; i < _size.x; i++)
+    {
+        for(size_t j = 0; j < _size.y; j++)
+        {
+            for(size_t k = 0; k < _size.z; k++)
+            {
+                functor(i, j, k);
+            }
+        }
+    }
+}
+
+void FaceCenteredGrid3D::ForEachIndex(const std::function<void(size_t, size_t, size_t)>& functor) const
+{
+    for(size_t i = 0; i < _size.x; i++)
+    {
+        for(size_t j = 0; j < _size.y; j++)
+        {
+            for(size_t k = 0; k < _size.z; k++)
+            {
+                functor(i, j, k);
+            }
+        }
+    }
+}
+
+void FaceCenteredGrid3D::ParallelForEachIndex(std::function<void(size_t, size_t, size_t)>& functor)
+{
+    parallel_utils::ForEach3(_size.x, _size.y, _size.z, functor);
+}
+
+void FaceCenteredGrid3D::ParallelForEachIndex(const std::function<void(size_t, size_t, size_t)>& functor) const
+{
+    parallel_utils::ConstForEach3(_size.x, _size.y, _size.z, functor);
 }
 
 void FaceCenteredGrid3D::SetGridSpacing(Vector3<double> gridSpacing)

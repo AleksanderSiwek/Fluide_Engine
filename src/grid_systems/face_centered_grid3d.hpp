@@ -16,6 +16,7 @@ class FaceCenteredGrid3D : public Grid3D
         void Resize(Vector3<size_t> size);
         void Fill(double xVal, double yVal, double zVal);
         void Fill(const Array3<double>& dataX, const Array3<double>& dataY, const Array3<double>& dataZ);
+        void ParallelFill(double xVal, double yVal, double zVal);
         bool IsEqual(const FaceCenteredGrid3D& grid);
         double& x(size_t i, size_t j, size_t k);
         const double& x(size_t i, size_t j, size_t k) const; 
@@ -28,7 +29,12 @@ class FaceCenteredGrid3D : public Grid3D
         Vector3<double> ValueAtCellCenter(size_t i, size_t j, size_t k) const;
         double DivergenceAtCallCenter(size_t i, size_t j, size_t k) const;
         Vector3<double> CurlAtCellCentre(size_t i, size_t j, size_t k) const;
-
+        
+        void ParallelForEachIndex(std::function<void(size_t, size_t, size_t)>& functor);
+        void ParallelForEachIndex(const std::function<void(size_t, size_t, size_t)>& functor) const;
+        void ForEachIndex(std::function<void(size_t, size_t, size_t)>& functor);
+        void ForEachIndex(const std::function<void(size_t, size_t, size_t)>& functor) const;
+        
         void SetGridSpacing(Vector3<double> gridSpacing) override;
 
         Vector3<size_t> GetSize() const;
