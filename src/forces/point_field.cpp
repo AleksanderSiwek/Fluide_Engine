@@ -25,18 +25,6 @@ Vector3<double> PointField::Sample(const Vector3<double>& position) const
     return _strength * (GetDistance(position) / _strengthFallOff) * GetDirection(position);
 }
 
-Vector3<double> PointField::Divergence(const Vector3<double>& position) const
-{
-    // TO DO
-    return 0;
-}
-
-Vector3<double> PointField::Curl(const Vector3<double>& position) const
-{
-    // TO DO
-    return 0;
-}
-
 void PointField::SetStrength(double strength)
 {
     _strength = strength;

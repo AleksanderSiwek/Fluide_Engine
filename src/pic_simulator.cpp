@@ -33,6 +33,7 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
     _boundryConditionSolver = std::make_shared<BlockedBoundryConditionSolver>();
+
 }
 
 PICSimulator::~PICSimulator()
@@ -103,6 +104,11 @@ void PICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
     converter.Build(mesh, _fluid.sdf);
 
     InitializeParticles();
+}
+
+void PICSimulator::AddExternalForce(const std::shared_ptr<ExternalForce> newForce)
+{
+    _externalForces.push_back(newForce);
 }
 
 void PICSimulator::SetViscosity(double viscosity)
@@ -196,13 +202,18 @@ void PICSimulator::OnInitialize()
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
     auto globalStart = std::chrono::steady_clock::now();
-    BeginAdvanceTimeStep(timeIntervalInSeconds);
     std::cout << std::setprecision(5) << std::fixed;
 
     auto start = std::chrono::steady_clock::now();
+    std::cout << "BeginAdvanceTimeStep: ";
+    BeginAdvanceTimeStep(timeIntervalInSeconds);
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
     std::cout << "External forces: ";
     ComputeExternalForces(timeIntervalInSeconds);
-    auto end = std::chrono::steady_clock::now();
+    end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 
     std::cout << "Diffusion: ";
@@ -223,10 +234,14 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 
+    start = std::chrono::steady_clock::now();
+    std::cout << "EndAdvanceTimeStep: ";
     EndAdvanceTimeStep(timeIntervalInSeconds);
+    end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 
     auto globalEnd = std::chrono::steady_clock::now();
-    std::cout << "Iteration enden in: ";
+    std::cout << "Iteration ended in: ";
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(globalEnd - globalStart).count() / 1000000000.0 << " [s]\n";
 
     //PrintGrid(_fluid.velocityGrid.GetDataYRef());
@@ -250,17 +265,9 @@ void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 {
     const auto& size = _fluid.velocityGrid.GetSize();
     auto& velGrid = _fluid.velocityGrid;
-    for(size_t i = 0; i < size.x; i++)
+    for(size_t forceIdx = 0; forceIdx < _externalForces.size(); forceIdx++)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                velGrid.x(i, j, k) += timeIntervalInSeconds * 0;
-                velGrid.y(i, j, k) += timeIntervalInSeconds * (-9.81);
-                velGrid.z(i, j, k) += timeIntervalInSeconds * 0;
-            }
-        }
+        _externalForces[forceIdx]->ApplyExternalForce(velGrid, timeIntervalInSeconds);
     }
     ApplyBoundryCondition();
 }

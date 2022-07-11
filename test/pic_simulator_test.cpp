@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include "../src/pic_simulator.hpp"
 #include "../src/3d/obj_manager.hpp"
-
+#include "../src/forces/directional_field.hpp"
+#include "../src/forces/point_field.hpp"
 
 void __PrintArray3(const Array3<double>& input)
 {
@@ -119,20 +120,22 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    const Vector3<size_t> size(100, 100, 100);
+    const Vector3<size_t> size(80, 80, 80);
     BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(4, 4, 4));
 
     TriangleMesh mesh;
     OBJManager objLoader;
-    objLoader.Load("../../../test/test_cases/test_cube_222.obj", &mesh);
+    objLoader.Load("../../../test/test_cases/water_wall.obj", &mesh);
 
     PICSimulator simulator(size, domain);
+    simulator.AddExternalForce(std::make_shared<DirectionalField>(Vector3<double>(0, -9.81, 0)));
+    simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
     simulator.InitializeFrom3dMesh(mesh);
     simulator.SetViscosity(0.0);
 
     Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 60; i++)
+    for(size_t i = 0; i < 150; i++)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();

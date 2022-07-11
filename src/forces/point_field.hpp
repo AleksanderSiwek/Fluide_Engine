@@ -2,10 +2,9 @@
 #define POINT_FIELD_HPP
 
 #include "external_force.hpp"
-#include "../common/vector_field3.hpp"
 
 
-class PointField : public VectorField3
+class PointField : public ExternalForce
 {
     public:
         PointField(Vector3<double> origin = 0, double strength = 0, double strengthFallOff = 1);
@@ -14,8 +13,6 @@ class PointField : public VectorField3
         ~PointField();
 
         Vector3<double> Sample(const Vector3<double>& position) const override;
-        Vector3<double> Divergence(const Vector3<double>& position) const override;
-        Vector3<double> Curl(const Vector3<double>& position) const override;
 
         void SetPosition(Vector3<double> origin);
         void SetStrength(double strength);

@@ -24,23 +24,17 @@ void SinglePhasePressureSolver::Solve(FaceCenteredGrid3D& sourceGrid, const Scal
 void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
 {
     _fluidMarkers.Resize(size);
-    for(size_t i = 0; i < size.x; i++)
+    _fluidMarkers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        if(fluidSdf.Sample(sourceGrid.GetCellCenterPos(i, j, k)) < 0)
         {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                if(fluidSdf.Sample(sourceGrid.GetCellCenterPos(i, j, k)) < 0)
-                {
-                    _fluidMarkers(i, j, k) = FLUID_MARK;
-                }
-                else
-                {
-                    _fluidMarkers(i, j, k) = AIR_MARK;
-                }
-            }
+            _fluidMarkers(i, j, k) = FLUID_MARK;
         }
-    }
+        else
+        {
+            _fluidMarkers(i, j, k) = AIR_MARK;
+        }
+    });
 }
 
 Array3<double> SinglePhasePressureSolver::GetPressure() const
@@ -102,66 +96,60 @@ void SinglePhasePressureSolver::BuildSystem(const FaceCenteredGrid3D& input, dou
     auto& A = _system.A;
     auto& b = _system.b;
 
-    for(size_t i = 0; i < size.x; i++)
+    _system.A.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
+        auto& row = A(i, j, k);
+
+        row.center = row.right =  row.up = row.front = 0.0;
+        b(i, j, k) = 0.0;
+
+        if(_fluidMarkers(i, j, k) == FLUID_MARK)
         {
-            for(size_t k = 0; k < size.z; k++)
+            b(i, j, k) = input.DivergenceAtCallCenter(i, j, k);
+
+            if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
             {
-                auto& row = A(i, j, k);
-
-                row.center = row.right =  row.up = row.front = 0.0;
-                b(i, j, k) = 0.0;
-
-                if(_fluidMarkers(i, j, k) == FLUID_MARK)
+                row.center += invHSqr.x;
+                if (_fluidMarkers(i + 1, j, k) == FLUID_MARK) 
                 {
-                    b(i, j, k) = input.DivergenceAtCallCenter(i, j, k);
-
-                    if (i + 1 < size.x && _fluidMarkers(i + 1, j, k) != BOUNDRY_MARK) 
-                    {
-                        row.center += invHSqr.x;
-                        if (_fluidMarkers(i + 1, j, k) == FLUID_MARK) 
-                        {
-                            row.right -= invHSqr.x;
-                        }
-                    }
-                    if(i > 0 && _fluidMarkers(i - 1, j, k) != BOUNDRY_MARK)
-                    {
-                        row.center += invHSqr.x;
-                    }
-                    
-                    if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
-                    {
-                        row.center += invHSqr.y;
-                        if (_fluidMarkers(i, j + 1, k) == FLUID_MARK) 
-                        {
-                            row.up -= invHSqr.y;
-                        }
-                    }
-                    if(j > 0 && _fluidMarkers(i, j - 1, k) != BOUNDRY_MARK)
-                    {
-                        row.center += invHSqr.y;
-                    }
-
-                    if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
-                    {
-                        row.center += invHSqr.z;
-                        if (_fluidMarkers(i, j, k + 1) == FLUID_MARK) 
-                        {
-                            row.front -= invHSqr.z;
-                        }
-                    }
-                    if(k > 0 && _fluidMarkers(i, j, k - 1) != BOUNDRY_MARK)
-                    {
-                        row.center += invHSqr.z;
-                    }
-                }
-                else
-                {
-                    row.center = 1.0;
+                    row.right -= invHSqr.x;
                 }
             }
+            if(i > 0 && _fluidMarkers(i - 1, j, k) != BOUNDRY_MARK)
+            {
+                row.center += invHSqr.x;
+            }
+            
+            if (j + 1 < size.y && _fluidMarkers(i, j + 1, k) != BOUNDRY_MARK) 
+            {
+                row.center += invHSqr.y;
+                if (_fluidMarkers(i, j + 1, k) == FLUID_MARK) 
+                {
+                    row.up -= invHSqr.y;
+                }
+            }
+            if(j > 0 && _fluidMarkers(i, j - 1, k) != BOUNDRY_MARK)
+            {
+                row.center += invHSqr.y;
+            }
+
+            if (k + 1 < size.z && _fluidMarkers(i, j, k + 1) != BOUNDRY_MARK) 
+            {
+                row.center += invHSqr.z;
+                if (_fluidMarkers(i, j, k + 1) == FLUID_MARK) 
+                {
+                    row.front -= invHSqr.z;
+                }
+            }
+            if(k > 0 && _fluidMarkers(i, j, k - 1) != BOUNDRY_MARK)
+            {
+                row.center += invHSqr.z;
+            }
         }
-    }
+        else
+        {
+            row.center = 1.0;
+        }
+    });
 }
 

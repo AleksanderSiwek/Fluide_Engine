@@ -37,6 +37,8 @@ class PICSimulator : public PhysicsAnimation
 
         void InitializeFrom3dMesh(const TriangleMesh& mesh);
 
+        void AddExternalForce(const std::shared_ptr<ExternalForce> newForce);
+
         void SetViscosity(double viscosity);
         void SetDensity(double density);
         void SetDiffusionSolver(std::shared_ptr<DiffusionSolver> diffusionSolver);
@@ -80,7 +82,7 @@ class PICSimulator : public PhysicsAnimation
         std::shared_ptr<PressureSolver> _pressureSolver;
         std::shared_ptr<BoundryConditionSolver> _boundryConditionSolver;
         std::shared_ptr<SurfaceTracker> _surfaceTracker;
-        std::vector<std::shared_ptr<VectorField3>> _externalForces;
+        std::vector<std::shared_ptr<ExternalForce>> _externalForces;
 
         FileSystem _fileSystem;
         double _maxClf;

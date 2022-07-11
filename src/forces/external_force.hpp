@@ -11,13 +11,8 @@ class ExternalForce
 
         virtual ~ExternalForce() {}
 
-        void ApplyExternalForce(FaceCenteredGrid3D& values)
-        {
-            OnApplyExternalForce(values);
-        }
-
-    protected:
-        virtual void OnApplyExternalForce(FaceCenteredGrid3D& values) = 0;
+        virtual void ApplyExternalForce(FaceCenteredGrid3D& velGrid, const double timeIntervalInSeconds);
+        virtual Vector3<double> Sample(const Vector3<double>& position) const = 0;
 };
 
 #endif // EXTERNAL_FORCE_HPP
