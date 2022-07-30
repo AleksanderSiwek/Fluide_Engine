@@ -108,6 +108,14 @@ class Vector3
             return z;
         }
 
+        Vector3<T> Abs() const
+        {
+            T _x = std::abs(x);
+            T _y = std::abs(y);
+            T _z = std::abs(z);
+            return Vector3<T>(_x, _y, _z);
+        }
+
         T AbsMax() const
         {
             T _x = std::abs(x);

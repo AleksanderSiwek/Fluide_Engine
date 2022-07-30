@@ -26,6 +26,8 @@ TEST(SinglePhasePressureSolverTest, Solve_test)
     const Vector3<size_t> size(6, 6, 3);
     FaceCenteredGrid3D input(size, 0, 1, 1);
     ScalarGrid3D sdf(size, 1, Vector3<double>(0, 0, 0));
+    ScalarGrid3D colliderSdf(size, 1, Vector3<double>(0, 0, 0));
+
     SinglePhasePressureSolver solver;
 
     auto& xData = input.GetDataXRef();
@@ -49,7 +51,7 @@ TEST(SinglePhasePressureSolverTest, Solve_test)
     //___PrintArray3(input.GetDataXRef());
 
     FaceCenteredGrid3D output;
-    solver.Solve(input, sdf, 1, 0.1, &output);
+    solver.Solve(input, sdf, colliderSdf, 1, 0.1, &output);
 
     //___PrintArray3(output.GetDataXRef());
 //     __PrintArray3(output.GetDataYRef());
@@ -62,6 +64,7 @@ TEST(SinglePhasePressureSolverTest, SolveSinglePhase)
     Vector3<size_t> size(4, 4, 4);
     FaceCenteredGrid3D vel(size);
     ScalarGrid3D sdf(size, -1, Vector3<double>(0, 0, 0));
+    ScalarGrid3D colliderSdf(size, 1, Vector3<double>(0, 0, 0));
     vel.Fill(0, 0, 0);
 
     for (size_t k = 0; k < 4; ++k) 
@@ -83,7 +86,7 @@ TEST(SinglePhasePressureSolverTest, SolveSinglePhase)
     }
 
     SinglePhasePressureSolver solver;
-    solver.Solve(vel, sdf, 1, 1, &vel);
+    solver.Solve(vel, sdf, colliderSdf, 1, 1, &vel);
 
     for (size_t k = 0; k < 3; ++k) 
     {

@@ -1,5 +1,9 @@
 #include "physics_animation.hpp"
 
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+
 PhysicsAnimation::PhysicsAnimation()
 {
     Initialize();
@@ -58,14 +62,27 @@ void PhysicsAnimation::OnUpdate(const Frame& frame)
 
 void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 {
+    auto globalStart = std::chrono::steady_clock::now();
+    std::cout << std::setprecision(5) << std::fixed;
+    std::cout << "========== ITERATION ==========\n";
+
     _currentTime = _currentFrame.GetTimeInSeconds();
 
-    const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / NumberOfSubTimeSteps(timeIntervalInSeconds);
+    const double numberOfSubTimesteps = NumberOfSubTimeSteps(timeIntervalInSeconds);
+    std::cout << "Number of simulation steps: " << numberOfSubTimesteps << "\n\n";
+
+    const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / numberOfSubTimesteps;
     for(size_t i = 0; i < NumberOfSubTimeSteps(timeIntervalInSeconds); i++)
     {
         OnAdvanceTimeStep(subTimestepInterval);
         _currentTime += subTimestepInterval;
+        std::cout << "\n";
     }
+
+    auto globalEnd = std::chrono::steady_clock::now();
+    std::cout << "Iteration ended in: ";
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(globalEnd - globalStart).count() / 1000000000.0 << " [s]\n";
+    std::cout << "================================\n\n";
 }
 
 void PhysicsAnimation::Initialize()

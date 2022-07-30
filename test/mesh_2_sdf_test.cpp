@@ -8,7 +8,7 @@ TEST(MeshSignedDistanceFieldTest, DistanceField_Test)
     OBJManager objManager;
     TriangleMesh mesh;
     objManager.Load("../../../test/test_cases/test_cube.obj", &mesh);
-    ScalarGrid3D sdf(Vector3<size_t>(5, 5, 5), 0, 0, 1);
+    ScalarGrid3D sdf(Vector3<size_t>(10, 10, 10), 0, 0, 1);
     Mesh2SDF sdfBuilder;
     sdfBuilder.Build(mesh, sdf);
 
@@ -22,8 +22,11 @@ TEST(MeshSignedDistanceFieldTest, DistanceField_Test)
                 auto pos = sdf.GridIndexToPosition(i, j, k);
                 // std::cout << "sdf(" << i << ", " << j << ", " << k << ") = " << sdf(i, j, k) << "\n";
                 // std::cout << "position = " << pos.x << ", " << pos.y << ", " << pos.z << "\n\n";
+                std::cout << sdf(i, j, k) << ", ";
             }
+            std::cout << "\n";
         }
+        std::cout << "\n\n";
     }
 }
 

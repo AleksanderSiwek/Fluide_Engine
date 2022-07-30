@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <cmath>
 
 PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain)
     : _domain(domain)
@@ -19,7 +20,7 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _fluid.velocityGrid.SetOrigin(domain.GetOrigin());
     _fluid.sdf.Resize(gridSize);
     _fluid.sdf.SetGridSpacing(gridSpacing);
-    _fluid.sdf.SetOrigin(domain.GetOrigin() + gridSpacing/2.0);
+    _fluid.sdf.SetOrigin(domain.GetOrigin() + gridSpacing / 2.0);
     _fluid.markers.Resize(gridSize);
     _fluid.particleSystem.AddVectorValue(PARTICLE_POSITION_KEY);
     _fluid.particleSystem.AddVectorValue(PARTICLE_VELOCITY_KEY);
@@ -27,13 +28,13 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _fluid.density = 1;
 
     _maxClf = 5.0;
-    _particlesPerBlok = 16;
+    _particlesPerBlok = 12;
 
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
     _boundryConditionSolver = std::make_shared<BlockedBoundryConditionSolver>();
-
+    _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, gridSpacing, domain.GetOrigin()));
 }
 
 PICSimulator::~PICSimulator()
@@ -131,6 +132,16 @@ void PICSimulator::SetPressureSolver(std::shared_ptr<PressureSolver> pressureSol
     _pressureSolver = pressureSolver;
 }
 
+void PICSimulator::SetColliders(std::shared_ptr<ColliderCollection> colliders)
+{
+    _boundryConditionSolver->SetColliders(colliders);
+}
+
+void PICSimulator::AddCollider(std::shared_ptr<Collider> collider)
+{
+    _boundryConditionSolver->AddCollider(collider);
+}
+
 double PICSimulator::GetViscosity() const
 {
     return _fluid.viscosity;
@@ -174,7 +185,7 @@ double PICSimulator::Cfl(double timeIntervalInSceonds) const
     double maxVelocity = 0.0;
     velocityGrid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k) + timeIntervalInSceonds * Vector3<double>(0.0, -9.8, 0.0); 
+        Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k).Abs() + timeIntervalInSceonds * Vector3<double>(0.0, -9.8, 0.0); 
         maxVelocity = std::max(maxVelocity, vect.x);
         maxVelocity = std::max(maxVelocity, vect.y);
         maxVelocity = std::max(maxVelocity, vect.z);
@@ -201,8 +212,7 @@ void PICSimulator::OnInitialize()
 
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
-    auto globalStart = std::chrono::steady_clock::now();
-    std::cout << std::setprecision(5) << std::fixed;
+    std::cout << "Number of particles: " << _fluid.particleSystem.GetParticleNumber() << "\n";
 
     auto start = std::chrono::steady_clock::now();
     std::cout << "BeginAdvanceTimeStep: ";
@@ -239,16 +249,11 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
     EndAdvanceTimeStep(timeIntervalInSeconds);
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-
-    auto globalEnd = std::chrono::steady_clock::now();
-    std::cout << "Iteration ended in: ";
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(globalEnd - globalStart).count() / 1000000000.0 << " [s]\n";
-
-    //PrintGrid(_fluid.velocityGrid.GetDataYRef());
 }
 
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
 {
+    _boundryConditionSolver->BuildCollider();
     TransferParticles2Grid();
     BuildSignedDistanceField();
     ExtrapolateVelocityToAir();
@@ -260,7 +265,6 @@ void PICSimulator::OnEndAdvanceTimeStep(double timeIntervalInSeconds)
 
 }
 
-// TO DO: do it for custom forces
 void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 {
     const auto& size = _fluid.velocityGrid.GetSize();
@@ -275,14 +279,14 @@ void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 void PICSimulator::ComputeDiffusion(double timeIntervalInSeconds)
 {
     FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
-    _diffusionSolver->Solve(currentVelocity, _fluid.sdf, timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
+    _diffusionSolver->Solve(currentVelocity, _fluid.sdf, _boundryConditionSolver->GetColliderSdf(), timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
     ApplyBoundryCondition();
 }
 
 void PICSimulator::ComputePressure(double timeIntervalInSeconds)
 {
     FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
-    _pressureSolver->Solve(currentVelocity, _fluid.sdf, timeIntervalInSeconds, _fluid.density, &(_fluid.velocityGrid));
+    _pressureSolver->Solve(currentVelocity, _fluid.sdf, _boundryConditionSolver->GetColliderSdf(), timeIntervalInSeconds, _fluid.density, &(_fluid.velocityGrid));
     ApplyBoundryCondition();
 }
 
@@ -349,6 +353,19 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 
         particlesPos[i] = pt1;
         particlesVel[i] = vel;
+    });
+
+    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
+    _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
+    {
+        if(colliderSdf.Sample(particlesPos[i]) < 0)
+        {
+            auto& colliders = _boundryConditionSolver->GetColliders();
+            for(size_t i = 0; i < colliders.size(); i++)
+            {
+                colliders[i]->ResolveCollision(0.0, 0.0, &particlesPos[i], &particlesVel[i]);
+            }
+        }
     });
 }
 
@@ -491,7 +508,7 @@ void PICSimulator::BuildSignedDistanceField()
         });
         sdf(i, j, k) = minDistance - radious;
     });
-    ExtrapolateIntoCollider();
+    //ExtrapolateIntoCollider();
 }
 
 void PICSimulator::ExtrapolateVelocityToAir()
@@ -524,23 +541,19 @@ void PICSimulator::ExtrapolateIntoCollider()
     size_t depth = static_cast<size_t>(std::ceil(_maxClf));
     const auto prevSdf(sdf);
     Array3<int> valid(size, 0);
-    // for(size_t i = 0; i < size.x; i++)
-    // {
-    //     for(size_t j = 0; j < size.y; j++)
-    //     {
-    //         for(size_t k = 0; k < size.z; k++)
-    //         {
-    //             if(sdf(i, j, k) < 0)
-    //             {
-    //                 valid(i, j, k) = 0;
-    //             }
-    //             else
-    //             {
-    //                 valid(i, j, k) = 1;
-    //             }
-    //         }
-    //     }
-    // }
+    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
+    valid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        Vector3<double> position = sdf.GridIndexToPosition(i, j, k);
+        if(colliderSdf.Sample(position) < 0)
+        {
+            valid(i, j, k) = 0;
+        }
+        else
+        {
+            valid(i, j, k) = 1;
+        }
+    });
     ExtrapolateToRegion(prevSdf, valid, depth, sdf);
 }
 

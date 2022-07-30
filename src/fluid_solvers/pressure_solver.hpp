@@ -12,7 +12,7 @@ class PressureSolver
 
         virtual ~PressureSolver();
 
-        virtual void Solve(FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
+        virtual void Solve(FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;
 };
 
 #endif // PRESSURE_SOLVER_HPP

@@ -51,6 +51,7 @@ TEST(ForwardEulerDiffusionSolverTest, Solve_test)
     const Vector3<size_t> size(6, 6, 3);
     FaceCenteredGrid3D input(size, 0, 1, 1);
     ScalarGrid3D sdf(size, 1, Vector3<double>(0, 0, 0));
+    ScalarGrid3D sdfCollider(size, 1, Vector3<double>(0, 0, 0));
     ForwardEulerDiffusionSolver solver;
 
     auto& xData = input.GetDataXRef();
@@ -74,7 +75,7 @@ TEST(ForwardEulerDiffusionSolverTest, Solve_test)
     PrintArray3(input.GetDataXRef());
 
     FaceCenteredGrid3D output;
-    solver.Solve(input, sdf, 0.5, 0.1, &output);
+    solver.Solve(input, sdf, sdfCollider, 0.5, 0.1, &output);
 
     PrintArray3(output.GetDataXRef());
 }

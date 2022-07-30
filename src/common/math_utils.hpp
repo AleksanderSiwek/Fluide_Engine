@@ -13,7 +13,18 @@ constexpr double PI = 3.14159265358979323846;
 template <typename T>
 inline T Clamp(const T& val, const T& maxVal, const T& minVal)
 {
-    return std::max(minVal, std::min(val, maxVal));
+    if(val < minVal)
+    {
+        return minVal;
+    }
+    else if(val > maxVal)
+    {
+        return maxVal;
+    }
+    else
+    {
+        return val;
+    }
 }
 
 template <typename S, typename T>

@@ -1,6 +1,7 @@
 #include "collisions.hpp"
 #include <iostream>
 
+#define MAX_DISTANCE 1.7976931348623157E+30
 
 double Collisions::DistanceToPoint(Vector3<double> p1, Vector3<double> p2)
 {
@@ -214,4 +215,23 @@ double Collisions::DistanceToTriangle(Vector3<double> point, Vector3<double> p1,
 {
     return DistanceToPoint(point, ClossestPointOnTriangle(point, p1, p2, p3));
 }
+
+size_t Collisions::ClosestTriangleIdx(Vector3<double> point, const TriangleMesh& mesh)
+{
+    const auto& triangles = mesh.GetTriangles();
+    const auto& verts = mesh.GetVerticies();
+    double closestDistnace = MAX_DISTANCE;
+    size_t idx = 0;
+    for(size_t i = 0; i < triangles.size(); i++)
+    {
+        double distance = DistanceToTriangle(point, verts[triangles[i].point1Idx], verts[triangles[i].point2Idx], verts[triangles[i].point3Idx]);
+        if(distance < closestDistnace)
+        {
+            closestDistnace = distance;
+            idx = i;
+        }
+    }
+    return idx;
+}
+
 

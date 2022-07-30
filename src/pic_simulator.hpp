@@ -20,6 +20,7 @@
 #include "3d/marching_cubes_solver.hpp"
 #include "3d/collisions.hpp"
 #include "3d/mesh_2_sdf.hpp"
+#include "3d/collider_collection.hpp"
 #include "fluid_solvers/blocked_boundry_condition_solver.hpp"
 
 
@@ -38,11 +39,13 @@ class PICSimulator : public PhysicsAnimation
         void InitializeFrom3dMesh(const TriangleMesh& mesh);
 
         void AddExternalForce(const std::shared_ptr<ExternalForce> newForce);
+        void AddCollider(std::shared_ptr<Collider> collider);
 
         void SetViscosity(double viscosity);
         void SetDensity(double density);
         void SetDiffusionSolver(std::shared_ptr<DiffusionSolver> diffusionSolver);
         void SetPressureSolver(std::shared_ptr<PressureSolver> pressureSolver);
+        void SetColliders(std::shared_ptr<ColliderCollection> colliders);
 
         double GetViscosity() const;
         double GetDensity() const;

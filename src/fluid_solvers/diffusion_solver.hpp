@@ -12,7 +12,7 @@ class DiffusionSolver
 
         virtual ~DiffusionSolver();
 
-        virtual void Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;;
+        virtual void Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) = 0;;
 };
 
 #endif // DIFFUSION_SOLVER_HPP

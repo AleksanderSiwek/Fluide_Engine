@@ -3,6 +3,8 @@
 #include "../src/3d/obj_manager.hpp"
 #include "../src/forces/directional_field.hpp"
 #include "../src/forces/point_field.hpp"
+#include "../src/3d/collider_collection.hpp"
+#include "../src/3d/triangle_mesh_collider.hpp"
 
 void __PrintArray3(const Array3<double>& input)
 {
@@ -96,12 +98,12 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
         std::cout << "\n";
     }
     
-    markers(0, 0, 0) = 0;
-    markers(1, 1, 0) = 0;
-    markers(1, 0, 0) = 0;
+    markers(0, 0, 0) = 1;
+    markers(1, 1, 0) = 1;
+    markers(1, 0, 0) = 1;
 
     const auto prevVel(vel);
-    ExtrapolateToRegion(prevVel, markers, 30, vel);
+    ExtrapolateToRegion(prevVel, markers, 1, vel);
 
     std::cout << "\nEnd: \n";
     for(size_t i = 0; i < size.x; i++)
@@ -120,28 +122,45 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    const Vector3<size_t> size(80, 80, 80);
-    BoundingBox3D domain(Vector3<double>(0, 0, 0), Vector3<double>(4, 4, 4));
+    const Vector3<size_t> size(60, 60, 60);
+    Vector3<double> domainOrigin(0, 0, 0);
+    Vector3<double> domainSize(4, 4, 4);
+    BoundingBox3D domain(domainOrigin, domainSize);
 
-    TriangleMesh mesh;
+    // Load fluid mesh
+    TriangleMesh fluidMesh;
     OBJManager objLoader;
-    objLoader.Load("../../../test/test_cases/water_wall.obj", &mesh);
+    objLoader.Load("../../../test/test_cases/monkey_2.obj", &fluidMesh);
 
+    // Setup colliders
+    TriangleMesh colliderMesh_1;
+    TriangleMesh colliderMesh_2;
+    objLoader.Load("../../../test/test_cases/collider_1.obj", &colliderMesh_1);
+    //objLoader.Load("../../../test/test_cases/collider_2.obj", &colliderMesh_2);
+    auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_1);
+    //auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_2);
+
+    // Setup Simulator
     PICSimulator simulator(size, domain);
     simulator.AddExternalForce(std::make_shared<DirectionalField>(Vector3<double>(0, -9.81, 0)));
-    simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
-    simulator.InitializeFrom3dMesh(mesh);
-    simulator.SetViscosity(0.0);
+    //simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
+    simulator.InitializeFrom3dMesh(fluidMesh);
+    simulator.SetViscosity(0);
+    //simulator.AddCollider(collider_1);
+    simulator.SetMaxClf(1);
+    //simulator.AddCollider(collider_2);
+
+    TriangleMesh tmpMesh = colliderMesh_1;
 
     Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 150; i++)
+    for(size_t i = 0; i < 120; i++)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();
-        simulator.GetSurface(&mesh);
-        objLoader.Save("../../simulation_test_" + std::to_string(i) + ".obj", mesh);
-        mesh.Clear();
-        std::cout << "\n\n";
+        simulator.GetSurface(&tmpMesh);
+        objLoader.Save("../../simulation_test_" + std::to_string(i) + ".obj", tmpMesh);
+        tmpMesh.Clear();
+        //tmpMesh = colliderMesh_1;
     }
 }

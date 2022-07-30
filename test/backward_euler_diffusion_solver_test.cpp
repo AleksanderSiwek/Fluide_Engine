@@ -59,6 +59,7 @@ TEST(BackwardEulerDiffusionSolverTest, Solve_test)
     const Vector3<size_t> size(6, 6, 3);
     FaceCenteredGrid3D input(size, 0, 1, 1);
     ScalarGrid3D sdf(size, 1, Vector3<double>(0, 0, 0));
+    ScalarGrid3D sdfCollider(size, 1, Vector3<double>(0, 0, 0));
     BackwardEulerDiffusionSolver solver;
 
     auto& xData = input.GetDataXRef();
@@ -82,7 +83,7 @@ TEST(BackwardEulerDiffusionSolverTest, Solve_test)
     _PrintArray3(input.GetDataXRef());
 
     FaceCenteredGrid3D output;
-    solver.Solve(input, sdf, 0.5, 0.1, &output);
+    solver.Solve(input, sdf, sdfCollider, 0.5, 0.1, &output);
 
     _PrintArray3(output.GetDataXRef());
 }
@@ -93,7 +94,8 @@ TEST(BackwardEulerDiffusionSolverTest, Solve2_test)
     const Vector3<size_t> size(5, 5, 5);
     FaceCenteredGrid3D input(size, 0, 1, 0);
     ScalarGrid3D sdf(size, 0, Vector3<double>(0.5, 0.5, 0.5));
-    SinglePhasePressureSolver solver;
+    ScalarGrid3D sdfCollider(size, 1, Vector3<double>(0, 0, 0));
+    BackwardEulerDiffusionSolver solver;
 
     auto& xData = input.GetDataXRef();
     auto& yData = input.GetDataYRef();
@@ -127,7 +129,7 @@ TEST(BackwardEulerDiffusionSolverTest, Solve2_test)
     
 
     FaceCenteredGrid3D output;
-    solver.Solve(input, sdf, 1, 0.05, &output);
+    solver.Solve(input, sdf, sdfCollider, 1, 0.05, &output);
 
     _PrintArray3(output.GetDataXRef());
     _PrintArray3(output.GetDataZRef());

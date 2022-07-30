@@ -12,16 +12,16 @@ SinglePhasePressureSolver::~SinglePhasePressureSolver()
 
 }
 
-void SinglePhasePressureSolver::Solve(FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void SinglePhasePressureSolver::Solve(FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, double density, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     output->Resize(sourceGrid.GetSize());
-    BuildMarkers(fluidSdf, sourceGrid.GetSize(), sourceGrid);
+    BuildMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid, density, timeIntervalInSeconds);
     _systemSolver->Solve(&_system);
     ApplyPressure(sourceGrid, density, timeIntervalInSeconds, output);
 }
 
-void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
+void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)
 {
     _fluidMarkers.Resize(size);
     _fluidMarkers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
@@ -29,6 +29,10 @@ void SinglePhasePressureSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const
         if(fluidSdf.Sample(sourceGrid.GetCellCenterPos(i, j, k)) < 0)
         {
             _fluidMarkers(i, j, k) = FLUID_MARK;
+        }
+        else if (colliderSdf.Sample(sourceGrid.GetCellCenterPos(i, j, k)) < 0)
+        {
+            _fluidMarkers(i, j, k) = BOUNDRY_MARK;
         }
         else
         {

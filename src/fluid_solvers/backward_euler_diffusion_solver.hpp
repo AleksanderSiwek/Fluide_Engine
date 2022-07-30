@@ -14,17 +14,17 @@ class BackwardEulerDiffusionSolver : public DiffusionSolver
 
         ~BackwardEulerDiffusionSolver();
 
-        void Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
+        void Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output) override;
 
     private:
         FluidMarkers _fluidMarkers;
         LinearSystem _system;
         std::shared_ptr<LinearSystemSolver> _systemSolver;
 
-        void BuildMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
-        void BuildXMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
-        void BuildYMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
-        void BuildZMarkers(const ScalarGrid3D& fluidSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildXMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildYMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
+        void BuildZMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid);
         void BuildSystem(const Array3<double>& arr, Vector3<double> c);
         void BuildMatrix(Vector3<size_t> size, Vector3<double> c);
         void BuildVectors(const Array3<double>& arr, Vector3<double> c);

@@ -10,7 +10,7 @@ ForwardEulerDiffusionSolver::~ForwardEulerDiffusionSolver()
 
 }
 
-void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
+void ForwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, double viscosity, double timeIntervalInSeconds, FaceCenteredGrid3D* output)
 {
     Vector3<size_t> size = sourceGrid.GetSize();
     output->Resize(size);
