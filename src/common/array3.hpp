@@ -2,6 +2,7 @@
 #define ARRAY_3_HPP
 
 #include <vector>
+
 #include "vector3.hpp"
 #include "parallel_utils.hpp"
 

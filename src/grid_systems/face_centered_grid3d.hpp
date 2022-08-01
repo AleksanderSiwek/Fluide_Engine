@@ -3,15 +3,18 @@
 
 #include "../common/grid3d.hpp"
 #include "../common/array3.hpp"
+#include "../common/serializable.hpp"
 
 
-class FaceCenteredGrid3D : public Grid3D
+class FaceCenteredGrid3D : public Grid3D, public Serializable
 {
     public:
         FaceCenteredGrid3D(Vector3<size_t> size=1, Vector3<double> origin=0, Vector3<double> spacing=1, Vector3<double> initalValue=0);
         FaceCenteredGrid3D(const FaceCenteredGrid3D& grid);
 
         ~FaceCenteredGrid3D();
+
+        std::vector<double> Serialize() const override;
 
         void Resize(Vector3<size_t> size);
         void Fill(double xVal, double yVal, double zVal);

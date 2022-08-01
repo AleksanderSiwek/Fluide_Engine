@@ -1,6 +1,7 @@
 #include "blocked_boundry_condition_solver.hpp"
 #include "../common/math_utils.hpp"
 #include "../grid_systems/fluid_markers.hpp"
+#include "../common/cuda_array_utils.hpp"
 
 #define MAX_DISTANCE 1.7976931348623157E+30
 
@@ -15,7 +16,7 @@ BlockedBoundryConditionSolver::~BlockedBoundryConditionSolver()
 
 }
 
-#include <iostream>
+
 void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& velocity, size_t depth)
 {
     const auto& size = velocity.GetSize();
@@ -35,13 +36,6 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
     Array3<int> zMarker(zData.GetSize(), 1);
 
     const auto& colliderSdf = GetColliderSdf();
-
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 2.5)) << "\n";
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 2.2)) << "\n";
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 2.9)) << "\n";
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 2)) << "\n";
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 3)) << "\n";
-    // std::cout << colliderSdf.Sample(Vector3<double>(0.5, 0.5, 3.2)) << "\n";
 
     xMarker.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
@@ -105,9 +99,9 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
     const auto prevX(velocity.GetDataX());
     const auto prevY(velocity.GetDataY());
     const auto prevZ(velocity.GetDataZ());
-    ExtrapolateToRegion(prevX, xMarker, depth, xData);
-    ExtrapolateToRegion(prevY, yMarker, depth, yData);
-    ExtrapolateToRegion(prevZ, zMarker, depth, zData);
+    WrappedCuda_ExtrapolateToRegion(prevX, xMarker, depth, xData);
+    WrappedCuda_ExtrapolateToRegion(prevY, yMarker, depth, yData);
+    WrappedCuda_ExtrapolateToRegion(prevZ, zMarker, depth, zData);
 
     xTemp.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
@@ -198,53 +192,53 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
     });
 
 
-    for (size_t k = 0; k < size.z; ++k) 
+    parallel_utils::ForEach(size.z, [&](size_t k)
     {
         for (size_t j = 0; j < size.y; ++j) 
         {
             xData(0, j, k) = 0;
         }
-    }
+    });
 
-    for (size_t k = 0; k < size.z; ++k) 
+    parallel_utils::ForEach(size.z, [&](size_t k)
     {
         for (size_t j = 0; j <size.y; ++j) 
         {
             xData(size.x - 1, j, k) = 0;
         }
-    }
+    });
 
-    for (size_t k = 0; k < size.z; ++k) 
+    parallel_utils::ForEach(size.z, [&](size_t k)
     {
         for (size_t i = 0; i < size.x; ++i) 
         {
             yData(i, 0, k) = 0;
         }
-    }
+    });
 
-    for (size_t k = 0; k < size.z; ++k) 
+    parallel_utils::ForEach(size.z, [&](size_t k)
     {
         for (size_t i = 0; i < size.x; ++i) 
         {
             yData(i, size.y - 1, k) = 0;
         }
-    }
+    });
 
-    for (size_t j = 0; j < size.y; ++j) 
+    parallel_utils::ForEach(size.y, [&](size_t j)
     {
         for (size_t i = 0; i < size.x; ++i) 
         {
             zData(i, j, 0) = 0;
         }
-    }
+    });
 
-    for (size_t j = 0; j < size.y; ++j) 
+    parallel_utils::ForEach(size.y, [&](size_t j)
     {
         for (size_t i = 0; i < size.x; ++i) 
         {
             zData(i, j, size.z - 1) = 0;
         }
-    }
+    });
 
     Array3<enum FluidMarker> markers;
     markers.Resize(size);
@@ -330,7 +324,7 @@ Vector3<double> BlockedBoundryConditionSolver::ApplyFriction(Vector3<double> vel
     if(velt.GetLength() * velt.GetLength() > 0.0)
     {
         double veln = std::max(-vel.Dot(normal), 0.0);
-        velt != std::max(1.0 - frictionCoeddicient * veln / velt.GetLength(), 0.0);
+        velt *= std::max(1.0 - frictionCoeddicient * veln / velt.GetLength(), 0.0);
     }
     return velt;
 }

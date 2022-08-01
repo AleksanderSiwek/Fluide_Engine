@@ -5,9 +5,10 @@
 #include "../common/grid3d.hpp"
 #include "../common/scalar_field3.hpp"
 #include "../common/math_utils.hpp"
+#include "../common/serializable.hpp"
 
 
-class ScalarGrid3D : public Array3<double>, public Grid3D, public ScalarField3
+class ScalarGrid3D : public Array3<double>, public Grid3D, public ScalarField3, public Serializable 
 {
     public:
         ScalarGrid3D(size_t width, size_t height, size_t depth, const double& initailValue = 0, Vector3<double> origin = 0, Vector3<double> gridSpacing = 1);
@@ -15,6 +16,8 @@ class ScalarGrid3D : public Array3<double>, public Grid3D, public ScalarField3
         ScalarGrid3D(const ScalarGrid3D& grid);
 
         ~ScalarGrid3D();
+
+        std::vector<double> Serialize() const override;
 
         virtual double Sample(const Vector3<double>& position) const override;
         virtual Vector3<double> Gradient(const Vector3<double>& position) const override;

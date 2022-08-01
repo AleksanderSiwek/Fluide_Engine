@@ -3,6 +3,9 @@
 #include <random>
 #include <concurrent_vector.h>  
 
+#include "common/cuda_array_utils.hpp"
+#include "fluid_solvers/cuda_blocked_boundry_condition_solver.hpp"
+
 // TO DO: DELETE
 #include <iostream>
 #include <iomanip>
@@ -27,13 +30,13 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _fluid.viscosity = 0.5;
     _fluid.density = 1;
 
-    _maxClf = 5.0;
+    _maxClf = 1;
     _particlesPerBlok = 12;
 
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
-    _boundryConditionSolver = std::make_shared<BlockedBoundryConditionSolver>();
+    _boundryConditionSolver = std::make_shared<CudaBlockedBoundryConditionSolver>();
     _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, gridSpacing, domain.GetOrigin()));
 }
 
@@ -253,11 +256,36 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
 {
+    auto start = std::chrono::steady_clock::now();
+    std::cout << "BuildCollider(): ";
     _boundryConditionSolver->BuildCollider();
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
+    std::cout << "TransferParticles2Grid(): ";
     TransferParticles2Grid();
+    end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
+    std::cout << "BuildSignedDistanceField(): ";
     BuildSignedDistanceField();
+    end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
+    std::cout << "ExtrapolateVelocityToAir(): ";
     ExtrapolateVelocityToAir();
+    end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
+    std::cout << "ApplyBoundryCondition(): ";
     ApplyBoundryCondition();
+    end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
 }
 
 void PICSimulator::OnEndAdvanceTimeStep(double timeIntervalInSeconds)
@@ -527,10 +555,9 @@ void PICSimulator::ExtrapolateVelocityToAir()
     const auto& zMarker =_fluid.zMarkers;
 
     size_t numberOfIterations = static_cast<size_t>(std::ceil(MaxCfl()));
-    ExtrapolateToRegion(prevX, xMarker, numberOfIterations, xVel);
-    ExtrapolateToRegion(prevY, yMarker, numberOfIterations, yVel);
-    ExtrapolateToRegion(prevZ, zMarker, numberOfIterations, zVel);
-    
+    WrappedCuda_ExtrapolateToRegion(prevX, xMarker, numberOfIterations, xVel);
+    WrappedCuda_ExtrapolateToRegion(prevY, yMarker, numberOfIterations, yVel);
+    WrappedCuda_ExtrapolateToRegion(prevZ, zMarker, numberOfIterations, zVel);
 }
 
 void PICSimulator::ExtrapolateIntoCollider()
@@ -554,7 +581,7 @@ void PICSimulator::ExtrapolateIntoCollider()
             valid(i, j, k) = 1;
         }
     });
-    ExtrapolateToRegion(prevSdf, valid, depth, sdf);
+    WrappedCuda_ExtrapolateToRegion(prevSdf, valid, depth, sdf);
 }
 
 void PICSimulator::InitializeParticles()

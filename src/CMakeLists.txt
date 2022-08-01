@@ -29,6 +29,15 @@ file(GLOB CUDA_SOURCES *.cu
         ./file_systems/*.cu
         ./3d/*cu)
 
-add_library(PROJECT_LIB ${SOURCES} ${CUDA_SOURCES})
+add_library(PROJECT_LIB STATIC ${SOURCES} ${CUDA_SOURCES})
+# target_compile_features(PROJECT_LIB PUBLIC cxx_std_11)
+# set_target_properties(PROJECT_LIB PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# set_target_properties(PROJECT_LIB PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_executable(${PROJECT_BINARY} ${HEADERS} ${SOURCES} ${CUDA_SOURCES})
+set_target_properties(${PROJECT_BINARY}
+   PROPERTIES
+       CUDA_SEPARABLE_COMPILATION ON
+       CUDA_RESOLVE_DEVICE_SYMBOLS ON
+)
 set_target_properties(${PROJECT_BINARY} PROPERTIES LINK_OPTIONS -nodefaultlibs)
+# set_target_properties(${PROJECT_BINARY} PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)

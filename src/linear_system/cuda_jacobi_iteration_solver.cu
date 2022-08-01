@@ -1,4 +1,5 @@
 #include "cuda_jacobi_iteration_solver.hpp"
+#include "../common/parallel_utils.hpp"
 
 
 __global__ void cuda_Relax(double* ACenter, double* ARight, double* AUp, double* AFront, double* x, double* b, double* xTemp, const size_t sizeX, const size_t sizeY, const size_t sizeZ)
@@ -33,7 +34,7 @@ CudaJacobiIterationSolver::~CudaJacobiIterationSolver()
 {
 
 }
-#include <iostream>
+
 void CudaJacobiIterationSolver::Solve(LinearSystem* system)
 {
     const auto size = system->x.GetSize();
@@ -91,9 +92,7 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
 {
     const auto& size = system->x.GetSize();
     const unsigned int vectorSize = (unsigned int)size.x * (unsigned int)size.y * (unsigned int)size.z;
-    double* x, *b, *ACenter, *ARight, *AUp, *AFront, *residual, *xTemp;
-    x = (double*)malloc(vectorSize * sizeof(double));
-    b = (double*)malloc(vectorSize * sizeof(double));
+    double *ACenter, *ARight, *AUp, *AFront, *residual, *xTemp;
     ACenter = (double*)malloc(vectorSize * sizeof(double));
     ARight = (double*)malloc(vectorSize * sizeof(double));
     AUp = (double*)malloc(vectorSize * sizeof(double));
@@ -101,23 +100,15 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
     residual = (double*)malloc(vectorSize * sizeof(double));
     xTemp = (double*)malloc(vectorSize * sizeof(double));
 
-    for(size_t i = 0; i < size.x; i++)
+    parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                x[i + size.x * (j + size.y * k)] = system->x(i, j, k);
-                b[i + size.x * (j + size.y * k)] = system->b(i, j, k);
-                ACenter[i + size.x * (j + size.y * k)] = system->A(i, j, k).center;
-                ARight[i + size.x * (j + size.y * k)] = system->A(i, j, k).right;
-                AUp[i + size.x * (j + size.y * k)] = system->A(i, j, k).up;
-                AFront[i + size.x * (j + size.y * k)] = system->A(i, j, k).front;
-                residual[i + size.x * (j + size.y * k)] = 0;
-                xTemp[i + size.x * (j + size.y * k)] = 0;
-            }   
-        }
-    }
+        ACenter[i + size.x * (j + size.y * k)] = system->A(i, j, k).center;
+        ARight[i + size.x * (j + size.y * k)] = system->A(i, j, k).right;
+        AUp[i + size.x * (j + size.y * k)] = system->A(i, j, k).up;
+        AFront[i + size.x * (j + size.y * k)] = system->A(i, j, k).front;
+        residual[i + size.x * (j + size.y * k)] = 0;
+        xTemp[i + size.x * (j + size.y * k)] = 0;
+    });
 
     cudaMalloc((void **)&_d_x, vectorSize * sizeof(double));
     cudaMalloc((void **)&_d_b, vectorSize * sizeof(double));
@@ -129,8 +120,8 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
     cudaMalloc((void **)&_d_xTemp, vectorSize * sizeof(double));
     cudaMalloc((void **)&_d_tmp, vectorSize * sizeof(double));
 
-    cudaMemcpy(_d_x, x, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(_d_b, b, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(_d_x, &(system->x.GetRawData())[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(_d_b, &(system->b.GetRawData())[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_ACenter, ACenter, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_ARight, ARight, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_AUp, AUp, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
@@ -139,10 +130,9 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
     cudaMemcpy(_d_xTemp, xTemp, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_tmp, xTemp, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
 
-    free(x);
-    free(b);
     free(ACenter);
     free(ARight);
+    free(AUp);
     free(AFront);
     free(residual);
     free(xTemp);
@@ -167,21 +157,15 @@ void CudaJacobiIterationSolver::FromDeviceToHost(LinearSystem* system)
     cudaMemcpy(AUp, _d_AUp, vectorSize * sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(AFront, _d_AFront, vectorSize * sizeof(double), cudaMemcpyDeviceToHost);
 
-    for(size_t i = 0; i < size.x; i++)
+    parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0; k < size.z; k++)
-            {
-                system->x(i, j, k) = x[i + size.x * (j + size.y * k)];
-                system->b(i, j, k) = b[i + size.x * (j + size.y * k)];
-                system->A(i, j, k).center = ACenter[i + size.x * (j + size.y * k)];
-                system->A(i, j, k).right = ARight[i + size.x * (j + size.y * k)];
-                system->A(i, j, k).up = AUp[i + size.x * (j + size.y * k)];
-                system->A(i, j, k).front = AFront[i + size.x * (j + size.y * k)];
-            }   
-        }
-    }
+        system->x(i, j, k) = x[i + size.x * (j + size.y * k)];
+        system->b(i, j, k) = b[i + size.x * (j + size.y * k)];
+        system->A(i, j, k).center = ACenter[i + size.x * (j + size.y * k)];
+        system->A(i, j, k).right = ARight[i + size.x * (j + size.y * k)];
+        system->A(i, j, k).up = AUp[i + size.x * (j + size.y * k)];
+        system->A(i, j, k).front = AFront[i + size.x * (j + size.y * k)];
+    });
     free(x);
     free(b);
     free(ACenter);

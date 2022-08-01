@@ -114,7 +114,7 @@ inline void GetCooridnatesAndWeights(const Vector3<size_t>& size, const Vector3<
 template<typename T>
 inline Vector3<T> Cross(const Vector3<T>& a, const Vector3<T>& b)
 {
-    return Vectro3<T>(a.y * b.z - a.z * b.y,
+    return Vector3<T>(a.y * b.z - a.z * b.y,
                       a.z * b.x - a.x * b.z,
                       a.x * b.y - a.y * b.x);
 }

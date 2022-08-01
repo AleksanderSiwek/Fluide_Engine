@@ -24,10 +24,16 @@ ScalarGrid3D::~ScalarGrid3D()
 
 }
 
+std::vector<double> ScalarGrid3D::Serialize() const
+{
+    return GetRawData();
+}
+
+
 double ScalarGrid3D::Sample(const Vector3<double>& position) const
 {
     int i, j, k;
-    double factorX, factorY, factorZ ;
+    double factorX, factorY, factorZ;
     i = j = k = 0;
     factorX = factorY = factorZ = 0;
 

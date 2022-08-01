@@ -21,6 +21,18 @@ FaceCenteredGrid3D::~FaceCenteredGrid3D()
 
 }
 
+std::vector<double> FaceCenteredGrid3D::Serialize() const
+{
+    std::vector<double> serialized;
+    size_t size = _dataX.GetRawData().size() + _dataY.GetRawData().size() + _dataZ.GetRawData().size();
+    serialized.reserve(size);
+    serialized.insert(serialized.end(), _dataX.GetRawData().begin(), _dataX.GetRawData().end());
+    serialized.insert(serialized.end(), _dataY.GetRawData().begin(), _dataY.GetRawData().end());
+    serialized.insert(serialized.end(), _dataZ.GetRawData().begin(), _dataZ.GetRawData().end());
+    return serialized;
+}
+
+
 Vector3<size_t> FaceCenteredGrid3D::GetSize() const
 {
     return _size; //- Vector3<size_t>(1, 1, 1)); // TO DO

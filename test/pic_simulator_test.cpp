@@ -122,15 +122,16 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    const Vector3<size_t> size(60, 60, 60);
+    size_t dimSize = 40;
+    const Vector3<size_t> size(dimSize, dimSize, dimSize*2);
     Vector3<double> domainOrigin(0, 0, 0);
-    Vector3<double> domainSize(4, 4, 4);
+    Vector3<double> domainSize(4, 4, 8);
     BoundingBox3D domain(domainOrigin, domainSize);
 
     // Load fluid mesh
     TriangleMesh fluidMesh;
     OBJManager objLoader;
-    objLoader.Load("../../../test/test_cases/monkey_2.obj", &fluidMesh);
+    objLoader.Load("../../../test/test_cases/water_wall.obj", &fluidMesh);
 
     // Setup colliders
     TriangleMesh colliderMesh_1;
@@ -146,7 +147,7 @@ TEST(PICSimulatorTest, Simulate_test)
     //simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
     simulator.InitializeFrom3dMesh(fluidMesh);
     simulator.SetViscosity(0);
-    //simulator.AddCollider(collider_1);
+    simulator.AddCollider(collider_1);
     simulator.SetMaxClf(1);
     //simulator.AddCollider(collider_2);
 
@@ -154,7 +155,7 @@ TEST(PICSimulatorTest, Simulate_test)
 
     Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 120; i++)
+    for(size_t i = 0; i < 0; i++)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();

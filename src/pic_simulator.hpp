@@ -14,6 +14,8 @@
 #include "fluid_solvers/boundry_condition_solver.hpp"
 #include "fluid_solvers/backward_euler_diffusion_solver.hpp"
 #include "fluid_solvers/single_phase_pressure_solver.hpp"
+#include "fluid_solvers/blocked_boundry_condition_solver.hpp"
+#include "fluid_solvers/cuda_blocked_boundry_condition_solver.hpp"
 #include "file_systems/file_system.hpp"
 #include "forces/external_force.hpp"
 #include "3d/bounding_box_3d.hpp"
@@ -21,7 +23,6 @@
 #include "3d/collisions.hpp"
 #include "3d/mesh_2_sdf.hpp"
 #include "3d/collider_collection.hpp"
-#include "fluid_solvers/blocked_boundry_condition_solver.hpp"
 
 
 class PICSimulator : public PhysicsAnimation
