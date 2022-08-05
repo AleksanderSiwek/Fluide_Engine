@@ -25,14 +25,17 @@ __global__ void cuda_Relax(double* ACenter, double* ARight, double* AUp, double*
 
 
 CudaJacobiIterationSolver::CudaJacobiIterationSolver(size_t maxNumberOfIterations, size_t toleranceCheckInterval, double tolerance)
-    : _maxNumberOfIterations(maxNumberOfIterations), _toleranceCheckInterval(toleranceCheckInterval), _tolerance(tolerance)
+    : _maxNumberOfIterations(maxNumberOfIterations), _toleranceCheckInterval(toleranceCheckInterval), _tolerance(tolerance), _wasMemoryAllocatedOnDevice(false)
 {
 
 }
 
 CudaJacobiIterationSolver::~CudaJacobiIterationSolver()
 {
-
+    if(_wasMemoryAllocatedOnDevice)
+    {
+        FreeDeviceMemory();
+    }
 }
 
 void CudaJacobiIterationSolver::Solve(LinearSystem* system)
@@ -57,7 +60,6 @@ void CudaJacobiIterationSolver::Solve(LinearSystem* system)
     }
 
     FromDeviceToHost(system);
-    FreeDeviceMemory();
 }
 
 void CudaJacobiIterationSolver::Relax(const Vector3<size_t> size)
@@ -92,13 +94,15 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
 {
     const auto& size = system->x.GetSize();
     const unsigned int vectorSize = (unsigned int)size.x * (unsigned int)size.y * (unsigned int)size.z;
-    double *ACenter, *ARight, *AUp, *AFront, *residual, *xTemp;
+    double *ACenter, *ARight, *AUp, *AFront, *residual, *xTemp, *h_x, *h_b;
     ACenter = (double*)malloc(vectorSize * sizeof(double));
     ARight = (double*)malloc(vectorSize * sizeof(double));
     AUp = (double*)malloc(vectorSize * sizeof(double));
     AFront = (double*)malloc(vectorSize * sizeof(double));
     residual = (double*)malloc(vectorSize * sizeof(double));
     xTemp = (double*)malloc(vectorSize * sizeof(double));
+    h_x = (double*)malloc(vectorSize * sizeof(double));
+    h_b = (double*)malloc(vectorSize * sizeof(double));
 
     parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
     {
@@ -106,22 +110,20 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
         ARight[i + size.x * (j + size.y * k)] = system->A(i, j, k).right;
         AUp[i + size.x * (j + size.y * k)] = system->A(i, j, k).up;
         AFront[i + size.x * (j + size.y * k)] = system->A(i, j, k).front;
+        h_x[i + size.x * (j + size.y * k)] = system->x(i, j, k);
+        h_b[i + size.x * (j + size.y * k)] = system->b(i, j, k);
         residual[i + size.x * (j + size.y * k)] = 0;
         xTemp[i + size.x * (j + size.y * k)] = 0;
     });
 
-    cudaMalloc((void **)&_d_x, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_b, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_ACenter, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_ARight, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_AUp, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_AFront, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_residual, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_xTemp, vectorSize * sizeof(double));
-    cudaMalloc((void **)&_d_tmp, vectorSize * sizeof(double));
+    if(!_wasMemoryAllocatedOnDevice)
+    {
+       AllocateMemoryOnDevice(vectorSize);
+       _wasMemoryAllocatedOnDevice = true;
+    }
 
-    cudaMemcpy(_d_x, &(system->x.GetRawData())[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(_d_b, &(system->b.GetRawData())[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(_d_x, h_x, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(_d_b, h_b, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_ACenter, ACenter, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_ARight, ARight, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(_d_AUp, AUp, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
@@ -134,6 +136,8 @@ void CudaJacobiIterationSolver::Initialize(LinearSystem* system)
     free(ARight);
     free(AUp);
     free(AFront);
+    free(h_x);
+    free(h_b);
     free(residual);
     free(xTemp);
 }
@@ -172,6 +176,19 @@ void CudaJacobiIterationSolver::FromDeviceToHost(LinearSystem* system)
     free(ARight);
     free(AUp);
     free(AFront);
+}
+
+void CudaJacobiIterationSolver::AllocateMemoryOnDevice(size_t vectorSize)
+{
+    cudaMalloc((void **)&_d_x, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_b, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_ACenter, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_ARight, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_AUp, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_AFront, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_residual, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_xTemp, vectorSize * sizeof(double));
+    cudaMalloc((void **)&_d_tmp, vectorSize * sizeof(double));
 }
 
 void CudaJacobiIterationSolver::FreeDeviceMemory()

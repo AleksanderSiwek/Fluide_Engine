@@ -122,7 +122,7 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    size_t dimSize = 40;
+    size_t dimSize = 5;
     const Vector3<size_t> size(dimSize, dimSize, dimSize*2);
     Vector3<double> domainOrigin(0, 0, 0);
     Vector3<double> domainSize(4, 4, 8);

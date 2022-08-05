@@ -151,8 +151,8 @@ TEST(Array3Test, FillArray_test)
 
 TEST(Array3Test, Swap_test)
 {
-    Array3<int> arr(2, 2, 1, 1);
-    Array3<int> arr1(2, 2, 1, 5);
+    Array3<double> arr(2, 2, 1, 1);
+    Array3<double> arr1(2, 2, 1, 5);
     arr.Swap(arr1);
     EXPECT_EQ(5, arr.GetElement(0, 0, 0));
     EXPECT_EQ(5, arr.GetElement(1, 0, 0));

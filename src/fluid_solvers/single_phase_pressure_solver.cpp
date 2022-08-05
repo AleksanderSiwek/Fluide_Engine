@@ -1,10 +1,14 @@
 #include "single_phase_pressure_solver.hpp"
 
 #include "../linear_system/cuda_jacobi_iteration_solver.hpp"
+#include "../linear_system/conjugate_gradient_solver.hpp"
+#include "../linear_system/cuda_conjugate_gradient_solver.hpp"
+
 
 SinglePhasePressureSolver::SinglePhasePressureSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.0000000000001);
+    //_systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.0000000000001);
+    _systemSolver = std::make_shared<CudaConjugateGradientSolver>(250, 0.000001);
 }
 
 SinglePhasePressureSolver::~SinglePhasePressureSolver()

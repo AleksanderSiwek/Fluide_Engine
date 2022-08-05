@@ -16,7 +16,6 @@ BlockedBoundryConditionSolver::~BlockedBoundryConditionSolver()
 
 }
 
-
 void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& velocity, size_t depth)
 {
     const auto& size = velocity.GetSize();

@@ -5,6 +5,7 @@
 
 #include "common/cuda_array_utils.hpp"
 #include "fluid_solvers/cuda_blocked_boundry_condition_solver.hpp"
+#include "fluid_solvers/blocked_boundry_condition_solver.hpp"
 
 // TO DO: DELETE
 #include <iostream>
@@ -172,7 +173,11 @@ Vector3<double> PICSimulator::GetGridSpacing() const
 
 void PICSimulator::GetSurface(TriangleMesh* mesh)
 {
+    auto start = std::chrono::steady_clock::now();
+    std::cout << "Surface Tracker: ";
     _surfaceTracker->BuildSurface(_fluid.sdf, mesh);
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 }
 
 const ScalarGrid3D& PICSimulator::GetFluidSdf() const
@@ -216,6 +221,7 @@ void PICSimulator::OnInitialize()
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
     std::cout << "Number of particles: " << _fluid.particleSystem.GetParticleNumber() << "\n";
+    auto startGlobal = std::chrono::steady_clock::now();
 
     auto start = std::chrono::steady_clock::now();
     std::cout << "BeginAdvanceTimeStep: ";
@@ -252,6 +258,9 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
     EndAdvanceTimeStep(timeIntervalInSeconds);
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    end = std::chrono::steady_clock::now();
+    std::cout << "SubStep ended in: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - startGlobal).count() / 1000000000.0 << " [s]\n";
 }
 
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
@@ -285,7 +294,6 @@ void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
     ApplyBoundryCondition();
     end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-
 }
 
 void PICSimulator::OnEndAdvanceTimeStep(double timeIntervalInSeconds)

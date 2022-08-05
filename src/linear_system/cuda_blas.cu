@@ -1,9 +1,9 @@
 #include "cuda_blas.hpp"
-
+#include <stdio.h>
 #define BLOCK_SIZE 512
 
 
-__global__ void cuda_DOT(double* a, double* b, double* result, const size_t size)
+__global__ void CUDA_BLAS::CUDA_DOT(double* a, double* b, double* result, const size_t size)
 {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -34,13 +34,11 @@ __global__ void cuda_DOT(double* a, double* b, double* result, const size_t size
     }
 }
 
-__global__ void cuda_Residual(double* ACenter, double* ARight, double* AUp, double* AFront, double* x, double* b, double* result, const size_t sizeX, const size_t sizeY, const size_t sizeZ)
+__global__ void CUDA_BLAS::CUDA_Residual(double* ACenter, double* ARight, double* AUp, double* AFront, double* x, double* b, double* result, const size_t sizeX, const size_t sizeY, const size_t sizeZ)
 {
-    unsigned int blockIdxz = __float2uint_rd(blockIdx.y * 1/8);
-    unsigned int blockIdxy = blockIdx.y - __umul24(blockIdxz, 8);
-    int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
-    int j = __umul24(blockIdxy, blockDim.y) + threadIdx.y;
-    int k = __umul24(blockIdxz, blockDim.z) + threadIdx.z;
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
     unsigned int idx = i + sizeX * (j + sizeY * k);
 
     if(i < 0 || j < 0 || k < 0 || i >= sizeX || j >= sizeY || k >= sizeZ)
@@ -56,6 +54,40 @@ __global__ void cuda_Residual(double* ACenter, double* ARight, double* AUp, doub
                     ((k + 1 < sizeZ) ? AFront[i + sizeX * (j + sizeY * k)] * x[i + sizeX * (j + sizeY * (k + 1))] : 0.0);
 }
 
+__global__ void CUDA_BLAS::CUDA_MatrixVectorMultiplication(double* ACenter, double* ARight, double* AUp, double* AFront, double* vector, double* result, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        result[idx] =
+            ACenter[idx] * vector[idx] +
+            ((i > 0) ? ARight[(i - 1) + size.x * (j + size.y * k)] * vector[(i - 1) + size.x * (j + size.y * k)] : 0.0) +
+            ((i + 1 < size.x) ? ARight[idx] * vector[(i + 1) + size.x * (j + size.y * k)] : 0.0) +
+            ((j > 0) ? AUp[i + size.x * ((j - 1) + size.y * k)] * vector[i + size.x * ((j - 1) + size.y * k)] : 0.0) +
+            ((j + 1 < size.y) ? AUp[idx] * vector[i + size.x * ((j + 1) + size.y * k)] : 0.0) +
+            ((k > 0) ? AFront[i + size.x * (j + size.y * (k - 1))] * vector[i + size.x * (j + size.y * (k - 1))] : 0.0) +
+            ((k + 1 < size.z) ? AFront[idx] * vector[i + size.x * (j + size.y * (k + 1))] : 0.0);
+    }
+}
+
+__global__ void CUDA_BLAS::CUDA_AXpY(double a, double* x, double* y, double* result, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        result[idx] = a * x[idx] + y[idx];
+    }
+}
+
+
 double CUDA_BLAS::Dot(double* a, double* b, Vector3<size_t> size)
 {
     double result = 0;
@@ -70,7 +102,7 @@ double CUDA_BLAS::Dot(double* a, double* b, Vector3<size_t> size)
     h_result = (double*)malloc(gridSize* sizeof(double));
     cudaMalloc((void **)&d_result, gridSize * sizeof(double));
 
-    cuda_DOT<<<dimGrid, dimBlock>>>(a, b, d_result, vectorLength);
+    CUDA_DOT<<<dimGrid, dimBlock>>>(a, b, d_result, vectorLength);
     cudaMemcpy(h_result, d_result, gridSize * sizeof(double), cudaMemcpyDeviceToHost);
 
     for(size_t i = 0; i < gridSize; i++) 
@@ -128,7 +160,7 @@ void CUDA_BLAS::Residual(double* ACenter, double* ARight, double* AUp, double* A
 
     dim3 dimGrid = dim3(blocksInX, blocksInY*blocksInZ);
     dim3 dimBlock = dim3(threadsInX, threadsInY, threadsInZ);
-    cuda_Residual<<<dimGrid, dimBlock>>>(ACenter, ARight, AUp, AFront, x, b, result, size.x, size.y, size.z);
+    CUDA_Residual<<<dimGrid, dimBlock>>>(ACenter, ARight, AUp, AFront, x, b, result, size.x, size.y, size.z);
 }
 
 void CUDA_BLAS::Residual(SystemMatrix& A, const SystemVector& x, const SystemVector& b, SystemVector* result)

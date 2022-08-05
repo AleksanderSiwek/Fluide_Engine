@@ -1,5 +1,5 @@
-#ifndef ANIMATION_HPP
-#define ANIMATION_HPP
+#ifndef _ANIMATION_HPP
+#define _ANIMATION_HPP
 
 #include "./common/frame.hpp"
 
@@ -17,4 +17,4 @@ class Animation
 
 };
 
-#endif // ANIMATION_HPP
+#endif // _ANIMATION_HPP

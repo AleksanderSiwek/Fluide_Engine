@@ -25,22 +25,22 @@ CUDA_Int3 Vector3SizeToCUDA_Int3(const Vector3<size_t>& vect)
 
 __device__ double CUDA_Vector3Dot(CUDA_Vector3 a, CUDA_Vector3 b)
 {
-    return sqrt(a.x * b.x + a.y * b.y + a.z * b.z);
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 __device__ CUDA_Vector3 CUDA_Vector3Project(CUDA_Vector3 a, CUDA_Vector3 normal)
 {
     CUDA_Vector3 projected = a;
     double dot = CUDA_Vector3Dot(a, normal);
-    projected.x = a.x / (normal.x * dot);
-    projected.y = a.y / (normal.y * dot);
-    projected.z = a.z / (normal.z * dot);
+    projected.x = a.x - (normal.x * dot);
+    projected.y = a.y - (normal.y * dot);
+    projected.z = a.z - (normal.z * dot);
     return projected;
 }
 
 __device__ double CUDA_Vector3GetLength(CUDA_Vector3 vect)
 {
-    return sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+    return sqrt(max(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z, 0.0));
 }
 
 __device__ CUDA_Vector3 CUDA_Vector3GetNormalised(CUDA_Vector3 vect)
@@ -155,7 +155,7 @@ __device__ CUDA_Vector3 CUDA_SampleFaceCenteredGrid3(double* dataX, double* data
 __device__ CUDA_Vector3 CUDA_GradientArray3(double* array, CUDA_Vector3 origin, CUDA_Vector3 gridSpacing, CUDA_Int3 size, CUDA_Vector3 position)
 {
     CUDA_Int3* indexes = (CUDA_Int3*)malloc(8 * sizeof(CUDA_Int3));
-    double* weights = (double*)malloc(8 * sizeof(double));;
+    double* weights = (double*)malloc(8 * sizeof(double));
     CUDA_GetCooridnatesAndWeights(size, origin, gridSpacing, position, indexes, weights);
     // const auto& ds = GetSize();
 
@@ -315,6 +315,32 @@ __device__ double CUDA_Clamp(double val, double minVal, double maxVal)
     }
 }
 
+__global__ void CUDA_FillArray3(double* array, double val, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        array[idx] = val;
+    }
+}
+
+__global__ void CUDA_CopyArray3(double* destination, double* source, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        destination[idx] = source[idx];
+    }
+
+}
+
 void WrappedCuda_ExtrapolateToRegion(const Array3<double>& input, const Array3<int>& valid, size_t numberOfIterations, Array3<double>& output)
 {
     const auto& size = input.GetSize();
@@ -370,3 +396,5 @@ void WrappedCuda_ExtrapolateToRegion(const Array3<double>& input, const Array3<i
     cudaFree(d_input);
     cudaFree(d_output);
 }
+
+

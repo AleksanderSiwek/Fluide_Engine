@@ -65,4 +65,8 @@ __device__ double CUDA_Clamp(double val, double minVal, double maxVal);
 
 __global__ void CUDA_ExtrapolateToRegion(double* input, int* valid, size_t numberOfIterations, double* output, const size_t sizeX, const size_t sizeY, const size_t sizeZ);
 
+__global__ void CUDA_FillArray3(double* array, double val, CUDA_Int3 size);
+
+__global__ void CUDA_CopyArray3(double* destination, double* source, CUDA_Int3 size);
+
 #endif // _CUDA_ARRAY_UTILS_HPP

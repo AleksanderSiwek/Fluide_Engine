@@ -1,5 +1,4 @@
 #include "jacobi_iteration_solver.hpp"
-#include <iostream>
 
 JacobiIterationSolver::JacobiIterationSolver(size_t maxNumberOfIterations, size_t toleranceCheckInterval, double tolerance)
     : _maxNumberOfIterations(maxNumberOfIterations), _toleranceCheckInterval(toleranceCheckInterval), _tolerance(tolerance)
@@ -20,8 +19,6 @@ void JacobiIterationSolver::Solve(LinearSystem* system)
     _xTemp.Resize(system->x.GetSize());
     _residual.Resize(system->x.GetSize());
 
-    std::cout << "start x(1, 1, 1): " << system->x(1, 1, 1) << "\n";
-
     size_t iteration = 0;
     for(size_t i = 0; i < _maxNumberOfIterations; i++)
     {
@@ -37,7 +34,6 @@ void JacobiIterationSolver::Solve(LinearSystem* system)
             }
         }
     }
-    std::cout << "Jacobi iteration: " << iteration << "\n";
 }
 
 void JacobiIterationSolver::Relax(LinearSystem* system)

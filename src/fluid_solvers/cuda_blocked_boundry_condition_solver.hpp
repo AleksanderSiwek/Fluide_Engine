@@ -17,9 +17,9 @@ class CudaBlockedBoundryConditionSolver : public BoundryConditionSolver
         void ConstrainVelocity(FaceCenteredGrid3D& velocity, size_t depth) override;
 
     private:
-        const int THREADS_IN_X = 8;
-        const int THREADS_IN_Y = 8;
-        const int THREADS_IN_Z = 8;
+        const int THREADS_IN_X = 4;
+        const int THREADS_IN_Y = 4;
+        const int THREADS_IN_Z = 4;
 
         Array3<Vector3<double>> _colliderVel;
 

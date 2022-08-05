@@ -1,10 +1,13 @@
 #include "backward_euler_diffusion_solver.hpp"
 
 #include "../linear_system/cuda_jacobi_iteration_solver.hpp"
+#include "../linear_system/cuda_conjugate_gradient_solver.hpp"
+
 
 BackwardEulerDiffusionSolver::BackwardEulerDiffusionSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.000001);
+    //_systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.000001);
+    _systemSolver = std::make_shared<CudaConjugateGradientSolver>(250, 0.000001);
 }
 
 BackwardEulerDiffusionSolver::~BackwardEulerDiffusionSolver()
@@ -21,17 +24,17 @@ void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, c
     BuildXMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataXRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataXPtr()->Fill(_system.x);
+    output->GetDataXPtr()->ParallelFill(_system.x);
     
     BuildYMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataYRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataYPtr()->Fill(_system.x);
+    output->GetDataYPtr()->ParallelFill(_system.x);
 
     BuildZMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataZRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataZPtr()->Fill(_system.x);
+    output->GetDataZPtr()->ParallelFill(_system.x);
 }
 
 void BackwardEulerDiffusionSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)

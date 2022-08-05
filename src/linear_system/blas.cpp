@@ -20,41 +20,27 @@ double BLAS::Dot(const SystemVector& a, const SystemVector& b)
 
 void BLAS::Residual(const SystemMatrix& A, const SystemVector& x, const SystemVector& b, SystemVector* result)
 {
-    const auto& size = x.GetSize();
-
-    for(size_t i = 0; i < size.x; i++)
+    const auto& size = result->GetSize();
+    
+    result->ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0 ; k < size.z; k++)
-            {
-                (*result)(i, j, k) =
-                    b(i, j, k) - A(i, j, k).center * x(i, j, k) -
-                    ((i > 0) ? A(i - 1, j, k).right * x(i - 1, j, k) : 0.0) -
-                    ((i + 1 < size.x) ? A(i, j, k).right * x(i + 1, j, k) : 0.0) -
-                    ((j > 0) ? A(i, j - 1, k).up * x(i, j - 1, k) : 0.0) -
-                    ((j + 1 < size.y) ? A(i, j, k).up * x(i, j + 1, k) : 0.0) -
-                    ((k > 0) ? A(i, j, k - 1).front * x(i, j, k - 1) : 0.0) -
-                    ((k + 1 < size.z) ? A(i, j, k).front * x(i, j, k + 1) : 0.0);
-            }
-        }
-    }
+        (*result)(i, j, k) =
+            b(i, j, k) - A(i, j, k).center * x(i, j, k) -
+            ((i > 0) ? A(i - 1, j, k).right * x(i - 1, j, k) : 0.0) -
+            ((i + 1 < size.x) ? A(i, j, k).right * x(i + 1, j, k) : 0.0) -
+            ((j > 0) ? A(i, j - 1, k).up * x(i, j - 1, k) : 0.0) -
+            ((j + 1 < size.y) ? A(i, j, k).up * x(i, j + 1, k) : 0.0) -
+            ((k > 0) ? A(i, j, k - 1).front * x(i, j, k - 1) : 0.0) -
+            ((k + 1 < size.z) ? A(i, j, k).front * x(i, j, k + 1) : 0.0);
+    });
 }
 
 void BLAS::AXpY(double a, const SystemVector& x, const SystemVector& y, SystemVector* result)
 {
-    Vector3<size_t> size = x.GetSize();
-
-    for(size_t i = 0; i < size.x; i++)
+    result->ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        for(size_t j = 0; j < size.y; j++)
-        {
-            for(size_t k = 0 ; k < size.z; k++)
-            {
-                (*result)(i, j, k) = a * x(i, j, k) + y(i, j, k);
-            }
-        }
-    }
+        (*result)(i, j, k) = a * x(i, j, k) + y(i, j, k);
+    });
 }
 
 double BLAS::L2Norm(const SystemVector& vector)
@@ -77,4 +63,21 @@ double BLAS::LInfNorm(const SystemVector& vector)
         }
     }
     return std::fabs(absMax);
+}
+
+void BLAS::MatrixVectorMultiplication(const SystemMatrix& m, const SystemVector& v, SystemVector* result)
+{
+    const auto& size = result->GetSize();
+
+    result->ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        (*result)(i, j, k) =
+            m(i, j, k).center * v(i, j, k) +
+            ((i > 0) ? m(i - 1, j, k).right * v(i - 1, j, k) : 0.0) +
+            ((i + 1 < size.x) ? m(i, j, k).right * v(i + 1, j, k) : 0.0) +
+            ((j > 0) ? m(i, j - 1, k).up * v(i, j - 1, k) : 0.0) +
+            ((j + 1 < size.y) ? m(i, j, k).up * v(i, j + 1, k) : 0.0) +
+            ((k > 0) ? m(i, j, k - 1).front * v(i, j, k - 1) : 0.0) +
+            ((k + 1 < size.z) ? m(i, j, k).front * v(i, j, k + 1) : 0.0);
+    });
 }

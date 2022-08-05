@@ -68,12 +68,13 @@ void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 
     _currentTime = _currentFrame.GetTimeInSeconds();
 
-    const double numberOfSubTimesteps = NumberOfSubTimeSteps(timeIntervalInSeconds);
+    const int numberOfSubTimesteps = NumberOfSubTimeSteps(timeIntervalInSeconds);
     std::cout << "Number of simulation steps: " << numberOfSubTimesteps << "\n\n";
 
     const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / numberOfSubTimesteps;
     for(size_t i = 0; i < NumberOfSubTimeSteps(timeIntervalInSeconds); i++)
     {
+        std::cout << "SubStep number: " << i << "\n";
         OnAdvanceTimeStep(subTimestepInterval);
         _currentTime += subTimestepInterval;
         std::cout << "\n";

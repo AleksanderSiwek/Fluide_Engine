@@ -28,10 +28,11 @@ __device__ double CUDA_FractionInsideSdf(double phi0, double phi1)
 __device__ CUDA_Vector3 CUDA_ApplyFriction(CUDA_Vector3 vel, CUDA_Vector3 normal, double frictionCoeddicient)
 {
     CUDA_Vector3 velt = CUDA_Vector3Project(vel, normal);
-    if(CUDA_Vector3GetLength(velt) * CUDA_Vector3GetLength(velt) > 0.0)
+    double veltLen = CUDA_Vector3GetLength(velt);
+    if(veltLen * veltLen > 0.0)
     {
         double veln = max(-CUDA_Vector3Dot(vel, normal), 0.0);
-        double scaler = max(1.0 - frictionCoeddicient * veln / CUDA_Vector3GetLength(velt), 0.0);
+        double scaler = max(1.0 - frictionCoeddicient * veln / veltLen, 0.0);
         velt.x = velt.x * scaler;
         velt.y = velt.y * scaler;
         velt.z = velt.z * scaler;
@@ -67,13 +68,6 @@ __global__ void CUDA_BuildMarkers(double* arrayX, int* markersX, double* arrayY,
             arrayX[idx] = 0;
             markersX[idx] = 0;
         }
-
-        // TO DO: DELETE
-        // if(i == 5 && j == 1 && k == 1)
-        // {
-        //     printf("frac(CUDA): %lf\n", frac);
-        //     printf("xData(CUDA): %lf\n", arrayX[idx]);
-        // }
 
         pos = CUDA_GridIdxToPosition(idx3, gridSpacing, dataYOrigin);
         pos0 = {pos.x, pos.y - 0.5 * gridSpacing.y, pos.z};
@@ -146,6 +140,7 @@ __global__ void CUDA_ResolveFrictionWithCollider(double* arrayX, double* arrayY,
             {
                 tmpX = coliiderVel.x;
             }
+
         }
         else
         {
@@ -210,6 +205,94 @@ __global__ void CUDA_ResolveFrictionWithCollider(double* arrayX, double* arrayY,
     }
 }
 
+__global__ void CUDA_ResolveCollisionsWithDomainBoundry(double* arrayX, double* arrayY, double* arrayZ, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        if(i == 0 || i == size.x - 1)
+        {
+            arrayX[idx] = 0;
+        }
+        if(j == 0 || j == size.y - 1)
+        {
+            arrayY[idx] = 0;
+        }
+        if(k == 0 || k == size.z - 1)
+        {
+            arrayZ[idx] = 0;
+        }
+    }
+}
+
+__global__ void CUDA_BuildColliderMarkers(int* markers, double* colliderSdf, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        if(colliderSdf[idx] < 0)
+        {
+            markers[idx] = 1;
+        }
+        else
+        {
+            markers[idx] = 0;
+        }
+    }
+}
+
+__global__ void CUDA_ResolveCollisionsWithCollider(double* arrayX, double* arrayY, double* arrayZ, double* colliderSdf, CUDA_Int3 size)
+{
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    int k = threadIdx.z + blockIdx.z * blockDim.z;
+    int idx = i + size.x * (j + size.y * k);
+
+    if(i >= 0 && j >= 0 && k >= 0 && i < size.x && j < size.y && k < size.z)
+    { 
+        if (colliderSdf[idx] < 0) 
+        {
+            if (i > 0 && colliderSdf[(i - 1) + size.x * (j + size.y * k)] >= 0) 
+            {
+                arrayX[idx] = 0;
+            }
+            if (j > 0 && colliderSdf[i + size.x * ((j - 1) + size.y * k)] >= 0) 
+            {
+                arrayY[idx] = 0;
+            }
+            if (k > 0 && colliderSdf[i + size.x * (j + size.y * (k - 1))] >= 0) 
+            {
+                arrayZ[idx] = 0;
+            }
+
+            __syncthreads();
+
+            if (i < size.x - 1 && colliderSdf[(i + 1) + size.x * (j + size.y * k)] >= 0) 
+            {
+                arrayX[(i + 1) + size.x * (j + size.y * k)] = 0;
+            }
+
+            if (j < size.y - 1 && colliderSdf[i + size.x * ((j + 1) + size.y * k)] >= 0) 
+            {
+                arrayY[i + size.x * ((j + 1) + size.y * k)] = 0;
+            }
+
+            if (k < size.z - 1 && colliderSdf[i + size.x * (j + size.y * (k + 1))] >= 0) 
+            {
+                arrayZ[i + size.x * (j + size.y * (k + 1))] = 0;
+            }
+        }
+    }
+}
+
 CudaBlockedBoundryConditionSolver::CudaBlockedBoundryConditionSolver()
 {
 
@@ -223,7 +306,7 @@ CudaBlockedBoundryConditionSolver::~CudaBlockedBoundryConditionSolver()
 void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& velocity, size_t depth)
 {
     const auto& size = velocity.GetSize();
-    const unsigned int vectorSize = (unsigned int)size.x * (unsigned int)size.y * (unsigned int)size.z;
+    const size_t vectorSize = size.x * size.y * size.z;
 
     auto colliderSdfPtr = GetColliderSdf().Serialize();
     const auto& colliderSdf = GetColliderSdf();
@@ -231,10 +314,6 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
     auto& xData = velocity.GetDataXRef();
     auto& yData = velocity.GetDataYRef();
     auto& zData = velocity.GetDataZRef();
-
-    auto xDataPtr = velocity.GetDataXPtr();
-    auto yDataPtr = velocity.GetDataYPtr();
-    auto zDataPtr = velocity.GetDataZPtr();
 
     dim3 dimGrid = CalculateDimGrid(size);
     dim3 dimBlock = dim3(THREADS_IN_X, THREADS_IN_Y, THREADS_IN_Z);
@@ -246,13 +325,14 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
     CUDA_Vector3 d_dataYOrigin = Vector3ToCUDA_Vector3(velocity.GetDataYOrigin());
     CUDA_Vector3 d_dataZOrigin = Vector3ToCUDA_Vector3(velocity.GetDataZOrigin());
 
-    double *h_xData, *h_yData, *h_zData;
+    double *h_xData, *h_yData, *h_zData, *h_colliderSdf;
     double *d_xData, *d_yData, *d_zData, *d_colliderSdf, *d_tmpX, *d_tmpY, *d_tmpZ;
     int *d_markersX, *d_markersY, *d_markersZ;
 
     h_xData = (double*)malloc(vectorSize * sizeof(double));
     h_yData = (double*)malloc(vectorSize * sizeof(double));
     h_zData = (double*)malloc(vectorSize * sizeof(double));
+    h_colliderSdf = (double*)malloc(vectorSize * sizeof(double));
 
     cudaMalloc((void **)&d_xData, vectorSize * sizeof(double));
     cudaMalloc((void **)&d_yData, vectorSize * sizeof(double));
@@ -261,15 +341,23 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
     cudaMalloc((void **)&d_tmpX, vectorSize * sizeof(double));
     cudaMalloc((void **)&d_tmpY, vectorSize * sizeof(double));
     cudaMalloc((void **)&d_tmpZ, vectorSize * sizeof(double));
-
     cudaMalloc((void **)&d_markersX, vectorSize * sizeof(int));
     cudaMalloc((void **)&d_markersY, vectorSize * sizeof(int));
     cudaMalloc((void **)&d_markersZ, vectorSize * sizeof(int));
 
-    cudaMemcpy(d_xData, &(*xDataPtr)[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_yData, &(*yDataPtr)[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_zData, &(*zDataPtr)[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_colliderSdf, &colliderSdfPtr[0], vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+     xData.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        h_xData[i + size.x * (j + size.y * k)] = xData(i, j, k);
+        h_yData[i + size.x * (j + size.y * k)] = yData(i, j, k);
+        h_zData[i + size.x * (j + size.y * k)] = zData(i, j, k);
+        h_colliderSdf[i + size.x * (j + size.y * k)] = colliderSdf(i, j, k);
+    }); 
+
+    cudaMemcpy(d_xData, h_xData, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_yData, h_yData, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_zData, h_zData, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_colliderSdf, h_colliderSdf, vectorSize * sizeof(double), cudaMemcpyHostToDevice);
+   
 
     CUDA_BuildMarkers<<<dimGrid, dimBlock>>>(d_xData, d_markersX, d_yData, d_markersY, d_zData, d_markersZ, 
                                  d_colliderSdf, d_size, d_gridSpacing, d_origin, 
@@ -288,6 +376,9 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
                                                             d_size, d_gridSpacing, d_origin, 
                                                             d_dataXOrigin, d_dataYOrigin, d_dataZOrigin);
 
+    CUDA_ResolveCollisionsWithDomainBoundry<<<dimGrid, dimBlock>>>(d_xData, d_yData, d_zData, d_size);
+    CUDA_ResolveCollisionsWithCollider<<<dimGrid, dimBlock>>>(d_xData, d_yData, d_zData, d_colliderSdf, d_size);
+
     cudaMemcpy(h_xData, d_xData, vectorSize * sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_yData, d_yData, vectorSize * sizeof(double), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_zData, d_zData, vectorSize * sizeof(double), cudaMemcpyDeviceToHost); 
@@ -297,102 +388,7 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
         xData(i, j, k) = h_xData[i + size.x * (j + size.y * k)];
         yData(i, j, k) = h_yData[i + size.x * (j + size.y * k)];
         zData(i, j, k) = h_zData[i + size.x * (j + size.y * k)];
-    });                                              
-
-    // TO DO: MOparallel_utils::ForEach(size.z, [&](size_t k)
-    parallel_utils::ForEach(size.z, [&](size_t k)
-    {
-        for (size_t j = 0; j < size.y; ++j) 
-        {
-            xData(0, j, k) = 0;
-        }
-    });
-
-    parallel_utils::ForEach(size.z, [&](size_t k)
-    {
-        for (size_t j = 0; j <size.y; ++j) 
-        {
-            xData(size.x - 1, j, k) = 0;
-        }
-    });
-
-    parallel_utils::ForEach(size.z, [&](size_t k)
-    {
-        for (size_t i = 0; i < size.x; ++i) 
-        {
-            yData(i, 0, k) = 0;
-        }
-    });
-
-    parallel_utils::ForEach(size.z, [&](size_t k)
-    {
-        for (size_t i = 0; i < size.x; ++i) 
-        {
-            yData(i, size.y - 1, k) = 0;
-        }
-    });
-
-    parallel_utils::ForEach(size.y, [&](size_t j)
-    {
-        for (size_t i = 0; i < size.x; ++i) 
-        {
-            zData(i, j, 0) = 0;
-        }
-    });
-
-    parallel_utils::ForEach(size.y, [&](size_t j)
-    {
-        for (size_t i = 0; i < size.x; ++i) 
-        {
-            zData(i, j, size.z - 1) = 0;
-        }
-    });
-
-    Array3<enum FluidMarker> markers;
-    markers.Resize(size);
-    markers.ParallelForEachIndex([&](size_t i, size_t j, size_t k) 
-    {
-        if (colliderSdf(i, j, k) < 0) 
-        {
-            markers(i, j, k) = BOUNDRY_MARK;
-        } 
-        else 
-        {
-            markers(i, j, k) = FLUID_MARK;
-        }
-    });
-
-    // TO DO change 0 to collider Velocity on  respective axis
-    markers.ForEachIndex([&](size_t i, size_t j, size_t k)
-    {
-        if (markers(i, j, k) == BOUNDRY_MARK) 
-        {
-            if (i > 0 && markers(i - 1, j, k) == FLUID_MARK) 
-            {
-                xData(i, j, k) = 0;
-            }
-            if (i < size.x - 1 && markers(i + 1, j, k) == FLUID_MARK) 
-            {
-                xData(i + 1, j, k) = 0;
-            }
-            if (j > 0 && markers(i, j - 1, k) == FLUID_MARK) 
-            {
-                yData(i, j, k) = 0;
-            }
-            if (j < size.y - 1 && markers(i, j + 1, k) == FLUID_MARK) 
-            {
-                yData(i, j + 1, k) = 0;
-            }
-            if (k > 0 && markers(i, j, k - 1) == FLUID_MARK) 
-            {
-                zData(i, j, k) = 0;
-            }
-            if (k < size.z - 1 && markers(i, j, k + 1) == FLUID_MARK) 
-            {
-                zData(i, j, k + 1) = 0;
-            }
-        }
-    });
+    });  
 
     cudaFree(d_xData);
     cudaFree(d_yData);
@@ -407,6 +403,7 @@ void CudaBlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& ve
     free(h_xData);
     free(h_yData);
     free(h_zData);
+    free(h_colliderSdf);
 }
 
 dim3 CudaBlockedBoundryConditionSolver::CalculateDimGrid(const Vector3<size_t> size)

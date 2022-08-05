@@ -141,7 +141,6 @@ TEST(CollisionsTest, ClosestTriangleIdx_test)
     std::cout << "velocity: " << velocity.x << ", " << velocity.y << " " << velocity.z << "\n";
     std::cout << "normal: " << closestNormal.x << ", " << closestNormal.y << " " << closestNormal.z << "\n";
 
-    EXPECT_EQ(true, false);
     EXPECT_EQ(true, mesh.IsInside(point1));
     EXPECT_EQ(true, mesh.IsInside(point2));
     EXPECT_EQ(false, mesh.IsInside(point3));

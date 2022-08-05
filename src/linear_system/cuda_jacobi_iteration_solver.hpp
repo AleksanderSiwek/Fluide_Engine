@@ -19,6 +19,8 @@ class CudaJacobiIterationSolver : public LinearSystemSolver
         double _tolerance;
         size_t _iteration;
 
+        bool _wasMemoryAllocatedOnDevice;
+
         double* _d_x;
         double* _d_b;
         double* _d_ACenter;
@@ -33,6 +35,7 @@ class CudaJacobiIterationSolver : public LinearSystemSolver
         double CalculateTolerance(const Vector3<size_t> size);
         void Initialize(LinearSystem* system);
         void FromDeviceToHost(LinearSystem* system);
+        void AllocateMemoryOnDevice(size_t vectorSize);
         void FreeDeviceMemory();
 };
 

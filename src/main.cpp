@@ -11,27 +11,28 @@
 
 int main()
 {
-    size_t dimSize = 40;
-    size_t numberOfIterations = 100;
-    double timeIntervalInSeconds = 0.05;
+    size_t resolution = 40;
+    Vector3<int> scalers(1, 2, 2);
+    size_t numberOfIterations = 150;
+    double timeIntervalInSeconds = 0.04;
 
-    const Vector3<size_t> size(dimSize, dimSize, dimSize*2);
+    const Vector3<size_t> size(resolution*scalers.x, resolution*scalers.y, resolution*scalers.z);
     Vector3<double> domainOrigin(0, 0, 0);
-    Vector3<double> domainSize(4, 4, 8);
+    Vector3<double> domainSize(4*scalers.x, 4*scalers.y, 4*scalers.z);
     BoundingBox3D domain(domainOrigin, domainSize);
 
     // Load fluid mesh
     TriangleMesh fluidMesh;
     OBJManager objLoader;
-    objLoader.Load("../../../test/test_cases/water_wall.obj", &fluidMesh);
+    objLoader.Load("../../../test/test_cases/2_Walls.obj", &fluidMesh);
 
     // Setup colliders
     TriangleMesh colliderMesh_1;
     TriangleMesh colliderMesh_2;
     objLoader.Load("../../../test/test_cases/collider_1.obj", &colliderMesh_1);
-    //objLoader.Load("../../../test/test_cases/collider_2.obj", &colliderMesh_2);
-    auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_1);
-    //auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_2);
+    objLoader.Load("../../../test/test_cases/test_cube.obj", &colliderMesh_2);
+    auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide(Vector3<double>((double)size.x, (double)size.y, (double)size.z)), colliderMesh_1);
+    auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide(Vector3<double>((double)size.x, (double)size.y, (double)size.z)), colliderMesh_2);
 
     // Setup Simulator
     PICSimulator simulator(size, domain);
@@ -40,10 +41,10 @@ int main()
     simulator.InitializeFrom3dMesh(fluidMesh);
     simulator.SetViscosity(0);
     simulator.AddCollider(collider_1);
-    simulator.SetMaxClf(1);
     //simulator.AddCollider(collider_2);
+    simulator.SetMaxClf(1);
 
-    TriangleMesh tmpMesh = colliderMesh_1;
+    TriangleMesh tmpMesh;
 
     Frame frame(timeIntervalInSeconds);
     simulator.SetCurrentFrame(frame);
@@ -54,6 +55,5 @@ int main()
         simulator.GetSurface(&tmpMesh);
         objLoader.Save("../../simulation_test_" + std::to_string(i) + ".obj", tmpMesh);
         tmpMesh.Clear();
-        //tmpMesh = colliderMesh_1;
     }   
 }
