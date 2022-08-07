@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
+find_package(PythonInterp 3.6 REQUIRED)
+find_package(PythonLibs 3.6 REQUIRED)
 
 set(PROJECT_NAME Fluid_Engine)
 set(PROJECT_LIB Fluid_Engine_lib)
@@ -6,7 +8,7 @@ set(PROJECT_BINARY Fluid_Engine_binary)
 set(PROJECT_TESTS Fluid_Engine_tests)
 set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 
-project(${PROJECT_NAME} LANGUAGES C CXX CUDA)
+project(${PROJECT_NAME} LANGUAGES C CXX CUDA PYTHON)
 
 # CUDA configuration
 enable_language(CUDA)
@@ -14,8 +16,8 @@ enable_language(CUDA)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -gencode arch=compute_22,code=sm_22 -rdc=true -lcudart -lcudadevrt -lcuda)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-
 include_directories(googletest/googletest/include/gtest/)
+include_directories(${PYTHON_INCLUDE_DIRS} ./libs/pybind11/include)
 
 message(STATUS "CMake version   : " ${CMAKE_SYSTEM_VERSION})
 message(STATUS "Compiler        : " ${CMAKE_CXX_COMPILER})
@@ -32,5 +34,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(src)
 add_subdirectory(test)
+
+
 
 
