@@ -132,7 +132,7 @@ __global__ void CUDA_ResolveFrictionWithCollider(double* arrayX, double* arrayY,
             {
                 CUDA_Vector3 normal = CUDA_Vector3GetNormalised(gradient);
                 CUDA_Vector3 velr = {vel.x - coliiderVel.x, vel.y - coliiderVel.y, vel.z - coliiderVel.z};
-                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 1.0);
+                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 0.0);
                 CUDA_Vector3 velp = {velt.x + coliiderVel.x, velt.y + coliiderVel.y, velt.z + coliiderVel.z};
                 tmpX = velp.x;
             }
@@ -158,7 +158,7 @@ __global__ void CUDA_ResolveFrictionWithCollider(double* arrayX, double* arrayY,
             {
                 CUDA_Vector3 normal = CUDA_Vector3GetNormalised(gradient);
                 CUDA_Vector3 velr = {vel.x - coliiderVel.x, vel.y - coliiderVel.y, vel.z - coliiderVel.z};
-                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 1.0);
+                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 0.0);
                 CUDA_Vector3 velp = {velt.x + coliiderVel.x, velt.y + coliiderVel.y, velt.z + coliiderVel.z};
                 tmpY = velp.y;
             }
@@ -183,7 +183,7 @@ __global__ void CUDA_ResolveFrictionWithCollider(double* arrayX, double* arrayY,
             {
                 CUDA_Vector3 normal = CUDA_Vector3GetNormalised(gradient);
                 CUDA_Vector3 velr = {vel.x - coliiderVel.x, vel.y - coliiderVel.y, vel.z - coliiderVel.z};
-                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 1.0);
+                CUDA_Vector3 velt = CUDA_ApplyFriction(velr, normal, 0.0);
                 CUDA_Vector3 velp = {velt.x + coliiderVel.x, velt.y + coliiderVel.y, velt.z + coliiderVel.z};
                 tmpZ = velp.z;
             }

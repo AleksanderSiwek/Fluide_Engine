@@ -1,5 +1,6 @@
 #include "cuda_conjugate_gradient_solver.hpp"
 #include "blas.hpp"
+#include <iostream>
 
 CudaConjugateGradientSolver::CudaConjugateGradientSolver(size_t maxNumberOfIterations, double tolerance)
     : _maxNumberOfIterations(maxNumberOfIterations), _tolerance(tolerance), _wasMemoryAllocatedOnDevice(false)
@@ -77,7 +78,7 @@ void CudaConjugateGradientSolver::Solve(LinearSystem* system)
         CUDA_BLAS::CUDA_AXpY<<<dimGrid, dimBlock>>>(beta, _d_tmp, _d_s, _d_d, cudaSize);
         iteration++;
     }
-
+    std::cout << "sigmaNew: " << std::sqrt(sigmaNew) << "\n";
     FromDeviceToHost(system);
 }
 

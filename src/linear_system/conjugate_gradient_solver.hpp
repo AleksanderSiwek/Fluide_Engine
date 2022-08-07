@@ -24,8 +24,10 @@ class ConjugateGradientSolver : public LinearSystemSolver
         SystemVector _d;
         SystemVector _q;
         SystemVector _s;
+        SystemVector _dPre;
+        SystemVector _yPre;
 
-        void InitializeSolver(const Vector3<size_t>& size);
+        void InitializeSolver(LinearSystem* system);
 };
 
 

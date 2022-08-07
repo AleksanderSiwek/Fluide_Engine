@@ -12,6 +12,7 @@ class CudaPICSimulator : public PhysicsAnimation
         ~CudaPICSimulator();
 
     private:
+    
 };
 
 #endif // _CUDA_PIC_SIMULATOR_HPP

@@ -114,7 +114,7 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
             {
                 Vector3<double> n = g.GetNormalized();
                 Vector3<double> velr = vel - coliderVel;
-                Vector3<double> velt = ApplyFriction(velr, n, 1.0);
+                Vector3<double> velt = ApplyFriction(velr, n, 0.0);
                 Vector3<double> velp = velt + coliderVel;
                 xTemp(i, j, k) = velp.x;
             }
@@ -141,7 +141,7 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
             {
                 Vector3<double> n = g.GetNormalized();
                 Vector3<double> velr = vel - coliderVel;
-                Vector3<double> velt = ApplyFriction(velr, n, 1.0);
+                Vector3<double> velt = ApplyFriction(velr, n, 0.0);
                 Vector3<double> velp = velt + coliderVel;
                 yTemp(i, j, k) = velp.y;
             }
@@ -168,7 +168,7 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
             {
                 Vector3<double> n = g.GetNormalized();
                 Vector3<double> velr = vel - coliderVel;
-                Vector3<double> velt = ApplyFriction(velr, n, 1.0);
+                Vector3<double> velt = ApplyFriction(velr, n, 0.0);
                 Vector3<double> velp = velt + coliderVel;
                 zTemp(i, j, k) = velp.z;
             }

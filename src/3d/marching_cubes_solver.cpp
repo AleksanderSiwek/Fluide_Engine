@@ -26,9 +26,14 @@ void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* me
 {
     MarchingCubeVertexMap vertexMap;
     const auto& size = sdf.GetSize();
-    const auto& gridSpacing = sdf.GetGridSpacing();
-    const auto& origin = sdf.GetOrigin();
-    const auto& invGridSpacing = 1.0 / gridSpacing;
+    // Vector3<double> scaleFactor(2, 2, 2);
+    // const auto& newSize = Vector3<size_t>((size_t)(size.x * scaleFactor.x), (size_t)(size.y * scaleFactor.y), (size_t)(size.z * scaleFactor.z));
+    // ScalarGrid3D rescaledSdf(newSize, 0, origin, gridSpacing / scaleFactor);
+    // rescaledSdf.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    // {
+    //     rescaledSdf(i, j, k) = sdf.Sample(rescaledSdf.GridIndexToPosition(i, j, k));
+    // });
+
 
     CalculateXYZMeshPart(sdf, size, vertexMap, mesh);
     CalculateXYMeshPart(sdf, size, mesh);

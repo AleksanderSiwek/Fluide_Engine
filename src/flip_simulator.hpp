@@ -11,7 +11,18 @@ class FLIPSimulator : public PICSimulator
 
         ~FLIPSimulator();
 
+        void SetBlendingFactor(double factor);
+
+        double GetBlendingFactor() const;
+
+    protected:
+        void TransferParticles2Grid() override;
+        void TransferGrid2Particles() override;
+
     private:
+        double _blendingFactor;
+        FaceCenteredGrid3D _velocityResiduals;
+
 };
 
 #endif // FLIP_SIMULATOR_HPP

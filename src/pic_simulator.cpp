@@ -30,7 +30,7 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _fluid.particleSystem.AddVectorValue(PARTICLE_VELOCITY_KEY);
     _fluid.viscosity = 0.5;
     _fluid.density = 1;
-
+    
     _maxClf = 1;
     _particlesPerBlok = 12;
 
@@ -39,68 +39,14 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
     _boundryConditionSolver = std::make_shared<CudaBlockedBoundryConditionSolver>();
     _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, gridSpacing, domain.GetOrigin()));
+
+    _maxNumberOfSubSteps = 100;
+    _cflTolerance = 0.1;
 }
 
 PICSimulator::~PICSimulator()
 {
 
-}
-
-FluidMarkers PICSimulator::GetMarkers() const
-{
-    FluidMarkers markers;
-    const auto& size = _fluid.sdf.GetSize();
-    markers.Resize(size);
-    markers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
-    {
-        if(_fluid.sdf(i, j, k) < 0)
-        {
-            markers(i, j, k) = FLUID_MARK;
-        }
-        else
-        {
-            markers(i, j, k) = AIR_MARK;
-        }
-    });
-    return markers;
-}
-
-void PICSimulator::PrintGrid(const Array3<double>& input) const
-{
-    const auto& size = input.GetSize();
-    std::cout << std::setprecision(2) << std::fixed;
-    for(size_t j = size.y ; j > 0; j--)
-    {
-        for(size_t k = 0; k < size.z; k++)
-        {
-            for(size_t i = 0; i < size.x; i++)
-            {
-                std::cout << input(i, j - 1, k) << " ";
-            }
-            std::cout << "      ";
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
-}
-
-void PICSimulator::PrintMarkers() 
-{
-    auto markers = GetMarkers();
-    const auto& size = markers.GetSize();
-    for(size_t j = size.y ; j > 0; j--)
-    {
-        for(size_t k = 0; k < size.z; k++)
-        {
-            for(size_t i = 0; i < size.x; i++)
-            {
-                std::cout << ((markers(i, j - 1, k) == FLUID_MARK) ? "F" : "A") << " ";
-            }
-            std::cout << "      ";
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
 }
 
 void PICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
@@ -185,22 +131,23 @@ const ScalarGrid3D& PICSimulator::GetFluidSdf() const
     return _fluid.sdf;
 }
 
-double PICSimulator::Cfl(double timeIntervalInSceonds) const
+double PICSimulator::Cfl(double timeIntervalInSeconds) const
 {
     const auto& size = _fluid.velocityGrid.GetSize();
     const auto& gridSpacing = _fluid.velocityGrid.GetGridSpacing();
     const auto& velocityGrid = _fluid.velocityGrid;
     double maxVelocity = 0.0;
-    velocityGrid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    velocityGrid.ForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k).Abs() + timeIntervalInSceonds * Vector3<double>(0.0, -9.8, 0.0); 
+        Vector3<double> vect = _fluid.velocityGrid.ValueAtCellCenter(i, j, k).Abs() + timeIntervalInSeconds * Vector3<double>(0.0, -9.8, 0.0); 
         maxVelocity = std::max(maxVelocity, vect.x);
         maxVelocity = std::max(maxVelocity, vect.y);
         maxVelocity = std::max(maxVelocity, vect.z);
     });
 
     double minGridSize = std::min(gridSpacing.x, std::min(gridSpacing.y, gridSpacing.z));
-    return maxVelocity * timeIntervalInSceonds / minGridSize;
+    double cflVal = maxVelocity * timeIntervalInSeconds / minGridSize;
+    return cflVal + cflVal * _cflTolerance;
 }
 
 double PICSimulator::MaxCfl() const
@@ -362,29 +309,35 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
             pt0 = pt1;
         }
 
-        if (pt1.x <= _domain.GetOrigin().x) {
+        if (pt1.x <= _domain.GetOrigin().x) 
+        {
             pt1.x = _domain.GetOrigin().x;
-            vel.x = 0.0;
+            vel.x = vel.x < 0.0 ? 0.0 : vel.x;
         }
-        if (pt1.x >= _domain.GetOrigin().x + _domain.GetSize().x) {
+        if (pt1.x >= _domain.GetOrigin().x + _domain.GetSize().x) 
+        {
             pt1.x = _domain.GetOrigin().x + _domain.GetSize().x;
-            vel.x = 0.0;
+            vel.x = vel.x > 0.0 ? 0.0 : vel.x;
         }
-        if (pt1.y <= _domain.GetOrigin().y) {
+        if (pt1.y <= _domain.GetOrigin().y) 
+        {
             pt1.y = _domain.GetOrigin().y;
-            vel.y = 0.0;
+            vel.y = vel.y < 0.0 ? 0.0 : vel.y;
         }
-        if (pt1.y >= _domain.GetOrigin().y + _domain.GetSize().y) {
+        if (pt1.y >= _domain.GetOrigin().y + _domain.GetSize().y) 
+        {
             pt1.y = _domain.GetOrigin().y + _domain.GetSize().y;
-            vel.y = 0.0;
+            vel.y = vel.y > 0.0 ? 0.0 : vel.y;
         }
-        if (pt1.z <= _domain.GetOrigin().z) {
+        if (pt1.z <= _domain.GetOrigin().z) 
+        {
             pt1.z = _domain.GetOrigin().z;
-            vel.z = 0.0;
+            vel.z = vel.z < 0.0 ? 0.0 : vel.z;
         }
-        if (pt1.z >= _domain.GetOrigin().z + _domain.GetSize().z) {
+        if (pt1.z >= _domain.GetOrigin().z + _domain.GetSize().z) 
+        {
             pt1.z = _domain.GetOrigin().z + _domain.GetSize().z;
-            vel.z = 0.0;
+            vel.z = vel.z > 0.0 ? 0.0 : vel.z;
         }
 
         particlesPos[i] = pt1;
@@ -423,7 +376,9 @@ void PICSimulator::EndAdvanceTimeStep(double tmeIntervalInSecons)
 unsigned int PICSimulator::NumberOfSubTimeSteps(double tmeIntervalInSecons) const
 {
     double currentCfl = Cfl(tmeIntervalInSecons);
-    return static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxClf), 1.0));
+    std::cout << "Current CFL: " << currentCfl << "\n";
+    unsigned int numberOfSubSteps = static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxClf), 1.0));
+    return std::min(numberOfSubSteps, _maxNumberOfSubSteps);
 }
 
 void PICSimulator::TransferParticles2Grid()

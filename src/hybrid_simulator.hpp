@@ -1,10 +1,12 @@
-#ifndef _PIC_SIMULATOR_HPP
-#define _PIC_SIMULATOR_HPP
+#ifndef _HYBRID_SIMULATOR_HPP
+#define _HYBRID_SIMULATOR_HPP
+
+#include "physics_animation.hpp"
 
 #include <memory>
 #include <algorithm>
 
-#include "hybrid_simulator.hpp"
+#include "physics_animation.hpp"
 #include "fluid3.hpp"
 #include "common/vector_field3.hpp"
 #include "particle_systems/particle_system.hpp"
@@ -25,14 +27,14 @@
 #include "3d/collider_collection.hpp"
 
 
-class PICSimulator : public HybridSimulator
+class HybridSimulator : public PhysicsAnimation
 {
     public:
-        PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain);
-        
-        ~PICSimulator();
+        HybridSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain);
 
-        void InitializeFrom3dMesh(const TriangleMesh& mesh);
+        virtual ~HybridSimulator();
+
+        virtual void InitializeFrom3dMesh(const TriangleMesh& mesh);
 
         void AddExternalForce(const std::shared_ptr<ExternalForce> newForce);
         void AddCollider(std::shared_ptr<Collider> collider);
@@ -51,7 +53,7 @@ class PICSimulator : public HybridSimulator
         void GetSurface(TriangleMesh* mesh);
         const ScalarGrid3D& GetFluidSdf() const;
 
-        double Cfl(double timeIntervalInSceonds) const;
+        virtual double Cfl(double timeIntervalInSceonds) const = 0;
         double MaxCfl() const;
         void SetMaxClf(double maxClf);
 
@@ -65,18 +67,14 @@ class PICSimulator : public HybridSimulator
         std::shared_ptr<SurfaceTracker> _surfaceTracker;
         std::vector<std::shared_ptr<ExternalForce>> _externalForces;
 
-        FileSystem _fileSystem;
         double _maxClf;
         size_t _particlesPerBlok;
-
-        const std::string PARTICLE_POSITION_KEY = "postion";
-        const std::string PARTICLE_VELOCITY_KEY = "velocity";
 
         unsigned int _maxNumberOfSubSteps;
         double _cflTolerance;
 
-        void OnInitialize() override;
-        void OnAdvanceTimeStep(double timeIntervalInSeconds) override;
+        virtual void OnInitialize() override;
+        virtual void OnAdvanceTimeStep(double timeIntervalInSeconds) override;
         virtual void OnBeginAdvanceTimeStep(double timeIntervalInSeconds);
         virtual void OnEndAdvanceTimeStep(double timeIntervalInSeconds);
 
@@ -84,21 +82,22 @@ class PICSimulator : public HybridSimulator
         virtual void ComputeDiffusion(double timeIntervalInSeconds);
         virtual void ComputePressure(double timeIntervalInSeconds);
         virtual void ComputeAdvection(double timeIntervalInSeconds);
-        virtual void MoveParticles(double timeIntervalInSeconds);
+        virtual void MoveParticles(double timeIntervalInSeconds) = 0;
+        virtual void TransferParticles2Grid() = 0;
+        virtual void TransferGrid2Particles() = 0;
 
         void ApplyBoundryCondition();
 
         unsigned int NumberOfSubTimeSteps(double tmeIntervalInSecons) const override;
-        virtual void TransferParticles2Grid();
-        virtual void TransferGrid2Particles();
-
+        
         void BeginAdvanceTimeStep(double tmeIntervalInSecons);
         void EndAdvanceTimeStep(double tmeIntervalInSecons);
-        void BuildSignedDistanceField();
-        void ExtrapolateVelocityToAir();  
-        void ExtrapolateIntoCollider();
+        virtual void BuildSignedDistanceField();
+        virtual void ExtrapolateVelocityToAir() = 0;  
+        virtual void ExtrapolateIntoCollider() = 0;
 
-        void InitializeParticles();
+        virtual void InitializeParticles() = 0;
 };
 
-#endif // _PIC_SIMULATOR_HPP
+
+#endif _HYBRID_SIMULATOR_HPP

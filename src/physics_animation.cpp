@@ -60,23 +60,26 @@ void PhysicsAnimation::OnUpdate(const Frame& frame)
     }
 }
 
+#define EPSYLON 0.0000000001
 void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 {
     auto globalStart = std::chrono::steady_clock::now();
-    std::cout << std::setprecision(5) << std::fixed;
+    std::cout << std::setprecision(20) << std::fixed;
     std::cout << "========== ITERATION ==========\n";
 
     _currentTime = _currentFrame.GetTimeInSeconds();
 
-    const int numberOfSubTimesteps = NumberOfSubTimeSteps(timeIntervalInSeconds);
-    std::cout << "Number of simulation steps: " << numberOfSubTimesteps << "\n\n";
-
-    const double subTimestepInterval = _currentFrame.GetTimeIntervalInSeconds() / numberOfSubTimesteps;
-    for(size_t i = 0; i < NumberOfSubTimeSteps(timeIntervalInSeconds); i++)
+    double timeRemaining = timeIntervalInSeconds;
+    size_t i = 0;
+    while(timeRemaining > EPSYLON)
     {
+        unsigned int numberOfSubTimesteps = NumberOfSubTimeSteps(timeRemaining);
+        double subTimestepInterval = timeRemaining / static_cast<double>(numberOfSubTimesteps);
         std::cout << "SubStep number: " << i << "\n";
         OnAdvanceTimeStep(subTimestepInterval);
+        timeRemaining -= subTimestepInterval;
         _currentTime += subTimestepInterval;
+        i++;
         std::cout << "\n";
     }
 

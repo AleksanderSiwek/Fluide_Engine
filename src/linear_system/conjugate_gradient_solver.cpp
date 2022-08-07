@@ -15,7 +15,7 @@ void ConjugateGradientSolver::Solve(LinearSystem* system)
 {
     const auto& size = system->x.GetSize();
 
-    InitializeSolver(size);
+    InitializeSolver(system);
 
     BLAS::Residual(system->A, system->x, system->b, &_r);
     Preconditioner(_r, _d);
@@ -56,18 +56,40 @@ void ConjugateGradientSolver::Solve(LinearSystem* system)
 
 void ConjugateGradientSolver::Preconditioner(SystemVector& a, SystemVector& b)
 {
+    // NULL type preconditioner
     b.ParallelFill(a);
+
+    // TO DO ? ICCG - Incomplete Cholesky conjugate gradient
 }
 
-void ConjugateGradientSolver::InitializeSolver(const Vector3<size_t>& size)
+void ConjugateGradientSolver::InitializeSolver(LinearSystem* system)
 {
-    _r.Resize(size);
-    _d.Resize(size);
-    _q.Resize(size);
-    _s.Resize(size);
+    const auto& size = system->A.GetSize();
 
-    _r.ParallelFill(0);
-    _d.ParallelFill(0);
-    _q.ParallelFill(0);
-    _s.ParallelFill(0);
+    _r.Resize(size, 0);
+    _d.Resize(size, 0);
+    _q.Resize(size, 0);
+    _s.Resize(size, 0);
+
+    // TO DO ? ICCG - Incomplete Cholesky conjugate gradient
+    // _dPre.Resize(size, 0);
+    // _yPre.Resize(size, 0);
+
+    // system->A.ForEachIndex([&](size_t i, size_t j, size_t k)
+    // {
+    //     double denom = 
+    //         system->A(i, j, k).center -
+    //         ((i > 0) ? (system->A(i - 1, j, k).right) * (system->A(i - 1, j, k).right) * _dPre(i - 1, j, k) : 0.0) -
+    //         ((j > 0) ? (system->A(i, j - 1, k).up) * (system->A(i, j - 1, k).up) * _dPre(i, j - 1, k) : 0.0) -
+    //         ((k > 0) ? (system->A(i, j, k - 1).front) * (system->A(i, j, k - 1).front) * _dPre(i, j, k - 1): 0.0);
+
+    //     if (std::fabs(denom) > 0.0) 
+    //     {
+    //         _dPre(i, j, k) = 1.0 / denom;
+    //     } 
+    //     else 
+    //     {
+    //         _dPre(i, j, k) = 0.0;
+    //     }
+    // });
 }
