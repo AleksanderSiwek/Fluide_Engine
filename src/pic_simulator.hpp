@@ -4,7 +4,7 @@
 #include <memory>
 #include <algorithm>
 
-#include "hybrid_simulator.hpp"
+#include "physics_animation.hpp"
 #include "fluid3.hpp"
 #include "common/vector_field3.hpp"
 #include "particle_systems/particle_system.hpp"
@@ -25,7 +25,7 @@
 #include "3d/collider_collection.hpp"
 
 
-class PICSimulator : public HybridSimulator
+class PICSimulator : public PhysicsAnimation
 {
     public:
         PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain);

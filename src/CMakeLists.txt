@@ -40,4 +40,6 @@ set_target_properties(${PROJECT_BINARY}
        CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
 set_target_properties(${PROJECT_BINARY} PROPERTIES LINK_OPTIONS -nodefaultlibs)
+
+add_subdirectory(python_wrapper)
 # set_target_properties(${PROJECT_BINARY} PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)

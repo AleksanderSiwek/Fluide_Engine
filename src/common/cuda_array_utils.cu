@@ -22,6 +22,15 @@ CUDA_Int3 Vector3SizeToCUDA_Int3(const Vector3<size_t>& vect)
     return intSize; 
 }
 
+Vector3<double> CUDA_Vector3ToVector3(const CUDA_Vector3& vect)
+{
+    return Vector3<double>(vect.x, vect.y, vect.z);
+}
+
+Vector3<size_t> CUDA_Int3ToVector3Size(const CUDA_Int3& vect)
+{
+        return Vector3<size_t>((size_t)vect.x, (size_t)vect.y, (size_t)vect.z);
+}
 
 __device__ double CUDA_Vector3Dot(CUDA_Vector3 a, CUDA_Vector3 b)
 {

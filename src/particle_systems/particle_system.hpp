@@ -22,7 +22,7 @@ class ParticleSystem
 
         void AddParticles(size_t numberOfParticles, const std::vector<Vector3<double>>& vectorVal, const std::string& name);
         void AddScalarValue(std::string name, double initialValue=0);
-        void AddVectorValue(std::string name, Vector3<double> initialValue=(0, 0, 0));
+        void AddVectorValue(std::string name, Vector3<double> initialValue=Vector3<double>(0, 0, 0));
 
         void ForEachParticle(std::function<void(size_t)>& functor);
         void ForEachParticle(const std::function<void(size_t)>& functor) const;

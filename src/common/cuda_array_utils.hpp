@@ -32,6 +32,10 @@ CUDA_Vector3 Vector3ToCUDA_Vector3(const Vector3<double>& vect);
 
 CUDA_Int3 Vector3SizeToCUDA_Int3(const Vector3<size_t>& vect);
 
+Vector3<double> CUDA_Vector3ToVector3(const CUDA_Vector3& vect);
+
+Vector3<size_t> CUDA_Int3ToVector3Size(const CUDA_Int3& vect);
+
 __device__ double CUDA_Vector3Dot(CUDA_Vector3 a, CUDA_Vector3 b);
 
 __device__ CUDA_Vector3 CUDA_Vector3Project(CUDA_Vector3 a, CUDA_Vector3 normal);
