@@ -6,6 +6,7 @@
 #include "common/cuda_array_utils.hpp"
 #include "fluid_solvers/cuda_blocked_boundry_condition_solver.hpp"
 #include "fluid_solvers/blocked_boundry_condition_solver.hpp"
+#include "fluid_solvers/cuda_blocked_boundry_condition_solver.hpp"
 
 // TO DO: DELETE
 #include <iostream>
@@ -14,34 +15,13 @@
 #include <cmath>
 
 PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain)
-    : _domain(domain)
+    : HybridSimulator(gridSize, domain)
 {
-    auto domainSize = _domain.GetSize();
-    Vector3<double> gridSpacing(domainSize.x / gridSize.x, domainSize.y / gridSize.y, domainSize.z / gridSize.z);
-
-    _fluid.velocityGrid.Resize(gridSize);
-    _fluid.velocityGrid.SetGridSpacing(gridSpacing);
-    _fluid.velocityGrid.SetOrigin(domain.GetOrigin());
-    _fluid.sdf.Resize(gridSize);
-    _fluid.sdf.SetGridSpacing(gridSpacing);
-    _fluid.sdf.SetOrigin(domain.GetOrigin() + gridSpacing / 2.0);
-    _fluid.markers.Resize(gridSize);
-    _fluid.particleSystem.AddVectorValue(PARTICLE_POSITION_KEY);
-    _fluid.particleSystem.AddVectorValue(PARTICLE_VELOCITY_KEY);
-    _fluid.viscosity = 0.5;
-    _fluid.density = 1;
-    
-    _maxClf = 1;
-    _particlesPerBlok = 12;
-
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
     _boundryConditionSolver = std::make_shared<CudaBlockedBoundryConditionSolver>();
-    _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, gridSpacing, domain.GetOrigin()));
-
-    _maxNumberOfSubSteps = 100;
-    _cflTolerance = 0.1;
+    _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, GetGridSpacing(), GetOrigin()));
 }
 
 PICSimulator::~PICSimulator()
@@ -49,7 +29,7 @@ PICSimulator::~PICSimulator()
 
 }
 
-void PICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
+void PICSimulator::InitializeFromTriangleMesh(const TriangleMesh& mesh)
 {
     Mesh2SDF converter;
     converter.Build(mesh, _fluid.sdf);
@@ -60,16 +40,6 @@ void PICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
 void PICSimulator::AddExternalForce(const std::shared_ptr<ExternalForce> newForce)
 {
     _externalForces.push_back(newForce);
-}
-
-void PICSimulator::SetViscosity(double viscosity)
-{
-    _fluid.viscosity = std::max(0.0, viscosity);
-}
-
-void PICSimulator::SetDensity(double density)
-{
-    _fluid.density = std::max(0.0, density);
 }
 
 void PICSimulator::SetDiffusionSolver(std::shared_ptr<DiffusionSolver> diffusionSolver)
@@ -92,43 +62,13 @@ void PICSimulator::AddCollider(std::shared_ptr<Collider> collider)
     _boundryConditionSolver->AddCollider(collider);
 }
 
-double PICSimulator::GetViscosity() const
-{
-    return _fluid.viscosity;
-}
-
-double PICSimulator::GetDensity() const
-{
-    return _fluid.density;
-}
-
-Vector3<double> PICSimulator::GetOrigin() const
-{
-    return _fluid.velocityGrid.GetOrigin();
-}
-
-Vector3<size_t> PICSimulator::GetResolution() const
-{
-    return _fluid.velocityGrid.GetSize();
-}
-
-Vector3<double> PICSimulator::GetGridSpacing() const
-{
-    return _fluid.velocityGrid.GetGridSpacing();
-}
-
-void PICSimulator::GetSurface(TriangleMesh* mesh)
+void PICSimulator::GetSurface(TriangleMesh& mesh)
 {
     auto start = std::chrono::steady_clock::now();
     std::cout << "Surface Tracker: ";
     _surfaceTracker->BuildSurface(_fluid.sdf, mesh);
     auto end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
-}
-
-const ScalarGrid3D& PICSimulator::GetFluidSdf() const
-{
-    return _fluid.sdf;
 }
 
 double PICSimulator::Cfl(double timeIntervalInSeconds) const
@@ -147,17 +87,7 @@ double PICSimulator::Cfl(double timeIntervalInSeconds) const
 
     double minGridSize = std::min(gridSpacing.x, std::min(gridSpacing.y, gridSpacing.z));
     double cflVal = maxVelocity * timeIntervalInSeconds / minGridSize;
-    return cflVal + cflVal * _cflTolerance;
-}
-
-double PICSimulator::MaxCfl() const
-{
-    return _maxClf;
-}
-
-void PICSimulator::SetMaxClf(double maxClf)
-{
-    _maxClf = maxClf;
+    return cflVal;
 }
 
 void PICSimulator::OnInitialize()
@@ -295,7 +225,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
         Vector3<double> vel = particlesVel[i];
 
         // Adaptive time-stepping
-        unsigned int numSubSteps = static_cast<unsigned int>(std::max(_maxClf, 1.0));
+        unsigned int numSubSteps = static_cast<unsigned int>(std::max(_maxCfl, 1.0));
         double dt = timeIntervalInSeconds / numSubSteps;
         for (unsigned int t = 0; t < numSubSteps; ++t) 
         {
@@ -360,7 +290,7 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 
 void PICSimulator::ApplyBoundryCondition()
 {
-    _boundryConditionSolver->ConstrainVelocity(_fluid.velocityGrid, static_cast<size_t>(std::ceil(_maxClf)));
+    _boundryConditionSolver->ConstrainVelocity(_fluid.velocityGrid, static_cast<size_t>(std::ceil(_maxCfl)));
 }
 
 void PICSimulator::BeginAdvanceTimeStep(double tmeIntervalInSecons)
@@ -377,7 +307,7 @@ unsigned int PICSimulator::NumberOfSubTimeSteps(double tmeIntervalInSecons) cons
 {
     double currentCfl = Cfl(tmeIntervalInSecons);
     std::cout << "Current CFL: " << currentCfl << "\n";
-    unsigned int numberOfSubSteps = static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxClf), 1.0));
+    unsigned int numberOfSubSteps = static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxCfl), 1.0));
     return std::min(numberOfSubSteps, _maxNumberOfSubSteps);
 }
 
@@ -528,7 +458,7 @@ void PICSimulator::ExtrapolateIntoCollider()
     auto& sdf = _fluid.sdf;
     const auto& size = sdf.GetSize();
 
-    size_t depth = static_cast<size_t>(std::ceil(_maxClf));
+    size_t depth = static_cast<size_t>(std::ceil(_maxCfl));
     const auto prevSdf(sdf);
     Array3<int> valid(size, 0);
     const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();

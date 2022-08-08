@@ -153,7 +153,7 @@ CudaPICSimulator::~CudaPICSimulator()
     }
 }
 
-void CudaPICSimulator::InitializeFrom3dMesh(const TriangleMesh& mesh)
+void CudaPICSimulator::InitializeFromTriangleMesh(const TriangleMesh& mesh)
 {
     Mesh2SDF converter;
     converter.Build(mesh, _fluid.sdf);
@@ -222,7 +222,7 @@ Vector3<double> CudaPICSimulator::GetGridSpacing() const
     return _fluid.velocityGrid.GetGridSpacing();
 }
 
-void CudaPICSimulator::GetSurface(TriangleMesh* mesh)
+void CudaPICSimulator::GetSurface(TriangleMesh& mesh)
 {
     auto start = std::chrono::steady_clock::now();
     std::cout << "Surface Tracker: ";

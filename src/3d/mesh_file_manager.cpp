@@ -21,12 +21,12 @@ void MeshFileManager::Save(std::string name, const TriangleMesh& obj)
     }
 }
 
-void MeshFileManager::Load(std::string name, TriangleMesh* obj)
+void MeshFileManager::Load(std::string name, TriangleMesh& obj)
 {
     std::ifstream f(name.c_str());
     if(IsOpenFileError(&f))
     {
-        OnLoad(&f, obj);
+        OnLoad(&f, &obj);
         CheckBadBitError(&f);
     }
 }

@@ -16,7 +16,7 @@ class MeshFileManager
         virtual ~MeshFileManager();
 
         void Save(std::string name, const TriangleMesh& obj);
-        void Load(std::string name, TriangleMesh* obj);
+        void Load(std::string name, TriangleMesh& obj);
 
     protected:
         virtual void OnSave(std::ofstream* f, const TriangleMesh& obj) = 0;

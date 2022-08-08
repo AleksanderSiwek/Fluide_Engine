@@ -161,3 +161,4 @@ double TriangleMesh::ADet(const Vector3<double>& point1, const Vector3<double>& 
     ret -= point1.x * point3.y * point2.z;
     return ret;
 }
+

@@ -22,7 +22,7 @@ MarchingCubesSolver::~MarchingCubesSolver()
 
 }
 
-void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* mesh)
+void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh& mesh)
 {
     MarchingCubeVertexMap vertexMap;
     const auto& size = sdf.GetSize();
@@ -35,10 +35,10 @@ void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh* me
     // });
 
 
-    CalculateXYZMeshPart(sdf, size, vertexMap, mesh);
-    CalculateXYMeshPart(sdf, size, mesh);
-    CalculateYZMeshPart(sdf, size, mesh);
-    CalculateXZMeshPart(sdf, size, mesh);
+    CalculateXYZMeshPart(sdf, size, vertexMap, &mesh);
+    CalculateXYMeshPart(sdf, size, &mesh);
+    CalculateYZMeshPart(sdf, size, &mesh);
+    CalculateXZMeshPart(sdf, size, &mesh);
 }
 
 void MarchingCubesSolver::CalculateXYZMeshPart(const ScalarGrid3D& sdf, const Vector3<size_t>& size, MarchingCubeVertexMap& vertexMap, TriangleMesh* mesh)

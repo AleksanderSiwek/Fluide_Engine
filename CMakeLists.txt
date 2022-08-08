@@ -5,6 +5,7 @@ set(PROJECT_LIB Fluid_Engine_lib)
 set(PROJECT_BINARY Fluid_Engine_binary)
 set(PROJECT_TESTS Fluid_Engine_tests)
 set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
+set (CMAKE_CXX_STANDARD 17)
 
 project(${PROJECT_NAME} LANGUAGES C CXX CUDA)
 

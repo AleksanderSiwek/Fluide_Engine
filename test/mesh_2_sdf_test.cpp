@@ -7,7 +7,7 @@ TEST(MeshSignedDistanceFieldTest, DistanceField_Test)
 {
     OBJManager objManager;
     TriangleMesh mesh;
-    objManager.Load("../../../test/test_cases/test_cube.obj", &mesh);
+    objManager.Load("../../../test/test_cases/test_cube.obj", mesh);
     ScalarGrid3D sdf(Vector3<size_t>(10, 10, 10), 0, 0, 1);
     Mesh2SDF sdfBuilder;
     sdfBuilder.Build(mesh, sdf);

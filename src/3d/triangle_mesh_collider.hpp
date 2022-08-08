@@ -7,6 +7,8 @@
 #include "../3d/scalar_grid3d.hpp"
 #include "../3d/mesh_2_sdf.hpp"
 
+#include <memory>
+
 
 class TriangleMeshCollider : public Collider
 {

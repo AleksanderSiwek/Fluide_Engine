@@ -64,7 +64,7 @@ void PhysicsAnimation::OnUpdate(const Frame& frame)
 void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 {
     auto globalStart = std::chrono::steady_clock::now();
-    std::cout << std::setprecision(20) << std::fixed;
+    std::cout << std::setprecision(5) << std::fixed;
     std::cout << "========== ITERATION ==========\n";
 
     _currentTime = _currentFrame.GetTimeInSeconds();

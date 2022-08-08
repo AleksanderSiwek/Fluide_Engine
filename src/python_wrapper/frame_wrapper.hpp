@@ -7,7 +7,6 @@
 
 namespace py = pybind11;
 
-
 void addFrame(py::module& m);
 
 #endif // _FRAME_WRAPPER_HPP

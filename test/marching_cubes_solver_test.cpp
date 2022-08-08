@@ -24,7 +24,7 @@ TEST(MarchingCubesSolverTest, BuildMesh_test)
     sdf(1, 0, 1) = -1;
     sdf(1, 0, 0) = -1;
 
-    solver.BuildSurface(sdf, &mesh);
+    solver.BuildSurface(sdf, mesh);
 
     objManager.Save("../../test_marching_cubes.obj", mesh);
 }

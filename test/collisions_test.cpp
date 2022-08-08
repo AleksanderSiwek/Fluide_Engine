@@ -60,7 +60,7 @@ TEST(CollisionsTest, IsInsideTriangleMesh_test)
     TriangleMesh mesh;
     OBJManager objManager;
 
-    objManager.Load("../../../test/test_cases/test_model.obj", &mesh);
+    objManager.Load("../../../test/test_cases/test_model.obj", mesh);
 
     EXPECT_EQ(true, mesh.IsInside(point0));
     EXPECT_EQ(true, mesh.IsInside(point1));
@@ -82,7 +82,7 @@ TEST(CollisionsTest, ClosestTriangleIdx_test)
     TriangleMesh mesh;
     OBJManager objManager;
 
-    objManager.Load("../../../test/test_cases/test_model.obj", &mesh);
+    objManager.Load("../../../test/test_cases/test_model.obj", mesh);
 
     Vector3<double> position = point0;
     Vector3<double> velocity(0, -1, 0);

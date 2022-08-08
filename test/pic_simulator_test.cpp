@@ -131,12 +131,12 @@ TEST(PICSimulatorTest, Simulate_test)
     // Load fluid mesh
     TriangleMesh fluidMesh;
     OBJManager objLoader;
-    objLoader.Load("../../../test/test_cases/water_wall.obj", &fluidMesh);
+    objLoader.Load("../../../test/test_cases/water_wall.obj", fluidMesh);
 
     // Setup colliders
     TriangleMesh colliderMesh_1;
     TriangleMesh colliderMesh_2;
-    objLoader.Load("../../../test/test_cases/collider_1.obj", &colliderMesh_1);
+    objLoader.Load("../../../test/test_cases/collider_1.obj", colliderMesh_1);
     //objLoader.Load("../../../test/test_cases/collider_2.obj", &colliderMesh_2);
     auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_1);
     //auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_2);
@@ -145,7 +145,7 @@ TEST(PICSimulatorTest, Simulate_test)
     PICSimulator simulator(size, domain);
     simulator.AddExternalForce(std::make_shared<DirectionalField>(Vector3<double>(0, -9.81, 0)));
     //simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
-    simulator.InitializeFrom3dMesh(fluidMesh);
+    simulator.InitializeFromTriangleMesh(fluidMesh);
     simulator.SetViscosity(0);
     simulator.AddCollider(collider_1);
     simulator.SetMaxClf(1);
@@ -159,7 +159,7 @@ TEST(PICSimulatorTest, Simulate_test)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();
-        simulator.GetSurface(&tmpMesh);
+        simulator.GetSurface(tmpMesh);
         objLoader.Save("../../simulation_test_" + std::to_string(i) + ".obj", tmpMesh);
         tmpMesh.Clear();
         //tmpMesh = colliderMesh_1;

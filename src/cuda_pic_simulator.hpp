@@ -34,7 +34,7 @@ class CudaPICSimulator : public PhysicsAnimation
 
         ~CudaPICSimulator();
 
-        void InitializeFrom3dMesh(const TriangleMesh& mesh);
+        void InitializeFromTriangleMesh(const TriangleMesh& mesh);
 
         void AddExternalForce(const std::shared_ptr<ExternalForce> newForce);
         void AddCollider(std::shared_ptr<Collider> collider);
@@ -50,7 +50,7 @@ class CudaPICSimulator : public PhysicsAnimation
         Vector3<double> GetOrigin() const;
         Vector3<size_t> GetResolution() const;
         Vector3<double> GetGridSpacing() const;
-        void GetSurface(TriangleMesh* mesh);
+        void GetSurface(TriangleMesh& mesh);
         const ScalarGrid3D& GetFluidSdf() const;
 
         double Cfl(double timeIntervalInSceonds) const;
