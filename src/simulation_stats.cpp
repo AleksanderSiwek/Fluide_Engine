@@ -20,8 +20,12 @@ void SimulationStats::PrintStats()
 {
     std::cout << "================ SIMULATION STATS ================\n";
     std::cout << "Simulator type: " << simulatorType << "\n";
+    std::cout << "Grid resolution: " << gridSize.x << " x " << gridSize.y << " x " << gridSize.z << "\n";
+    std::cout << "Number of particles: " << numberOfParticles << "\n";
     std::cout << "Number of Iterations: " << numberOfIterations << "\n";
     std::cout << "Time interval: " << timeIntervalInSeconds << " [s]\n";
+    std::cout << "Median CFL: " << CalculateMean(cflPerIteration) << "\n";
+    std::cout << "Mean CFL: " << CalculateMedian(cflPerIteration) << "\n";
     std::cout << "Median frame: " << CalculateMedian(iterationTimeInSeconds) << " [s]\n";
     std::cout << "Mean frame: " << CalculateMean(iterationTimeInSeconds) << " [s]\n";
     std::cout << "Simulation time: " << simulationTimeInSeconds << " [s]\n";
@@ -31,10 +35,13 @@ void SimulationStats::PrintStats()
 void SimulationStats::Clear()
 {
     simulatorType = "";
+    gridSize = 0;
+    numberOfParticles = 0;
     numberOfIterations = 0;
     timeIntervalInSeconds = 0;
     simulationTimeInSeconds = 0;
     iterationTimeInSeconds.clear();
+    cflPerIteration.clear();
 }
 
 double SimulationStats::CalculateMedian(std::vector<double> vector)

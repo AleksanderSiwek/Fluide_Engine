@@ -33,6 +33,7 @@ class HybridSimulator : public PhysicsAnimation
         Vector3<size_t> GetResolution() const;
         Vector3<double> GetGridSpacing() const;
         const ScalarGrid3D& GetFluidSdf() const;
+        size_t GetNumberOfParticles() const;
 
         void SetMaxClf(double maxClf);
         void SetViscosity(double viscosity);

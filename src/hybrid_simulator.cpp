@@ -84,6 +84,11 @@ const ScalarGrid3D& HybridSimulator::GetFluidSdf() const
     return _fluid.sdf;
 }
 
+size_t HybridSimulator::GetNumberOfParticles() const
+{
+    return _fluid.particleSystem.GetParticleNumber();
+}
+
 void HybridSimulator::SetMaxClf(double maxCfl)
 {
     _maxCfl = maxCfl;

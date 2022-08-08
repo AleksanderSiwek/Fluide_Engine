@@ -7,6 +7,6 @@
 
 namespace py = pybind11;
 
-void addPICSimulator(py::module& m);
+void addSimulators(py::module& m);
 
 #endif // _PIC_SIMULATOR_WRAPPER_HPP

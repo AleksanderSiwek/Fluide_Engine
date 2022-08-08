@@ -14,7 +14,7 @@ SimulationRunner::~SimulationRunner()
 
 }
 
-void SimulationRunner::RunSimulation(std::shared_ptr<HybridSimulator> simulator, double timeIntervalInSeconds, size_t numberOfIterations, std::string simulationOutputName, std::string cacheFolderPath)
+void SimulationRunner::RunSimulation(const std::shared_ptr<HybridSimulator> simulator, double timeIntervalInSeconds, size_t numberOfIterations, std::string simulationOutputName, std::string cacheFolderPath)
 {
     OBJManager objManager;
     TriangleMesh fluidSurface;
@@ -37,6 +37,7 @@ void SimulationRunner::RunSimulation(std::shared_ptr<HybridSimulator> simulator,
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0;
         _stats.simulationTimeInSeconds += duration;
         _stats.iterationTimeInSeconds.push_back(duration);
+        _stats.cflPerIteration.push_back(simulator->Cfl(timeIntervalInSeconds));
         fluidSurface.Clear();
         std::cout << std::endl;
     }
@@ -44,6 +45,8 @@ void SimulationRunner::RunSimulation(std::shared_ptr<HybridSimulator> simulator,
     _stats.numberOfIterations = numberOfIterations;
     _stats.timeIntervalInSeconds = timeIntervalInSeconds;
     _stats.simulatorType = typeid(*(simulator.get())).name();
+    _stats.numberOfParticles = simulator->GetNumberOfParticles();
+    _stats.gridSize = simulator->GetResolution();
 
     _stats.PrintStats();
 

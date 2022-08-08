@@ -18,6 +18,7 @@ set_target_properties(${target}
        CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
 set_target_properties(${target} PROPERTIES LINK_OPTIONS -nodefaultlibs)
+set_target_properties(${target} PROPERTIES CUDA_ARCHITECTURES "35;50;72")
 
 # Link libraries
 target_link_libraries(${target} PRIVATE ${DEFAULT_LINKER_OPTIONS} PROJECT_LIB cudart)

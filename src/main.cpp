@@ -42,12 +42,11 @@ void RunSimulation(std::shared_ptr<PICSimulator> simulator, size_t numberOfItera
     std::cout << "Simulation ended!\n";
     runner.GetStats().PrintStats();
     std::cout << "\n\n";
-
 }
 
 int main()
 {
-    size_t resolution = 40;
+    size_t resolution = 20;
     Vector3<double> scalers(1, 1.5, 2);
     size_t numberOfIterations = 60;
     double timeIntervalInSeconds = 1.0 / 60.0;

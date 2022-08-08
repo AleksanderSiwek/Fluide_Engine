@@ -15,7 +15,7 @@ class SimulationRunner
 
         ~SimulationRunner();
 
-        void RunSimulation(std::shared_ptr<HybridSimulator> simulator, double timeIntervalInSeconds, size_t numberOfIterations, std::string simulationOutputName, std::string cacheFolderPath);
+        void RunSimulation(const std::shared_ptr<HybridSimulator> simulator, double timeIntervalInSeconds, size_t numberOfIterations, std::string simulationOutputName, std::string cacheFolderPath);
 
         SimulationStats GetStats() const;
 

@@ -8,7 +8,8 @@
 #include "triangle_mesh_wrapper.hpp"
 #include "external_forces_wrapper.hpp"
 #include "obj_manager_wrapper.hpp"
-#include "pic_simulator_wrapper.hpp"
+#include "simulators_wrapper.hpp"
+#include "simulator_runner_wrapper.hpp"
 
 namespace py = pybind11;
 
@@ -21,6 +22,7 @@ PYBIND11_MODULE(PyFluidEngine, m)
     addTriangleMesh(m);
     addExternalFrorces(m);
     addOBJManager(m);
-    addPICSimulator(m);
+    addSimulators(m);
+    addSimulatorRunner(m);
 }
 
