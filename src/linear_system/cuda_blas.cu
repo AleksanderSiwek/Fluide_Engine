@@ -150,9 +150,9 @@ double CUDA_BLAS::Dot(Array3<double>& a, Array3<double>& b)
 
 void CUDA_BLAS::Residual(double* ACenter, double* ARight, double* AUp, double* AFront, double* x, double* b, double* result, Vector3<size_t> size)
 { 
-    int threadsInX = 8;
-    int threadsInY = 8;
-    int threadsInZ = 8;
+    int threadsInX = 4;
+    int threadsInY = 4;
+    int threadsInZ = 4;
 
     int blocksInX = ((int)size.x + threadsInX-1) / threadsInX;
     int blocksInY = ((int)size.y + threadsInY-1) / threadsInY;

@@ -20,6 +20,7 @@ class PhysicsAnimation : public Animation
 
     protected:
         virtual void OnAdvanceTimeStep(double timeIntervalInSeconds) = 0;
+        virtual void OnBeginIteration(double timeIntervalInSeconds) = 0;
         virtual void OnInitialize();
         virtual unsigned int NumberOfSubTimeSteps(double tmeIntervalInSecons) const = 0;
 

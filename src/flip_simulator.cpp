@@ -2,7 +2,7 @@
 
 
 FLIPSimulator::FLIPSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D& domain)
-    : PICSimulator(gridSize, domain), _velocityResiduals(_fluid.velocityGrid.GetSize(), _fluid.velocityGrid.GetOrigin(), _fluid.velocityGrid.GetGridSpacing()), _blendingFactor(0.0)
+    : PICSimulator(gridSize, domain), _velocityResiduals(_fluid.velocityGrid.GetSize(), _fluid.velocityGrid.GetOrigin(), _fluid.velocityGrid.GetGridSpacing()), _blendingFactor(0.05)
 {
 
 }
@@ -43,9 +43,9 @@ void FLIPSimulator::TransferParticles2Grid()
     auto& xMarkers = _fluid.xMarkers;
     auto& yMarkers = _fluid.yMarkers;
     auto& zMarkers = _fluid.zMarkers;
-    xMarkers.Resize(size);
-    yMarkers.Resize(size);
-    zMarkers.Resize(size);
+    xMarkers.Resize(u.GetSize());
+    yMarkers.Resize(v.GetSize());
+    zMarkers.Resize(w.GetSize());
     xMarkers.ParallelFill(0);
     yMarkers.ParallelFill(0);
     zMarkers.ParallelFill(0);
@@ -104,14 +104,20 @@ void FLIPSimulator::TransferParticles2Grid()
         }
     });
 
-    _velocityResiduals.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    u.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
         _velocityResiduals.x(i, j, k) = u(i, j, k);
+    });
+    v.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
         _velocityResiduals.y(i, j, k) = v(i, j, k);
+    });
+    w.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
         _velocityResiduals.z(i, j, k) = w(i, j, k);
     });
-
 }
+
 void FLIPSimulator::TransferGrid2Particles()
 {
     auto& velocity = _fluid.velocityGrid;
@@ -119,19 +125,28 @@ void FLIPSimulator::TransferGrid2Particles()
     auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
     auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
 
+    auto& xData = velocity.GetDataXRef();
+    auto& yData = velocity.GetDataYRef();
+    auto& zData = velocity.GetDataZRef();
+
     // _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
     // {
     //     particlesVel[i] = velocity.Sample(particlesPos[i]);
     // });
-
-    velocity.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    // 
+    
+    xData.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
-        _velocityResiduals.x(i, j, k) = velocity.x(i, j, k) - _velocityResiduals.x(i, j, k);
-        _velocityResiduals.y(i, j, k) = velocity.y(i, j, k) - _velocityResiduals.y(i, j, k);
-        _velocityResiduals.z(i, j, k) = velocity.z(i, j, k) - _velocityResiduals.z(i, j, k);
-        // _velocityResiduals.x(i, j, k) = velocity.x(i, j, k);
-        // _velocityResiduals.y(i, j, k) = velocity.y(i, j, k);
-        // _velocityResiduals.z(i, j, k) = velocity.z(i, j, k);
+        _velocityResiduals.x(i, j, k) = xData(i, j, k) - _velocityResiduals.x(i, j, k);
+    });
+
+    yData.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        _velocityResiduals.y(i, j, k) = yData(i, j, k) - _velocityResiduals.y(i, j, k);
+    });
+    zData.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+     _velocityResiduals.z(i, j, k) = zData(i, j, k) - _velocityResiduals.z(i, j, k);
     });
 
     _fluid.particleSystem.ParallelForEachParticle([&](size_t i)

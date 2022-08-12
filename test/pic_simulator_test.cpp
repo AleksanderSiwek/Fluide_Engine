@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include "../src/pic_simulator.hpp"
+#include "../src/flip_simulator.hpp"
+#include "../src/apic_simulator.hpp"
 #include "../src/3d/obj_manager.hpp"
 #include "../src/forces/directional_field.hpp"
 #include "../src/forces/point_field.hpp"
@@ -122,10 +124,10 @@ TEST(PICSimulatorTest, ExtrapolateToRegion_test)
 
 TEST(PICSimulatorTest, Simulate_test)
 {
-    size_t dimSize = 5;
-    const Vector3<size_t> size(dimSize, dimSize, dimSize*2);
+    size_t dimSize = 20;
+    const Vector3<size_t> size(dimSize, dimSize, dimSize);
     Vector3<double> domainOrigin(0, 0, 0);
-    Vector3<double> domainSize(4, 4, 8);
+    Vector3<double> domainSize(4, 4, 4);
     BoundingBox3D domain(domainOrigin, domainSize);
 
     // Load fluid mesh
@@ -136,7 +138,7 @@ TEST(PICSimulatorTest, Simulate_test)
     // Setup colliders
     TriangleMesh colliderMesh_1;
     TriangleMesh colliderMesh_2;
-    objLoader.Load("../../../test/test_cases/collider_1.obj", colliderMesh_1);
+    objLoader.Load("../../../test/test_cases/collider_3.obj", colliderMesh_1);
     //objLoader.Load("../../../test/test_cases/collider_2.obj", &colliderMesh_2);
     auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_1);
     //auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide((double)size.x), colliderMesh_2);
@@ -148,14 +150,14 @@ TEST(PICSimulatorTest, Simulate_test)
     simulator.InitializeFromTriangleMesh(fluidMesh);
     simulator.SetViscosity(0);
     simulator.AddCollider(collider_1);
-    simulator.SetMaxClf(1);
+    simulator.SetMaxClf(5);
     //simulator.AddCollider(collider_2);
 
-    TriangleMesh tmpMesh = colliderMesh_1;
+    TriangleMesh tmpMesh;
 
     Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 0; i++)
+    for(size_t i = 0; i < 60; i++)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();

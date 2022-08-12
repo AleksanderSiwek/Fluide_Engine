@@ -7,7 +7,7 @@
 
 namespace py = pybind11;
 
-void addExternalFrorces(py::module& m)
+void addExternalForces(py::module& m)
 {
     py::class_<ExternalForce, std::shared_ptr<ExternalForce>>(m, "ExternalForce");
 

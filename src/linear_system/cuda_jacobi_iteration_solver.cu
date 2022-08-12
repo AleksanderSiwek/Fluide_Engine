@@ -64,9 +64,9 @@ void CudaJacobiIterationSolver::Solve(LinearSystem* system)
 
 void CudaJacobiIterationSolver::Relax(const Vector3<size_t> size)
 {
-    int threadsInX = 8;
-    int threadsInY = 8;
-    int threadsInZ = 8;
+    int threadsInX = 4;
+    int threadsInY = 4;
+    int threadsInZ = 4;
 
     int blocksInX = (int)std::ceil(((double)size.x) / threadsInX);
     int blocksInY = (int)std::ceil(((double)size.y) / threadsInY);

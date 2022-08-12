@@ -20,8 +20,9 @@ PICSimulator::PICSimulator(const Vector3<size_t>& gridSize, const BoundingBox3D&
     SetDiffusionSolver(std::make_shared<BackwardEulerDiffusionSolver>());
     SetPressureSolver(std::make_shared<SinglePhasePressureSolver>());
     _surfaceTracker = std::make_shared<MarchingCubesSolver>();
-    _boundryConditionSolver = std::make_shared<CudaBlockedBoundryConditionSolver>();
+    _boundryConditionSolver = std::make_shared<BlockedBoundryConditionSolver>();
     _boundryConditionSolver->SetColliders(std::make_shared<ColliderCollection>(gridSize, GetGridSpacing(), GetOrigin()));
+    _maxParticleSpeedInCfl = 100;
 }
 
 PICSimulator::~PICSimulator()
@@ -94,6 +95,13 @@ void PICSimulator::OnInitialize()
 {
 
 }
+
+void PICSimulator::OnBeginIteration(double timeIntervalInSeconds)
+{
+    std::cout << "OnBeginIteration!\n";
+    // DumpParticlesSpeed(timeIntervalInSeconds);
+}
+
 
 void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 {
@@ -239,35 +247,29 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
             pt0 = pt1;
         }
 
-        if (pt1.x <= _domain.GetOrigin().x) 
-        {
+        if (pt1.x <= _domain.GetOrigin().x) {
             pt1.x = _domain.GetOrigin().x;
-            vel.x = vel.x < 0.0 ? 0.0 : vel.x;
+            vel.x = 0.0;
         }
-        if (pt1.x >= _domain.GetOrigin().x + _domain.GetSize().x) 
-        {
+        if (pt1.x >= _domain.GetOrigin().x + _domain.GetSize().x) {
             pt1.x = _domain.GetOrigin().x + _domain.GetSize().x;
-            vel.x = vel.x > 0.0 ? 0.0 : vel.x;
+            vel.x = 0.0;
         }
-        if (pt1.y <= _domain.GetOrigin().y) 
-        {
+        if (pt1.y <= _domain.GetOrigin().y) {
             pt1.y = _domain.GetOrigin().y;
-            vel.y = vel.y < 0.0 ? 0.0 : vel.y;
+            vel.y = 0.0;
         }
-        if (pt1.y >= _domain.GetOrigin().y + _domain.GetSize().y) 
-        {
+        if (pt1.y >= _domain.GetOrigin().y + _domain.GetSize().y) {
             pt1.y = _domain.GetOrigin().y + _domain.GetSize().y;
-            vel.y = vel.y > 0.0 ? 0.0 : vel.y;
+            vel.y = 0.0;
         }
-        if (pt1.z <= _domain.GetOrigin().z) 
-        {
+        if (pt1.z <= _domain.GetOrigin().z) {
             pt1.z = _domain.GetOrigin().z;
-            vel.z = vel.z < 0.0 ? 0.0 : vel.z;
+            vel.z = 0.0;
         }
-        if (pt1.z >= _domain.GetOrigin().z + _domain.GetSize().z) 
-        {
+        if (pt1.z >= _domain.GetOrigin().z + _domain.GetSize().z) {
             pt1.z = _domain.GetOrigin().z + _domain.GetSize().z;
-            vel.z = vel.z > 0.0 ? 0.0 : vel.z;
+            vel.z = 0.0;
         }
 
         particlesPos[i] = pt1;
@@ -288,6 +290,26 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
     });
 }
 
+void PICSimulator::DumpParticlesSpeed(double timeIntervalInSeconds)
+{
+    // size_t dumpedParticlesCnt = 0;
+    // size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
+    // auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
+    // const auto& gridSpacing = _fluid.velocityGrid.GetGridSpacing();
+    // double minGridSize = std::min(gridSpacing.x, std::min(gridSpacing.y, gridSpacing.z));
+    // _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
+    // {
+    //     double particleSpeedInCfl = ((particlesVel[i] + particlesVel[i] * timeIntervalInSeconds) / minGridSize).GetLength();
+    //     if(particleSpeedInCfl > _maxParticleSpeedInCfl)
+    //     {
+    //         particlesVel[i] = particlesVel[i] / particleSpeedInCfl * _maxParticleSpeedInCfl;
+    //         dumpedParticlesCnt++;
+    //     }
+    // });
+    // std::cout << "\n" << "Dumped particles: " << dumpedParticlesCnt / (double)numberOfParticles * 100.0 << "%" << "\n";
+}
+
+
 void PICSimulator::ApplyBoundryCondition()
 {
     _boundryConditionSolver->ConstrainVelocity(_fluid.velocityGrid, static_cast<size_t>(std::ceil(_maxCfl)));
@@ -307,8 +329,7 @@ unsigned int PICSimulator::NumberOfSubTimeSteps(double tmeIntervalInSecons) cons
 {
     double currentCfl = Cfl(tmeIntervalInSecons);
     std::cout << "Current CFL: " << currentCfl << "\n";
-    unsigned int numberOfSubSteps = static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxCfl), 1.0));
-    return std::min(numberOfSubSteps, _maxNumberOfSubSteps);
+    return static_cast<unsigned int>(std::max(std::ceil(currentCfl / _maxCfl), 1.0));
 }
 
 void PICSimulator::TransferParticles2Grid()
@@ -332,9 +353,9 @@ void PICSimulator::TransferParticles2Grid()
     auto& xMarkers = _fluid.xMarkers;
     auto& yMarkers = _fluid.yMarkers;
     auto& zMarkers = _fluid.zMarkers;
-    xMarkers.Resize(size);
-    yMarkers.Resize(size);
-    zMarkers.Resize(size);
+    xMarkers.Resize(u.GetSize());
+    yMarkers.Resize(v.GetSize());
+    zMarkers.Resize(w.GetSize());
     xMarkers.ParallelFill(0);
     yMarkers.ParallelFill(0);
     zMarkers.ParallelFill(0);
@@ -436,7 +457,6 @@ void PICSimulator::ExtrapolateVelocityToAir()
 {
     auto& markers = _fluid.markers;
     const auto& sdf = _fluid.sdf;
-    const auto& size = markers.GetSize();
     auto& xVel = _fluid.velocityGrid.GetDataXRef();
     auto& yVel = _fluid.velocityGrid.GetDataYRef();
     auto& zVel = _fluid.velocityGrid.GetDataZRef();
@@ -448,9 +468,9 @@ void PICSimulator::ExtrapolateVelocityToAir()
     const auto& zMarker =_fluid.zMarkers;
 
     size_t numberOfIterations = static_cast<size_t>(std::ceil(MaxCfl()));
-    WrappedCuda_ExtrapolateToRegion(prevX, xMarker, numberOfIterations, xVel);
-    WrappedCuda_ExtrapolateToRegion(prevY, yMarker, numberOfIterations, yVel);
-    WrappedCuda_ExtrapolateToRegion(prevZ, zMarker, numberOfIterations, zVel);
+    ExtrapolateToRegion(prevX, xMarker, numberOfIterations, xVel);
+    ExtrapolateToRegion(prevY, yMarker, numberOfIterations, yVel);
+    ExtrapolateToRegion(prevZ, zMarker, numberOfIterations, zVel);
 }
 
 void PICSimulator::ExtrapolateIntoCollider()
@@ -461,19 +481,19 @@ void PICSimulator::ExtrapolateIntoCollider()
     size_t depth = static_cast<size_t>(std::ceil(_maxCfl));
     const auto prevSdf(sdf);
     Array3<int> valid(size, 0);
-    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
-    valid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
-    {
-        Vector3<double> position = sdf.GridIndexToPosition(i, j, k);
-        if(colliderSdf.Sample(position) < 0)
-        {
-            valid(i, j, k) = 0;
-        }
-        else
-        {
-            valid(i, j, k) = 1;
-        }
-    });
+    // const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
+    // valid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    // {
+    //     Vector3<double> position = sdf.GridIndexToPosition(i, j, k);
+    //     if(colliderSdf.Sample(position) < 0)
+    //     {
+    //         valid(i, j, k) = 0;
+    //     }
+    //     else
+    //     {
+    //         valid(i, j, k) = 1;
+    //     }
+    // });
     WrappedCuda_ExtrapolateToRegion(prevSdf, valid, depth, sdf);
 }
 

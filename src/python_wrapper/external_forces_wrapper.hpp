@@ -7,6 +7,6 @@
 
 namespace py = pybind11;
 
-void addExternalFrorces(py::module& m);
+void addExternalForces(py::module& m);
 
 #endif // _DIRECTIONAL_FIELD_PTR_WRAPPER_HPP

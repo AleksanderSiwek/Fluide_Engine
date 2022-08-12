@@ -1,12 +1,13 @@
 #include "backward_euler_diffusion_solver.hpp"
 
 #include "../linear_system/cuda_jacobi_iteration_solver.hpp"
+#include "../linear_system/jacobi_iteration_solver.hpp"
 #include "../linear_system/cuda_conjugate_gradient_solver.hpp"
 
 
 BackwardEulerDiffusionSolver::BackwardEulerDiffusionSolver() : _system(LinearSystem())
 {
-    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.000001);
+    _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.00000000000001);
     //_systemSolver = std::make_shared<CudaConjugateGradientSolver>(250, 0.00000000000001);
 }
 
@@ -21,20 +22,29 @@ void BackwardEulerDiffusionSolver::Solve(const FaceCenteredGrid3D& sourceGrid, c
     Vector3<double> spacing = sourceGrid.GetGridSpacing();
     Vector3<double> c = (timeIntervalInSeconds * viscosity) / (spacing * spacing);
 
-    BuildXMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
+    BuildXMarkers(fluidSdf, colliderSdf, sourceGrid.GetXSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataXRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataXPtr()->ParallelFill(_system.x);
+    _system.x.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        output->x(i, j, k) = _system.x(i, j, k);
+    });
     
-    BuildYMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
+    BuildYMarkers(fluidSdf, colliderSdf, sourceGrid.GetYSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataYRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataYPtr()->ParallelFill(_system.x);
+    _system.x.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        output->y(i, j, k) = _system.x(i, j, k);
+    });
 
-    BuildZMarkers(fluidSdf, colliderSdf, sourceGrid.GetSize(), sourceGrid);
+    BuildZMarkers(fluidSdf, colliderSdf, sourceGrid.GetZSize(), sourceGrid);
     BuildSystem(sourceGrid.GetDataZRef(), c);
     _systemSolver->Solve(&_system);
-    output->GetDataZPtr()->ParallelFill(_system.x);
+    _system.x.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        output->z(i, j, k) = _system.x(i, j, k);
+    });
 }
 
 void BackwardEulerDiffusionSolver::BuildMarkers(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, const Vector3<size_t>& size, const FaceCenteredGrid3D& sourceGrid)

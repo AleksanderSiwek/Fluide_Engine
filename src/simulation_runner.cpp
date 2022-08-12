@@ -29,6 +29,7 @@ void SimulationRunner::RunSimulation(const std::shared_ptr<HybridSimulator> simu
 
     for(size_t i = 0; i < numberOfIterations; i++)
     {
+        std::cout << "Iteration: " << i << "\n";
         auto start = std::chrono::steady_clock::now();
         simulator->AdvanceSingleFrame();
         simulator->GetSurface(fluidSurface);

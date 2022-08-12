@@ -24,11 +24,11 @@ FaceCenteredGrid3D::~FaceCenteredGrid3D()
 std::vector<double> FaceCenteredGrid3D::Serialize() const
 {
     std::vector<double> serialized;
-    size_t size = _dataX.GetRawData().size() + _dataY.GetRawData().size() + _dataZ.GetRawData().size();
-    serialized.reserve(size);
-    serialized.insert(serialized.end(), _dataX.GetRawData().begin(), _dataX.GetRawData().end());
-    serialized.insert(serialized.end(), _dataY.GetRawData().begin(), _dataY.GetRawData().end());
-    serialized.insert(serialized.end(), _dataZ.GetRawData().begin(), _dataZ.GetRawData().end());
+    // size_t size = _dataX.GetRawData().size() + _dataY.GetRawData().size() + _dataZ.GetRawData().size();
+    // serialized.reserve(size);
+    // serialized.insert(serialized.end(), _dataX.GetRawData().begin(), _dataX.GetRawData().end());
+    // serialized.insert(serialized.end(), _dataY.GetRawData().begin(), _dataY.GetRawData().end());
+    // serialized.insert(serialized.end(), _dataZ.GetRawData().begin(), _dataZ.GetRawData().end());
     return serialized;
 }
 
@@ -36,6 +36,21 @@ std::vector<double> FaceCenteredGrid3D::Serialize() const
 Vector3<size_t> FaceCenteredGrid3D::GetSize() const
 {
     return _size; //- Vector3<size_t>(1, 1, 1)); // TO DO
+}
+
+Vector3<size_t> FaceCenteredGrid3D::GetXSize() const
+{
+    return _dataX.GetSize();
+}
+
+Vector3<size_t> FaceCenteredGrid3D::GetYSize() const
+{
+    return _dataY.GetSize();
+}
+
+Vector3<size_t> FaceCenteredGrid3D::GetZSize() const
+{
+    return _dataZ.GetSize();
 }
 
 Vector3<size_t> FaceCenteredGrid3D::GetActualSize() const
@@ -52,9 +67,9 @@ Vector3<double> FaceCenteredGrid3D::GetDiemensions() const
 void FaceCenteredGrid3D::Resize(Vector3<size_t> size)
 {
     SetSize(size);
-    _dataX.Resize(_size);
-    _dataY.Resize(_size);
-    _dataZ.Resize(_size);
+    _dataX.Resize(_size + Vector3<size_t>(1, 0, 0));
+    _dataY.Resize(_size + Vector3<size_t>(0, 1, 0));
+    _dataZ.Resize(_size + Vector3<size_t>(0, 0, 1));
 }
 
 void FaceCenteredGrid3D::Fill(double xVal, double yVal, double zVal)

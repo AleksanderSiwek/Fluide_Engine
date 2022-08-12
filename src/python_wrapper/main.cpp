@@ -6,6 +6,7 @@
 #include "vector3_wrapper.hpp"
 #include "bounding_box_3d_wrapper.hpp"
 #include "triangle_mesh_wrapper.hpp"
+#include "colliders_wrapper.hpp"
 #include "external_forces_wrapper.hpp"
 #include "obj_manager_wrapper.hpp"
 #include "simulators_wrapper.hpp"
@@ -20,9 +21,10 @@ PYBIND11_MODULE(PyFluidEngine, m)
     addVector3(m);
     addBoundingBox3D(m);
     addTriangleMesh(m);
-    addExternalFrorces(m);
+    addExternalForces(m);
     addOBJManager(m);
     addSimulators(m);
+    addColliders(m);
     addSimulatorRunner(m);
 }
 

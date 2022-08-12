@@ -35,7 +35,16 @@ namespace py = pybind11;
 
 void addSimulators(py::module& m)
 {
-    py::class_<HybridSimulator, std::shared_ptr<HybridSimulator>>(m, "HybridSimulator");
+    py::class_<HybridSimulator, std::shared_ptr<HybridSimulator>>(m, "HybridSimulator")
+        .def("MaxCfl", &HybridSimulator::MaxCfl)
+        .def("GetViscosity", &HybridSimulator::GetViscosity)
+        .def("GetViscosity", &HybridSimulator::GetViscosity)
+        .def("GetParticlesPerBlock", &HybridSimulator::GetParticlesPerBlock)
+        .def("GetOrigin", &HybridSimulator::GetOrigin)
+        .def("GetResolution", &HybridSimulator::GetResolution)
+        .def("GetOrigin", &HybridSimulator::GetOrigin)
+        .def("GetGridSpacing", &HybridSimulator::GetGridSpacing)
+        .def("GetNumberOfParticles", &HybridSimulator::GetNumberOfParticles);
 
     py::class_<PICSimulator, std::shared_ptr<PICSimulator>, HybridSimulator>(m, "PICSimulator")
         .def(py::init<Vector3<size_t>, BoundingBox3D>())
@@ -58,6 +67,7 @@ void addSimulators(py::module& m)
         .def("SetViscosity", &APICSimulator::SetViscosity)
         .def("SetMaxClf", &APICSimulator::SetMaxClf)
         .def("GetSurface", &APICSimulator::GetSurface);
+
 
     py::class_<FLIPSimulator, std::shared_ptr<FLIPSimulator>, PICSimulator>(m, "FLIPSimulator")
         .def(py::init<Vector3<size_t>, BoundingBox3D>())

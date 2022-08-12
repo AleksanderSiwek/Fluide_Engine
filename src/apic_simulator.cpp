@@ -36,9 +36,9 @@ void APICSimulator::TransferParticles2Grid()
     auto& xMarkers = _fluid.xMarkers;
     auto& yMarkers = _fluid.yMarkers;
     auto& zMarkers = _fluid.zMarkers;
-    xMarkers.Resize(size);
-    yMarkers.Resize(size);
-    zMarkers.Resize(size);
+    xMarkers.Resize(u.GetSize());
+    yMarkers.Resize(v.GetSize());
+    zMarkers.Resize(w.GetSize());
     xMarkers.ParallelFill(0);
     yMarkers.ParallelFill(0);
     zMarkers.ParallelFill(0);

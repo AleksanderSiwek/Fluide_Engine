@@ -12,14 +12,14 @@ HybridSimulator::HybridSimulator(const Vector3<size_t>& gridSize, const Bounding
     _fluid.velocityGrid.SetOrigin(domain.GetOrigin());
     _fluid.sdf.Resize(gridSize);
     _fluid.sdf.SetGridSpacing(gridSpacing);
-    _fluid.sdf.SetOrigin(domain.GetOrigin() + gridSpacing / 2.0);
+    _fluid.sdf.SetOrigin(domain.GetOrigin() + gridSpacing/2.0);
     _fluid.markers.Resize(gridSize);
     _fluid.particleSystem.AddVectorValue(PARTICLE_POSITION_KEY);
     _fluid.particleSystem.AddVectorValue(PARTICLE_VELOCITY_KEY);
 
     _maxNumberOfSubSteps = 250;
     _maxCfl = 3;
-    _particlesPerBlok = 8;
+    _particlesPerBlok = 16;
     _fluid.viscosity = 0;
     _fluid.density = 1;
 }

@@ -69,6 +69,8 @@ void PhysicsAnimation::AdvanceTimeStep(double timeIntervalInSeconds)
 
     _currentTime = _currentFrame.GetTimeInSeconds();
 
+    OnBeginIteration(timeIntervalInSeconds);
+
     double timeRemaining = timeIntervalInSeconds;
     size_t i = 0;
     while(timeRemaining > EPSYLON)

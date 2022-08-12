@@ -41,6 +41,9 @@ class FaceCenteredGrid3D : public Grid3D, public Serializable
         void SetGridSpacing(Vector3<double> gridSpacing) override;
 
         Vector3<size_t> GetSize() const;
+        Vector3<size_t> GetXSize() const;
+        Vector3<size_t> GetYSize() const;
+        Vector3<size_t> GetZSize() const;
         Vector3<size_t> GetActualSize() const;
         Vector3<double> GetDiemensions() const;
         Vector3<double> GetDataXOrigin() const;

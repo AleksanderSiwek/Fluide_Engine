@@ -47,7 +47,10 @@ class PICSimulator : public HybridSimulator
         std::shared_ptr<SurfaceTracker> _surfaceTracker;
         std::vector<std::shared_ptr<ExternalForce>> _externalForces;
 
+        double _maxParticleSpeedInCfl;
+
         void OnInitialize() override;
+        void OnBeginIteration(double timeIntervalInSeconds) override;
         void OnAdvanceTimeStep(double timeIntervalInSeconds) override;
         virtual void OnBeginAdvanceTimeStep(double timeIntervalInSeconds);
         virtual void OnEndAdvanceTimeStep(double timeIntervalInSeconds);
@@ -57,6 +60,7 @@ class PICSimulator : public HybridSimulator
         virtual void ComputePressure(double timeIntervalInSeconds);
         virtual void ComputeAdvection(double timeIntervalInSeconds);
         virtual void MoveParticles(double timeIntervalInSeconds);
+        void DumpParticlesSpeed(double timeIntervalInSeconds);
 
         void ApplyBoundryCondition();
 
