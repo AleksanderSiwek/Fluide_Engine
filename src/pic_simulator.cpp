@@ -67,7 +67,7 @@ void PICSimulator::GetSurface(TriangleMesh& mesh)
 {
     auto start = std::chrono::steady_clock::now();
     std::cout << "Surface Tracker: ";
-    _surfaceTracker->BuildSurface(_fluid.sdf, mesh);
+    _surfaceTracker->BuildSurface(_fluid.sdf, _boundryConditionSolver->GetColliderSdf(), mesh);
     auto end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 }
@@ -225,9 +225,11 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
     size_t numberOfParticles = _fluid.particleSystem.GetParticleNumber();
     auto& particlesPos = _fluid.particleSystem.GetVectorValues(PARTICLE_POSITION_KEY);
     auto& particlesVel = _fluid.particleSystem.GetVectorValues(PARTICLE_VELOCITY_KEY);
-    
+    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
+
     _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
     {
+        Vector3<double> startParticlePosition = particlesPos[i];
         Vector3<double> pt0 = particlesPos[i];
         Vector3<double> pt1 = pt0;
         Vector3<double> vel = particlesVel[i];
@@ -274,20 +276,22 @@ void PICSimulator::MoveParticles(double timeIntervalInSeconds)
 
         particlesPos[i] = pt1;
         particlesVel[i] = vel;
-    });
 
-    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
-    _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
-    {
         if(colliderSdf.Sample(particlesPos[i]) < 0)
         {
             auto& colliders = _boundryConditionSolver->GetColliders();
             for(size_t i = 0; i < colliders.size(); i++)
             {
-                colliders[i]->ResolveCollision(0.0, 0.0, &particlesPos[i], &particlesVel[i]);
+                colliders[i]->ResolveCollision(0.0, 0.0, startParticlePosition, &particlesPos[i], &particlesVel[i]);
             }
         }
     });
+
+
+    // _fluid.particleSystem.ParallelForEachParticle([&](size_t i)
+    // {
+
+    // });
 }
 
 void PICSimulator::DumpParticlesSpeed(double timeIntervalInSeconds)
@@ -450,7 +454,7 @@ void PICSimulator::BuildSignedDistanceField()
         });
         sdf(i, j, k) = minDistance - radious;
     });
-    //ExtrapolateIntoCollider();
+    ExtrapolateIntoCollider();
 }
 
 void PICSimulator::ExtrapolateVelocityToAir()
@@ -481,20 +485,20 @@ void PICSimulator::ExtrapolateIntoCollider()
     size_t depth = static_cast<size_t>(std::ceil(_maxCfl));
     const auto prevSdf(sdf);
     Array3<int> valid(size, 0);
-    // const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
-    // valid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
-    // {
-    //     Vector3<double> position = sdf.GridIndexToPosition(i, j, k);
-    //     if(colliderSdf.Sample(position) < 0)
-    //     {
-    //         valid(i, j, k) = 0;
-    //     }
-    //     else
-    //     {
-    //         valid(i, j, k) = 1;
-    //     }
-    // });
-    WrappedCuda_ExtrapolateToRegion(prevSdf, valid, depth, sdf);
+    const auto& colliderSdf = _boundryConditionSolver->GetColliderSdf();
+    valid.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        Vector3<double> position = sdf.GridIndexToPosition(i, j, k);
+        if(colliderSdf.Sample(position) < 0)
+        {
+            valid(i, j, k) = 0;
+        }
+        else
+        {
+            valid(i, j, k) = 1;
+        }
+    });
+    ExtrapolateToRegion(prevSdf, valid, depth, sdf);
 }
 
 void PICSimulator::InitializeParticles()

@@ -148,4 +148,46 @@ TEST(CollisionsTest, ClosestTriangleIdx_test)
     EXPECT_EQ(false, mesh.IsInside(point5));
 }
 
+TEST(CollisionsTest, DistanceToAxis_test)
+{
+    Vector3<double> axisOrigin(0, 0, 0);
+    Vector3<double> axisDirection(0, 3, 0);
+    Vector3<double> point1(1, 0, 0);
+    Vector3<double> point2(0, 5, 2);
 
+    EXPECT_EQ(1.0, Collisions::DistanceToAxis(axisOrigin, axisDirection, point1));
+    EXPECT_EQ(2.0, Collisions::DistanceToAxis(axisOrigin, axisDirection, point2));
+}
+
+TEST(CollisionsTest, RotatePointAroundAxis_test)
+{
+    Vector3<double> axisOrigin(0, 0, 0);
+    Vector3<double> axisDirection(0, 1, 0);
+    Vector3<double> point1(1, 0, 0);
+
+    Vector3<double> rotated1 = Collisions::RotatePointAroundAxis(axisOrigin, axisDirection, point1, 90.0);
+    Vector3<double> rotated2 = Collisions::RotatePointAroundAxis(axisOrigin, axisDirection, point1, 180.0);
+    Vector3<double> rotated3 = Collisions::RotatePointAroundAxis(axisOrigin, axisDirection, point1, -90.0);
+    Vector3<double> rotated4 = Collisions::RotatePointAroundAxis(axisOrigin, axisDirection, point1, 270.0);
+    Vector3<double> rotated5 = Collisions::RotatePointAroundAxis(axisOrigin, axisDirection, point1, 360.0);
+
+    EXPECT_NEAR(0.0, rotated1.x, 0.001);
+    EXPECT_NEAR(0.0, rotated1.y, 0.001);
+    EXPECT_NEAR(-1.0, rotated1.z, 0.001);
+
+    EXPECT_NEAR(-1.0, rotated2.x, 0.001);
+    EXPECT_NEAR(0.0, rotated2.y, 0.001);
+    EXPECT_NEAR(0.0, rotated2.z, 0.001);
+
+    EXPECT_NEAR(0.0, rotated3.x, 0.001);
+    EXPECT_NEAR(0.0, rotated3.y, 0.001);
+    EXPECT_NEAR(1.0, rotated3.z, 0.001);
+
+    EXPECT_NEAR(0.0, rotated4.x, 0.001);
+    EXPECT_NEAR(0.0, rotated4.y, 0.001);
+    EXPECT_NEAR(1.0, rotated4.z, 0.001);
+
+    EXPECT_NEAR(1.0, rotated5.x, 0.001);
+    EXPECT_NEAR(0.0, rotated5.y, 0.001);
+    EXPECT_NEAR(0.0, rotated5.z, 0.001);
+}

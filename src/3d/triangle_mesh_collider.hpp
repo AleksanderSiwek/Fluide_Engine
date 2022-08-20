@@ -19,7 +19,7 @@ class TriangleMeshCollider : public Collider
         bool IsInside(const Vector3<double>& position) override;
         double GetClosestDistanceAt(const Vector3<double>& position) override;
         Vector3<double> GetVelocityAt(const Vector3<double>& position) override;
-        void ResolveCollision(double radius, double restitutionCoefficient, Vector3<double>* position, Vector3<double>* velocity) override;
+        void ResolveCollision(double radius, double restitutionCoefficient, const Vector3<double>& previousPosition, Vector3<double>* position, Vector3<double>* velocity) override;
         bool IsPenetraiting(const Vector3<double>& point, const Vector3<double>& closestPoint, const Vector3<double>& normal);
 
     private:

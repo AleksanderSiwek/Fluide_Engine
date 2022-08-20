@@ -226,7 +226,7 @@ void CudaPICSimulator::GetSurface(TriangleMesh& mesh)
 {
     auto start = std::chrono::steady_clock::now();
     std::cout << "Surface Tracker: ";
-    _surfaceTracker->BuildSurface(_fluid.sdf, mesh);
+    //_surfaceTracker->BuildSurface(_fluid.sdf, mesh);
     auto end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 }
@@ -463,7 +463,7 @@ void CudaPICSimulator::MoveParticles(double timeIntervalInSeconds)
             auto& colliders = _boundryConditionSolver->GetColliders();
             for(size_t i = 0; i < colliders.size(); i++)
             {
-                colliders[i]->ResolveCollision(0.0, 0.0, &particlesPos[i], &particlesVel[i]);
+                //colliders[i]->ResolveCollision(0.0, 0.0, &particlesPos[i], &particlesVel[i]);
             }
         }
     });

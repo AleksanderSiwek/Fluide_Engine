@@ -8,6 +8,7 @@
 BackwardEulerDiffusionSolver::BackwardEulerDiffusionSolver() : _system(LinearSystem())
 {
     _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.00000000000001);
+    //_systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.00000000000001);
     //_systemSolver = std::make_shared<CudaConjugateGradientSolver>(250, 0.00000000000001);
 }
 

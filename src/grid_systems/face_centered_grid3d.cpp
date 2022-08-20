@@ -146,22 +146,22 @@ Vector3<double> FaceCenteredGrid3D::Sample(const Vector3<double>& position) cons
 Vector3<double> FaceCenteredGrid3D::ValueAtCellCenter(size_t i, size_t j, size_t k) const
 {
     double left = _dataX(i, j, k);
-    double right = i + 1 <  GetSize().x ? _dataX(i + 1, j, k) : 0.0;
+    double right = _dataX(i + 1, j, k);
     double down = _dataY(i, j ,k);
-    double up = j + 1 < GetSize().y ? _dataY(i, j + 1, k) : 0.0;
+    double up = _dataY(i, j + 1, k);
     double back = _dataZ(i, j, k);
-    double front = k + 1 < GetSize().z ? _dataZ(i, j, k + 1) : 0.0;
+    double front = _dataZ(i, j, k + 1);
     return 0.5 * Vector3<double>(left + right, down + up, back + front);
 }
 
 double FaceCenteredGrid3D::DivergenceAtCallCenter(size_t i, size_t j, size_t k) const
 {
     double left = _dataX(i, j, k);
-    double right =  i + 1 < _size.x ? _dataX(i + 1, j ,k) : _dataX(i, j ,k);
+    double right = _dataX(i + 1, j, k);
     double down = _dataY(i, j ,k);
-    double up = j + 1 < _size.y ? _dataY(i, j + 1, k) :_dataY(i, j, k) ;
+    double up = _dataY(i, j + 1, k);
     double back = _dataZ(i, j, k);
-    double front = k + 1 < _size.z ? _dataZ(i, j, k + 1) : _dataZ(i, j, k);
+    double front = _dataZ(i, j, k + 1);
     return (right - left)/_gridSpacing.x + (up - down)/_gridSpacing.y + (front - back)/_gridSpacing.z;
 }
 

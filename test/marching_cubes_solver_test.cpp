@@ -13,6 +13,7 @@ TEST(MarchingCubesSolverTest, BuildMesh_test)
     MarchingCubesSolver solver;
     OBJManager objManager;
     ScalarGrid3D sdf(size, 1, origin, gridSpacing);
+    ScalarGrid3D sdfColl(size, 1, origin, gridSpacing);
     TriangleMesh mesh;
 
     sdf(0, 1, 1) = -1;
@@ -24,7 +25,7 @@ TEST(MarchingCubesSolverTest, BuildMesh_test)
     sdf(1, 0, 1) = -1;
     sdf(1, 0, 0) = -1;
 
-    solver.BuildSurface(sdf, mesh);
+    solver.BuildSurface(sdf, sdfColl, mesh);
 
     objManager.Save("../../test_marching_cubes.obj", mesh);
 }

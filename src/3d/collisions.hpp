@@ -26,6 +26,9 @@ class Collisions
 
         static bool IsInsideTriangleMesh(const TriangleMesh& mesh, const Vector3<double>& point);
 
+        static Vector3<double> RotatePointAroundAxis(const Vector3<double>& axisOrigin, const Vector3<double>& axisDirection, const Vector3<double>& point, double angle);
+        static double DistanceToAxis(const Vector3<double>& axisOrigin, const Vector3<double>& axisDirection, const Vector3<double>& point);
+
     private:
         static double ADet(const Vector3<double>& point1, const Vector3<double>& point2, const Vector3<double>& point3);
 };

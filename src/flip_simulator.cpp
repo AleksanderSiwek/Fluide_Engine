@@ -55,7 +55,7 @@ void FLIPSimulator::TransferParticles2Grid()
         std::array<Vector3<size_t>, 8> indices;
         std::array<double, 8> weights;
 
-        GetCooridnatesAndWeights(size, flow.GetDataXOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
+        GetCooridnatesAndWeights(u.GetSize(), flow.GetDataXOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
         for (int j = 0; j < 8; ++j) 
         {
             u(indices[j]) += velocities[i].x * weights[j];
@@ -63,7 +63,7 @@ void FLIPSimulator::TransferParticles2Grid()
             xMarkers(indices[j]) = 1;
         }
 
-        GetCooridnatesAndWeights(size, flow.GetDataYOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
+        GetCooridnatesAndWeights(v.GetSize(), flow.GetDataYOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
         for (int j = 0; j < 8; ++j) 
         {
             v(indices[j]) += velocities[i].y * weights[j];
@@ -71,7 +71,7 @@ void FLIPSimulator::TransferParticles2Grid()
             yMarkers(indices[j]) = 1;
         }
 
-        GetCooridnatesAndWeights(size, flow.GetDataZOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
+        GetCooridnatesAndWeights(w.GetSize(), flow.GetDataZOrigin(), flow.GetGridSpacing(), positions[i], indices, weights);
         for (int j = 0; j < 8; ++j) 
         {
             w(indices[j]) += velocities[i].z * weights[j];

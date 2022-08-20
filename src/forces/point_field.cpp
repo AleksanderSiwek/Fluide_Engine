@@ -22,7 +22,7 @@ void PointField::SetPosition(Vector3<double> origin)
 
 Vector3<double> PointField::Sample(const Vector3<double>& position) const
 {
-    return _strength * (GetDistance(position) / _strengthFallOff) * GetDirection(position);
+    return _strength * (1.0 / GetDistance(position)) * GetDirection(position);
 }
 
 void PointField::SetStrength(double strength)
@@ -50,9 +50,9 @@ double PointField::GetStrengthFallOff() const
     return _strengthFallOff;
 }
 
-Vector3<double> PointField::GetDistance(Vector3<double> point) const
+double PointField::GetDistance(Vector3<double> point) const
 {
-    return (point - _origin).GetLength();
+    return (point - _origin).GetLength() >= 1.0 ? (point - _origin).GetLength() : 1.0;
 }
 
 Vector3<double> PointField::GetDirection(Vector3<double> point) const

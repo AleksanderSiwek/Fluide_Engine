@@ -216,6 +216,36 @@ double Collisions::DistanceToTriangle(Vector3<double> point, Vector3<double> p1,
     return DistanceToPoint(point, ClossestPointOnTriangle(point, p1, p2, p3));
 }
 
+Vector3<double> Collisions::RotatePointAroundAxis(const Vector3<double>& axisOrigin, const Vector3<double>& axisDirection, const Vector3<double>& point, double angle)
+{
+    double angleInRadians = angle * PI / 180;
+    Vector3<double> normalizedDirection = axisDirection.GetNormalized();
+    double x = point.x;
+    double y = point.y;
+    double z = point.z;
+    double u = normalizedDirection.x;
+    double v = normalizedDirection.y;
+    double w = normalizedDirection.z;
+    double a = axisOrigin.x;
+    double b = axisOrigin.y;
+    double c = axisOrigin.z;
+    Vector3<double> rotated(0, 0, 0);
+    rotated.x = (a*(v*v + w*w) - u*(b*v + c*w - u*x - v*y - w*z))*(1 - cos(angleInRadians)) + x*cos(angleInRadians) + ((-1)*c*v + b*w - w*y + v*z)*sin(angleInRadians);
+    rotated.y = (b*(u*u + w*w) - v*(a*u + c*w - u*x - v*y - w*z))*(1 - cos(angleInRadians)) + y*cos(angleInRadians) + (c*u - a*w + w*x - u*z)*sin(angleInRadians);
+    rotated.z = (c*(u*u + v*v) - w*(a*u + b*v - u*x - v*y - w*z))*(1 - cos(angleInRadians)) + z*cos(angleInRadians) + ((-1)*b*u + a*v - v*x + u*y)*sin(angleInRadians);
+    return rotated;
+}
+
+double Collisions::DistanceToAxis(const Vector3<double>& axisOrigin, const Vector3<double>& axisDirection, const Vector3<double>& point)
+{
+    Vector3<double> direction = (axisDirection - axisOrigin) / Vector3<double>(DistanceToPoint(axisDirection, axisOrigin));
+    Vector3<double> v = point - axisOrigin;
+    double t = v.Dot(direction);
+    Vector3<double> closestPointOnAxis = axisOrigin + t * direction;
+    return DistanceToPoint(closestPointOnAxis, point);
+}
+
+
 size_t Collisions::ClosestTriangleIdx(Vector3<double> point, const TriangleMesh& mesh)
 {
     const auto& triangles = mesh.GetTriangles();

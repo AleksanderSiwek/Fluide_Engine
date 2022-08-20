@@ -13,7 +13,7 @@ class Collider
         virtual bool IsInside(const Vector3<double>& position) = 0;
         virtual double GetClosestDistanceAt(const Vector3<double>& position) = 0;
         virtual Vector3<double> GetVelocityAt(const Vector3<double>& position) = 0;
-        virtual void ResolveCollision(double radius, double restitutionCoefficient, Vector3<double>* position, Vector3<double>* velocity) = 0;
+        virtual void ResolveCollision(double radius, double restitutionCoefficient, const Vector3<double>& previousPosition, Vector3<double>* position, Vector3<double>* velocity) = 0;
         
     private:
 };

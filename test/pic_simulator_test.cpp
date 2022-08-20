@@ -157,7 +157,7 @@ TEST(PICSimulatorTest, Simulate_test)
 
     Frame frame(0.05);
     simulator.SetCurrentFrame(frame);
-    for(size_t i = 0; i < 60; i++)
+    for(size_t i = 0; i < 0; i++)
     {
         std::cout << "Iteration = " << i << "\n";
         simulator.AdvanceSingleFrame();

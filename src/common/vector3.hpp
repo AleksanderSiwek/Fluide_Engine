@@ -151,7 +151,7 @@ class Vector3
             Divide(sqrt(x * x + y * y + z * z));
         }
 
-        Vector3<T> GetNormalized()
+        Vector3<T> GetNormalized() const
         {
             double val = sqrt(x * x + y * y + z * z);
             return Vector3<T>(x/val, y/val, z/val);

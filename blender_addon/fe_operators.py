@@ -1,5 +1,12 @@
-import bpy
+import os
+import sys
 
+sys.path.append("D:/_STUDIA/Praca_magisterska/Fluid_Engine/build/src/python_wrapper\Debug/")
+os.environ['PATH'] = os.path.join(os.environ['CUDA_PATH'], 'bin')
+
+import PyFluidEngine as pyf
+
+import bpy
 from bpy.types import Operator
 
 

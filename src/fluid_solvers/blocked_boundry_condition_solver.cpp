@@ -41,8 +41,8 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
         double phi0 = colliderSdf.Sample(pos - Vector3<double>(0.5 * gridSpacing.x, 0.0, 0.0));
         double phi1 = colliderSdf.Sample(pos + Vector3<double>(0.5 * gridSpacing.x, 0.0, 0.0));
         double frac = FractionInsideSdf(phi0, phi1);
-        frac = 1 - Clamp(frac, 0.0, 1.0);
-        if(!(frac > 0.0))
+        frac = 1 - Clamp(frac, 1.0, 0.0);
+        if(frac > 0.0)
         {
             xMarker(i, j, k) = 1;
         }
@@ -60,9 +60,9 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
         double phi0 = colliderSdf.Sample(pos - Vector3<double>(0.0, 0.5 * gridSpacing.y, 0.0));
         double phi1 = colliderSdf.Sample(pos + Vector3<double>(0.0, 0.5 * gridSpacing.y, 0.0));
         double frac = FractionInsideSdf(phi0, phi1);
-        frac = 1 - Clamp(frac, 0.0, 1.0);
+        frac = 1 - Clamp(frac, 1.0, 0.0);
 
-        if(!(frac > 0.0))
+        if(frac > 0.0)
         {
             yMarker(i, j, k) = 1;
         }
@@ -80,9 +80,9 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
         double phi0 = colliderSdf.Sample(pos - Vector3<double>(0.0, 0.0, 0.5 * gridSpacing.z));
         double phi1 = colliderSdf.Sample(pos + Vector3<double>(0.0, 0.0, 0.5 * gridSpacing.z));
         double frac = FractionInsideSdf(phi0, phi1);
-        frac = 1 - Clamp(frac, 0.0, 1.0);
+        frac = 1 - Clamp(frac, 1.0, 0.0);
 
-        if(!(frac > 0.0))
+        if(frac > 0.0)
         {
             zMarker(i, j, k) = 1;
         }
@@ -205,7 +205,7 @@ void BlockedBoundryConditionSolver::ConstrainVelocity(FaceCenteredGrid3D& veloci
 
     for (size_t k = 0; k < xData.GetSize().z; ++k) 
     {
-        for (size_t j = 0; j <xData.GetSize().y; ++j) 
+        for (size_t j = 0; j < xData.GetSize().y; ++j) 
         {
             xData(xData.GetSize().x - 1, j, k) = 0;
         }

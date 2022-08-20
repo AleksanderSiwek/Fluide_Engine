@@ -62,24 +62,20 @@ Vector3<double> TriangleMeshCollider::GetVelocityAt(const Vector3<double>& posit
 }
 
 #include <iostream>
-void TriangleMeshCollider::ResolveCollision(double radius, double restitutionCoefficient, Vector3<double>* position, Vector3<double>* velocity)
+void TriangleMeshCollider::ResolveCollision(double radius, double restitutionCoefficient, const Vector3<double>& previousPosition, Vector3<double>* position, Vector3<double>* velocity)
 {
     double frictionCoeffient = 0; // TO DO
-    Vector3<double> colliderVelocity = 0; // TO DO
+    Vector3<double> colliderVelocity(0.0, 0.0, 0.0); // TO DO
 
     const auto& triangles = _mesh.GetTriangles();
     const auto& verts = _mesh.GetVerticies();
     const auto& normals = _mesh.GetNormals();
-    size_t triangleIdx = Collisions::ClosestTriangleIdx(*position, _mesh);
-    Vector3<double> closestPoint = Collisions::ClossestPointOnTriangle(*position, verts[triangles[triangleIdx].point1Idx], verts[triangles[triangleIdx].point2Idx], verts[triangles[triangleIdx].point3Idx]);
-    double distanceToTriangle = Collisions::DistanceToTriangle(*position, verts[triangles[triangleIdx].point1Idx], verts[triangles[triangleIdx].point2Idx], verts[triangles[triangleIdx].point3Idx]);
+    size_t triangleIdx = Collisions::ClosestTriangleIdx(previousPosition, _mesh);
+    Vector3<double> closestPoint = Collisions::ClossestPointOnTriangle(previousPosition, verts[triangles[triangleIdx].point1Idx], verts[triangles[triangleIdx].point2Idx], verts[triangles[triangleIdx].point3Idx]);
     Vector3<double> closestNormal = normals[triangles[triangleIdx].normalIdx];
 
     if(_mesh.IsInside(*position))
     {
-        Vector3<double> u = velocity->Dot(closestNormal) / (closestNormal.Dot(closestNormal)) * closestNormal;
-        Vector3<double> w = *velocity - u;
-        // *velocity = w - u;
         Vector3<double> relativeVel = *velocity - colliderVelocity;
         double normalDotRelativeVel = closestNormal.Dot(relativeVel);
         Vector3<double> relativeVelN = normalDotRelativeVel * closestNormal;

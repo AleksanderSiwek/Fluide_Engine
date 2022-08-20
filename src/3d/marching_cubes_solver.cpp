@@ -22,10 +22,19 @@ MarchingCubesSolver::~MarchingCubesSolver()
 
 }
 
-void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& sdf, TriangleMesh& mesh)
+void MarchingCubesSolver::BuildSurface(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, TriangleMesh& mesh)
 {
     MarchingCubeVertexMap vertexMap;
-    const auto& size = sdf.GetSize();
+    const auto& size = fluidSdf.GetSize();
+    ScalarGrid3D sdf = fluidSdf;
+
+    sdf.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    {
+        if(fluidSdf(i, j, k) < 0 && colliderSdf(i, j, k) < 0)
+        {
+            sdf(i, j, k) = colliderSdf(i, j, k) * (-1);
+        }
+    });
     // Vector3<double> scaleFactor(2, 2, 2);
     // const auto& newSize = Vector3<size_t>((size_t)(size.x * scaleFactor.x), (size_t)(size.y * scaleFactor.y), (size_t)(size.z * scaleFactor.z));
     // ScalarGrid3D rescaledSdf(newSize, 0, origin, gridSpacing / scaleFactor);

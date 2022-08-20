@@ -9,6 +9,7 @@
 SinglePhasePressureSolver::SinglePhasePressureSolver() : _system(LinearSystem())
 {
     _systemSolver = std::make_shared<CudaJacobiIterationSolver>(1000, 5, 0.00000000000001);
+    //_systemSolver = std::make_shared<JacobiIterationSolver>(1000, 5, 0.00000000000001);
     //_systemSolver = std::make_shared<CudaConjugateGradientSolver>(250, 0.00000000000001);
 }
 
@@ -70,7 +71,7 @@ void SinglePhasePressureSolver::ApplyPressure(const FaceCenteredGrid3D& input, d
     outY.ParallelFill(inY);
     outZ.ParallelFill(inZ);
 
-    _fluidMarkers.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
+    _system.x.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
         if(_fluidMarkers(i, j, k) == FLUID_MARK)
         {

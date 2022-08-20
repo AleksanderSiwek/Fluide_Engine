@@ -16,7 +16,7 @@ class MarchingCubesSolver : public SurfaceTracker
 
         ~MarchingCubesSolver();
 
-        void BuildSurface(const ScalarGrid3D& sdf, TriangleMesh& mesh) override;
+        void BuildSurface(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, TriangleMesh& mesh) override;
     
         typedef size_t MarchingCubeVertexHashKey;
         typedef size_t MarchingCubeVertexId;

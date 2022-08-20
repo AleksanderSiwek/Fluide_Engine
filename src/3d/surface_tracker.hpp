@@ -12,7 +12,7 @@ class SurfaceTracker
 
         virtual ~SurfaceTracker();
 
-        virtual void BuildSurface(const ScalarGrid3D& sdf, TriangleMesh& mesh) = 0;
+        virtual void BuildSurface(const ScalarGrid3D& fluidSdf, const ScalarGrid3D& colliderSdf, TriangleMesh& mesh) = 0;
 };
 
 

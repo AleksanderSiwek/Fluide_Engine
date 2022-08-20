@@ -27,7 +27,7 @@ class PointField : public ExternalForce
         double _strength; 
         double _strengthFallOff;
 
-        Vector3<double> GetDistance(Vector3<double> point) const;
+        double GetDistance(Vector3<double> point) const;
         Vector3<double> GetDirection(Vector3<double> point) const;
 };
 

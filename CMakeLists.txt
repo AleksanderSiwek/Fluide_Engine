@@ -16,8 +16,8 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -gencode arch=compute_22,code=sm_22 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 # python
-find_package(PythonInterp 3.6 REQUIRED)
-find_package(PythonLibs 3.6 REQUIRED)
+find_package(PythonInterp 3.7.7 REQUIRED)
+find_package(PythonLibs 3.7.7 REQUIRED)
 
 include_directories(googletest/googletest/include/gtest/)
 include_directories(external/pybind11/include)
