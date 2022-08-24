@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.7)
 
 set(PROJECT_NAME Fluid_Engine)
 set(PROJECT_LIB Fluid_Engine_lib)
@@ -6,6 +6,8 @@ set(PROJECT_BINARY Fluid_Engine_binary)
 set(PROJECT_TESTS Fluid_Engine_tests)
 set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+set(CMAKE_FIND_PACKAGE_SORT_DIRECTION ASC)
 
 project(${PROJECT_NAME} LANGUAGES C CXX CUDA)
 
@@ -16,8 +18,8 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -gencode arch=compute_22,code=sm_22 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 # python
-find_package(PythonInterp 3.7.7 REQUIRED)
-find_package(PythonLibs 3.7.7 REQUIRED)
+find_package(PythonInterp 3.7.7 EXACT REQUIRED)
+find_package(PythonLibs 3.7.7 EXACT REQUIRED)
 
 include_directories(googletest/googletest/include/gtest/)
 include_directories(external/pybind11/include)

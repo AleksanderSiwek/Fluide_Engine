@@ -21,6 +21,7 @@
 #include "3d/collisions.hpp"
 #include "3d/mesh_2_sdf.hpp"
 #include "3d/collider_collection.hpp"
+#include "emmiter/emmiter.hpp"
 
 
 class PICSimulator : public HybridSimulator
@@ -33,6 +34,7 @@ class PICSimulator : public HybridSimulator
         void InitializeFromTriangleMesh(const TriangleMesh& mesh) override;
         void AddExternalForce(const std::shared_ptr<ExternalForce> newForce) override;
         void AddCollider(std::shared_ptr<Collider> collider) override;
+        void AddEmitter(std::shared_ptr<Emitter> emitter);
         double Cfl(double timeIntervalInSceonds) const override;
         void GetSurface(TriangleMesh& mesh) override;
 
@@ -46,6 +48,7 @@ class PICSimulator : public HybridSimulator
         std::shared_ptr<BoundryConditionSolver> _boundryConditionSolver;
         std::shared_ptr<SurfaceTracker> _surfaceTracker;
         std::vector<std::shared_ptr<ExternalForce>> _externalForces;
+        std::vector<std::shared_ptr<Emitter>> _emitters;
 
         double _maxParticleSpeedInCfl;
 

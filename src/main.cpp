@@ -8,6 +8,7 @@
 #include "3d/collider_collection.hpp"
 #include "3d/triangle_mesh_collider.hpp"
 #include "simulation_runner.hpp"
+#include "emmiter/volume_emmiter.hpp"
 
 #include <stdlib.h>  
 #include <iostream>
@@ -19,23 +20,15 @@ void RunSimulation(std::shared_ptr<PICSimulator> simulator, size_t numberOfItera
     OBJManager objLoader;
     objLoader.Load("../../../test/test_cases/short_water_wall.obj", fluidMesh);
 
-    // Setup colliders
-    TriangleMesh colliderMesh_1;
-    TriangleMesh colliderMesh_2;
-    objLoader.Load("../../../test/test_cases/collider_2.obj", colliderMesh_1);
-    objLoader.Load("../../../test/test_cases/test_cube.obj", colliderMesh_2);
-    auto domainOrigin = domain.GetOrigin();
-    auto domainSize = domain.GetSize();
-    auto collider_1 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide(Vector3<double>((double)size.x, (double)size.y, (double)size.z)), colliderMesh_1);
-    auto collider_2 = std::make_shared<TriangleMeshCollider>(size, domainOrigin, (domainSize - domainOrigin).Divide(Vector3<double>((double)size.x, (double)size.y, (double)size.z)), colliderMesh_2);
+    // Setup Emitter
+    TriangleMesh emitterObject;
+    objLoader.Load("../../../test/test_cases/emitter_1.obj", emitterObject);
 
     simulator->AddExternalForce(std::make_shared<DirectionalField>(Vector3<double>(0, -9.81, 0)));
-    //simulator.AddExternalForce(std::make_shared<PointField>(Vector3<double>(2, 2, 2), 10));
-    simulator->InitializeFromTriangleMesh(fluidMesh);
-    simulator->SetViscosity(0);
-    simulator->AddCollider(collider_1);
-    //simulator.AddCollider(collider_2);
-    simulator->SetMaxClf(3);
+    //simulator->InitializeFromTriangleMesh(fluidMesh);
+    simulator->AddEmitter(std::make_shared<VolumeEmitter>(emitterObject, size, domain, 12, Vector3<double>(0.0, 6.0, 0.0), 0.0));
+    simulator->SetViscosity(0.01);
+    simulator->SetMaxClf(5);
 
     SimulationRunner runner;
     runner.RunSimulation(simulator, timeIntervalInSeconds, numberOfIterations, prefix, "../../../simOutputs/" + prefix + "/");
@@ -46,21 +39,21 @@ void RunSimulation(std::shared_ptr<PICSimulator> simulator, size_t numberOfItera
 
 int main()
 {
-    size_t resolution = 20;
-    Vector3<double> scalers(1, 1.5, 2);
-    size_t numberOfIterations = 60;
+    size_t resolution = 30;
+    Vector3<double> scalers(1, 1, 1);
+    size_t numberOfIterations = 400;
     double timeIntervalInSeconds = 1.0 / 60.0;
 
     const Vector3<size_t> size((size_t)(resolution*scalers.x), (size_t)(resolution*scalers.y), (size_t)(resolution*scalers.z));
     Vector3<double> domainOrigin(0, 0, 0);
-    Vector3<double> domainSize(4*scalers.x, 4*scalers.y, 4*scalers.z);
+    Vector3<double> domainSize(6*scalers.x, 6*scalers.y, 6*scalers.z);
     BoundingBox3D domain(domainOrigin, domainSize);
 
     std::shared_ptr<PICSimulator> picSimulator = std::make_shared<PICSimulator>(size, domain);
     std::shared_ptr<APICSimulator> apicSimulator = std::make_shared<APICSimulator>(size, domain);
     std::shared_ptr<FLIPSimulator> flipSimulator = std::make_shared<FLIPSimulator>(size, domain);
 
-    RunSimulation(picSimulator, numberOfIterations, timeIntervalInSeconds, "pic_out", size, domain);
-    RunSimulation(apicSimulator, numberOfIterations, timeIntervalInSeconds, "apic_out", size, domain);
+    // RunSimulation(picSimulator, numberOfIterations, timeIntervalInSeconds, "pic_out", size, domain);
+    // RunSimulation(apicSimulator, numberOfIterations, timeIntervalInSeconds, "apic_out", size, domain);
     RunSimulation(flipSimulator, numberOfIterations, timeIntervalInSeconds, "flip_out", size, domain);
 }

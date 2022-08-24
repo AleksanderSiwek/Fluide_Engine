@@ -3,8 +3,6 @@
 #include "../3d/mesh_2_sdf.hpp"
 #include "../3d/collisions.hpp"
 
-#include <iostream>
-
 
 VolumeField::VolumeField(const TriangleMesh& mesh, Vector3<size_t> resolution, BoundingBox3D domain, double strength)
     : _mesh(mesh), _strength(strength), _resolution(resolution)
@@ -30,15 +28,15 @@ Vector3<double> VolumeField::Sample(const Vector3<double>& position) const
     i = j = k = 0;
     factorX = factorY = factorZ = 0;
 
-    Vector3<double> normalizedPoistion = (position - _origin) / _gridSpacing;
+    Vector3<double> normalizedPosition = (position - _origin) / _gridSpacing;
     const auto& size = _resolution;
     int sizeX = static_cast<int>(size.x);
     int sizeY = static_cast<int>(size.y);
     int sizeZ = static_cast<int>(size.z);
 
-    GetBarycentric<double>(normalizedPoistion.x, 0, sizeX - 1, &i, &factorX);
-    GetBarycentric<double>(normalizedPoistion.y, 0, sizeY - 1, &j, &factorY);
-    GetBarycentric<double>(normalizedPoistion.z, 0, sizeZ - 1, &k, &factorZ);
+    GetBarycentric<double>(normalizedPosition.x, 0, sizeX - 1, &i, &factorX);
+    GetBarycentric<double>(normalizedPosition.y, 0, sizeY - 1, &j, &factorY);
+    GetBarycentric<double>(normalizedPosition.z, 0, sizeZ - 1, &k, &factorZ);
 
     size_t ip1 = std::min(i + 1, sizeX - 1);
     size_t jp1 = std::min(j + 1, sizeY - 1);
@@ -77,8 +75,6 @@ double VolumeField::GetStrength() const
 
 void VolumeField::Initialize()
 {
-    std::cout << "Inicialization start\n";
-    std::cout << "Resolution: " << _resolution.x << ", " << _resolution.y << ", " << _resolution.z << "\n";
     _vectorField.Resize(_resolution);
     _sdf.Resize(_resolution);
 
@@ -90,10 +86,9 @@ void VolumeField::Initialize()
 
     _vectorField.ParallelForEachIndex([&](size_t i, size_t j, size_t k)
     {
+        Vector3<double> gp = _sdf.GridIndexToPosition(i, j, k);
         size_t idx = Collisions::ClosestTriangleIdx(gp, _mesh);
         Vector3<double> cp = Collisions::ClossestPointOnTriangle(gp, verticies[triangles[idx].point1Idx], verticies[triangles[idx].point2Idx], verticies[triangles[idx].point3Idx]);
         _vectorField(i, j, k) = (cp - gp);
     });
-
-    std::cout << "Inicialization end\n";
 }

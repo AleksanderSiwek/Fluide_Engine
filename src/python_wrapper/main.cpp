@@ -11,6 +11,8 @@
 #include "obj_manager_wrapper.hpp"
 #include "simulators_wrapper.hpp"
 #include "simulator_runner_wrapper.hpp"
+#include "emitters_wrapper.hpp"
+#include "scalar_grid_3d_wrapper.hpp"
 
 namespace py = pybind11;
 
@@ -26,5 +28,7 @@ PYBIND11_MODULE(PyFluidEngine, m)
     addSimulators(m);
     addColliders(m);
     addSimulatorRunner(m);
+    addEmitters(m);
+    addScalarGrid(m);
 }
 

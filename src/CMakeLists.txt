@@ -7,7 +7,8 @@ file(GLOB HEADERS *.hpp
         ./fluid_solvers/*.hpp 
         ./linear_system/*.hpp 
         ./file_systems/*.hpp
-        ./3d/*hpp)
+        ./3d/*hpp
+        ./emmiter/*hpp)
 
 file(GLOB SOURCES *.cpp 
         ./common/*.cpp 
@@ -17,7 +18,8 @@ file(GLOB SOURCES *.cpp
         ./fluid_solvers/*.cpp 
         ./linear_system/*.cpp 
         ./file_systems/*.cpp
-        ./3d/*cpp)
+        ./3d/*cpp
+        ./emmiter/*cpp)
 
 file(GLOB CUDA_SOURCES *.cu 
         ./common/*.cu 

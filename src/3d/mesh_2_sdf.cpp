@@ -34,9 +34,30 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
     for(size_t trisIdx = 0; trisIdx < triangles.size(); trisIdx++)
     {
         tris = triangles[trisIdx];
-        Vector3<double> vertexPos1 = verticies[tris.point1Idx] * inversedGridSpacing;
-        Vector3<double> vertexPos2 = verticies[tris.point2Idx] * inversedGridSpacing;
-        Vector3<double> vertexPos3 = verticies[tris.point3Idx] * inversedGridSpacing;
+
+        Vector3<double> p = verticies[tris.point1Idx];
+        Vector3<double> q = verticies[tris.point2Idx];
+        Vector3<double> r = verticies[tris.point3Idx];
+
+        double fip = (double)p.x * inversedGridSpacing;
+        double fjp = (double)p.y * inversedGridSpacing; 
+        double fkp = (double)p.z * inversedGridSpacing;
+
+        double fiq = (double)q.x * inversedGridSpacing;
+        double fjq = (double)q.y * inversedGridSpacing;
+        double fkq = (double)q.z * inversedGridSpacing;
+
+        double fir = (double)r.x * inversedGridSpacing;
+        double fjr = (double)r.y * inversedGridSpacing;
+        double fkr = (double)r.z * inversedGridSpacing;
+
+        int i0 = Clamp<int>(int(fmin(fip, fmin(fiq, fir))) - bandwidth, (int)size.x - 1, 0);
+        int j0 = Clamp<int>(int(fmin(fjp, fmin(fjq, fjr))) - bandwidth, (int)size.y - 1, 0);
+        int k0 = Clamp<int>(int(fmin(fkp, fmin(fkq, fkr))) - bandwidth, (int)size.z - 1, 0);
+
+        int i1 = Clamp<int>(int(fmax(fip, fmax(fiq, fir))) + bandwidth + 1, (int)size.x - 1, 0);
+        int j1 = Clamp<int>(int(fmax(fjp, fmax(fjq, fjr))) + bandwidth + 1, (int)size.y - 1, 0);
+        int k1 = Clamp<int>(int(fmax(fkp, fmax(fkq, fkr))) + bandwidth + 1, (int)size.z - 1, 0);
 
         // int i0 = Clamp<int>(int(fmin(vertexPos1.x, fmin(vertexPos2.x, vertexPos3.x))) - bandwidth, 0, (int)size.x - 1);
         // int j0 = Clamp<int>(int(fmin(vertexPos1.y, fmin(vertexPos2.y, vertexPos3.y))) - bandwidth, 0, (int)size.y - 1);
@@ -48,12 +69,15 @@ void Mesh2SDF::ComputeExactBandDistanceField(const TriangleMesh& mesh, ScalarGri
 
         parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
         {
-            double distance = Collisions::DistanceToTriangle(sdf.GridIndexToPosition(i, j, k), 
-                                                                verticies[tris.point1Idx], 
-                                                                verticies[tris.point2Idx], 
-                                                                verticies[tris.point3Idx]);
-            if(distance < sdf(i, j ,k))
-                sdf(i, j, k) = distance;
+            if(i >= i0 && j >= j0 && k >= k0 && i <= i1 && j <= j1 && k <= k1)
+            {
+                double distance = Collisions::DistanceToTriangle(sdf.GridIndexToPosition(i, j, k), 
+                                                                    verticies[tris.point1Idx], 
+                                                                    verticies[tris.point2Idx], 
+                                                                    verticies[tris.point3Idx]);
+                if(distance < sdf(i, j ,k))
+                    sdf(i, j, k) = distance;
+            }
         });
     }
 }
@@ -65,7 +89,7 @@ void Mesh2SDF::ComputeSigns(const TriangleMesh& mesh, ScalarGrid3D& sdf)
 
     parallel_utils::ForEach3(size.x, size.y, size.z, [&](size_t i, size_t j, size_t k)
     {
-                if(mesh.IsInside(sdf.GridIndexToPosition(i, j, k)))
-                    sdf(i, j, k) = sdf(i, j, k) * -1.0;
+        if(mesh.IsInside(sdf.GridIndexToPosition(i, j, k)))
+            sdf(i, j, k) = sdf(i, j, k) * -1.0;
     });
 }

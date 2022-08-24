@@ -43,6 +43,11 @@ void PICSimulator::AddExternalForce(const std::shared_ptr<ExternalForce> newForc
     _externalForces.push_back(newForce);
 }
 
+void PICSimulator::AddEmitter(std::shared_ptr<Emitter> emitter)
+{
+    _emitters.push_back(emitter);
+}
+
 void PICSimulator::SetDiffusionSolver(std::shared_ptr<DiffusionSolver> diffusionSolver)
 {
     _diffusionSolver = diffusionSolver;
@@ -151,9 +156,18 @@ void PICSimulator::OnAdvanceTimeStep(double timeIntervalInSeconds)
 void PICSimulator::OnBeginAdvanceTimeStep(double timeIntervalInSeconds)
 {
     auto start = std::chrono::steady_clock::now();
+    std::cout << "Update Emitters: ";
+    for(size_t i = 0; i < _emitters.size(); i++)
+    {
+        _emitters[i]->Emitt(_fluid.particleSystem, PARTICLE_POSITION_KEY, PARTICLE_VELOCITY_KEY, _fluid.sdf, _boundryConditionSolver->GetColliderSdf());
+    }
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
+
+    start = std::chrono::steady_clock::now();
     std::cout << "BuildCollider(): ";
     _boundryConditionSolver->BuildCollider();
-    auto end = std::chrono::steady_clock::now();
+    end = std::chrono::steady_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000000.0 << " [s]\n";
 
     start = std::chrono::steady_clock::now();
@@ -199,9 +213,12 @@ void PICSimulator::ComputeExternalForces(double timeIntervalInSeconds)
 
 void PICSimulator::ComputeDiffusion(double timeIntervalInSeconds)
 {
-    FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
-    _diffusionSolver->Solve(currentVelocity, _fluid.sdf, _boundryConditionSolver->GetColliderSdf(), timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
-    ApplyBoundryCondition();
+    if(_fluid.viscosity > 0.0)
+    {
+        FaceCenteredGrid3D currentVelocity(_fluid.velocityGrid);
+        _diffusionSolver->Solve(currentVelocity, _fluid.sdf, _boundryConditionSolver->GetColliderSdf(), timeIntervalInSeconds, _fluid.viscosity, &(_fluid.velocityGrid));
+        ApplyBoundryCondition();
+    }
 }
 
 void PICSimulator::ComputePressure(double timeIntervalInSeconds)

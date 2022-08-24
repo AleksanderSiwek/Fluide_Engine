@@ -24,15 +24,29 @@ bl_info = {
 
 import bpy
 
-from . fe_operators import FE_OT_AddCube
-from . fe_panel import FE_PT_Panel
+from . fe_operators import FE_OT_RunFluidSimulation
+from . fe_panel import FE_PT_FluidEngine, FE_PT_SimulatorPanel, FE_PT_ObjectInspector, FE_PT_Stats, SimpleOperator, FluidEngineProperties
 
-classes = (FE_OT_AddCube, FE_PT_Panel)
+classes = (FE_OT_RunFluidSimulation, FluidEngineProperties,  FE_PT_FluidEngine, FE_PT_SimulatorPanel, FE_PT_ObjectInspector, FE_PT_Stats, SimpleOperator)
 
 def register():
     for c in classes:
         bpy.utils.register_class(c)
+        
+    bpy.types.Object.my_global_enum = bpy.props.EnumProperty(
+    items=(
+        ('NONE', "None", ""),
+        ('FLUID', "Fluid", ""),
+        ('COLLIDER', "Collider", ""),
+        ('EMMITER', "Emmiter", ""),
+        ('TERMINATOR', "Terminator", ""),
+        ('FORCE', "Force", "")
+    ),
+    default='NONE')
+    
+    bpy.types.Scene.fe_props = bpy.props.PointerProperty(type=FluidEngineProperties)
 
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
+    del bpy.types.Scene.fe_props
